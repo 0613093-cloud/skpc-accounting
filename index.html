@@ -1996,7 +1996,13 @@ window.renderDeptReport=function(){
     const customKey='deptCustomRows_'+ym+'_'+dept;
     const customRows=ST.get(customKey,[]);
     const crT=customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
-    const crInc=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    // 커스텀 행 수입
+    const crIncCustom=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    // DB 행 view 수입 (보고서 전용, DB 영향 없음)
+    const incViewKey2='deptViewIncome_'+ym+'_'+dept;
+    const incViewData2=ST.get(incViewKey2,{});
+    const crIncDB=dMo.reduce(function(s,e){return s+(parseInt(incViewData2[e.id])||0);},0);
+    const crInc=crIncCustom+crIncDB;
     const moTall=moT+crT;const cuTall=cuT+crT;
 
     const card=document.createElement('div');card.className='dr-card';
@@ -2038,30 +2044,51 @@ window.renderDeptReport=function(){
     addBtnTop.addEventListener('click',function(){addDeptRowTop(dept,ym);});
     body.appendChild(addBtnTop);
 
-    // DB expense rows
+    // DB expense rows (수입칸은 보고서 전용 편집 - DB 영향 없음)
     var runBal=0;
+    const incViewKey='deptViewIncome_'+ym+'_'+dept;
+    const incViewData=ST.get(incViewKey,{});
     dMo.forEach(function(e){
-      runBal-=e.amount;
+      const viewInc=parseInt(incViewData[e.id])||0;
+      runBal=runBal+viewInc-e.amount;
       var balColor=runBal>=0?'var(--blue)':'var(--red)';
       const row=document.createElement('div');row.className='dr-row';
-      const cols=[
-        {txt:e.date,style:'text-align:center;font-size:11px;font-family:var(--fnum)'},
-        {txt:e.content||'지출',style:'font-family:var(--fn)'},
-        {txt:'',style:''},
-        {txt:fmtN(e.amount),style:'text-align:right;color:var(--red)'},
-        {txt:fmtN(runBal),style:'text-align:right;font-weight:700;color:'+balColor},
-        {txt:e.memo||'',style:'font-family:var(--fn);font-size:11px'}
-      ];
-      cols.forEach(function(col){
-        const dc=document.createElement('div');dc.className='dc';
-        if(col.style) col.style.split(';').forEach(function(s){
-          const p=s.split(':');if(p[0]&&p[1]){
-            dc.style[p[0].trim().replace(/-([a-z])/g,function(m,l){return l.toUpperCase();})]=p[1].trim();
-          }
-        });
-        dc.textContent=col.txt;
-        row.appendChild(dc);
-      });
+      // 날짜
+      const dc0=document.createElement('div');dc0.className='dc';
+      dc0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
+      dc0.textContent=e.date;row.appendChild(dc0);
+      // 적요
+      const dc1=document.createElement('div');dc1.className='dc';
+      dc1.style.fontFamily='var(--fn)';dc1.textContent=e.content||'지출';row.appendChild(dc1);
+      // 수입 (보고서 전용 편집 - DB 저장 없음)
+      const dc2=document.createElement('div');dc2.className='dc';dc2.style.textAlign='right';
+      const iInc2=document.createElement('input');
+      iInc2.value=viewInc?fmtN(viewInc):'';
+      iInc2.placeholder='0';
+      iInc2.title='보고서 표시용 수입 (DB에 저장되지 않음)';
+      iInc2.style.cssText='width:90px;border:none;border-bottom:1px dashed var(--blue-l);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)';
+      iInc2.addEventListener('input',function(){fmtAmt(this);});
+      iInc2.addEventListener('change',(function(eid){
+        return function(){
+          const v=getRaw(this);
+          const d=ST.get(incViewKey,{});
+          d[eid]=v;ST.set(incViewKey,d);
+          renderDeptReport();
+        };
+      })(e.id));
+      dc2.appendChild(iInc2);row.appendChild(dc2);
+      // 지출
+      const dc3=document.createElement('div');dc3.className='dc';
+      dc3.style.cssText='text-align:right;color:var(--red)';
+      dc3.textContent=fmtN(e.amount);row.appendChild(dc3);
+      // 잔액
+      const dc4=document.createElement('div');dc4.className='dc';
+      dc4.style.cssText='text-align:right;font-weight:700;color:'+balColor;
+      dc4.textContent=fmtN(runBal);row.appendChild(dc4);
+      // 비고
+      const dc5=document.createElement('div');dc5.className='dc';
+      dc5.style.cssText='font-family:var(--fn);font-size:11px';
+      dc5.textContent=e.memo||'';row.appendChild(dc5);
       body.appendChild(row);
     });
 
