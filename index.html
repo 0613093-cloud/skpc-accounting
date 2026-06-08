@@ -274,20 +274,21 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 /* PRINT */
 @media print{
   .no-print{display:none!important}
-  .content{padding:0}
   .card{box-shadow:none;border:1px solid #ccc}
-  /* 입금전표 한 장 출력 */
   .hdr,.nav{display:none!important}
   .app{height:auto!important;overflow:visible!important}
-  .content{overflow:visible!important;height:auto!important}
+  .content{overflow:visible!important;height:auto!important;padding:0!important}
   .tab-pane{display:none!important}
   .tab-pane.active{display:block!important}
   .result-section{display:block!important}
-  @page{margin:10mm;size:A4 portrait}
-  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  /* 전표 한 장 강제 */
+  @page{margin:8mm;size:A4 portrait}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10px}
+  /* 입금전표 한 장 최적화 */
   #receipt-content{page-break-inside:avoid;break-inside:avoid}
-  .rct-tbl,table{width:100%!important;font-size:11px!important}
+  #receipt-content table td,#receipt-content table th{padding:2px 5px!important;font-size:10px!important;line-height:1.3!important}
+  #receipt-content .rct-title{font-size:15px!important}
+  #receipt-content .approv-tbl td{height:28px!important;min-width:44px!important}
+  .cat-cell{font-size:9px!important}
 }
 </style>
 </head>
@@ -957,7 +958,7 @@ function buildInputSheet(num){
   <div class="g2">
     <div class="card">
       <div class="card-title" style="margin-bottom:10px">기본 정보</div>
-      <div class="fg"><div class="flbl">입력일자 (자동)</div><input class="finp" readonly value="${TODAY}" id="s${num}-date"></div>
+      <div class="fg"><div class="flbl">입력일자 (수정 가능)</div><input type="date" class="finp" id="s${num}-date" value="${TODAY}"></div>
       <div class="fg"><div class="flbl">작성자</div>
         <select class="fsel" id="s${num}-writer">${WRITERS.map(w=>`<option ${w===st.writer?'selected':''}>${w}</option>`).join('')}</select></div>
     </div>
@@ -1069,11 +1070,12 @@ window.addEntry=function(num){
   const name=nameEl.value.trim();
   const amount=getRaw(amtEl);
   if(!name||!amount){alert('성도명과 금액을 입력하세요.');nameEl.focus();return;}
+  const entryDate=document.getElementById(`s${num}-date`)?.value||TODAY;
   const online=document.getElementById(`s${num}-online`).value;
   const memo=document.getElementById(`s${num}-memo`).value.trim();
   const spon=document.getElementById(`s${num}-spon`)?.value||'';
   const type=st.selectedType||getOffTypes()[0];
-  st.entries.push({id:uid(),date:TODAY,type,name,amount,online,memo,spon,sheet:num});
+  st.entries.push({id:uid(),date:entryDate,type,name,amount,online,memo,spon,sheet:num});
   ST.set(SK,st);
   nameEl.value='';amtEl.value='';delete amtEl.dataset.raw;
   document.getElementById(`s${num}-memo`).value='';
@@ -2072,117 +2074,147 @@ window.renderReceipt=function(){
   const expenses=getExpenses().filter(e=>e.date===dateVal);
   const byTypeInc={};offerings.forEach(e=>{byTypeInc[e.type]=(byTypeInc[e.type]||0)+e.amount;});
   const byDeptOut={};expenses.forEach(e=>{byDeptOut[e.dept]=(byDeptOut[e.dept]||0)+e.amount;});
-  const totInc=offerings.reduce((s,e)=>s+e.amount,0);const totOut=expenses.reduce((s,e)=>s+e.amount,0);
+  const totInc=offerings.reduce((s,e)=>s+e.amount,0);
+  const totOut=expenses.reduce((s,e)=>s+e.amount,0);
   const cashOut=expenses.filter(e=>e.paytype==='현금지급').reduce((s,e)=>s+e.amount,0);
   const remitOut=expenses.filter(e=>e.paytype==='송금지급').reduce((s,e)=>s+e.amount,0);
+  // 통장입금 = 온라인입금 헌금 합계
+  const bankInc=offerings.filter(e=>e.online==='온라인입금').reduce((s,e)=>s+e.amount,0);
+  const cashInc=totInc-bankInc; // 현금입금 헌금 합계
   const genOff=DEF_OFF_TYPES.filter(t=>!['건축헌금','전도헌금','지역봉사헌금'].includes(t));
   const genDept=DEF_DEPT_TYPES.filter(d=>!['건축헌금','전도헌금','사회봉사'].includes(d));
   const el=document.getElementById('receipt-content');
-  const genOffLen=genOff.length;const genDeptLen=genDept.length;
+
+  // 수입표 통장입금 계산 (헌금별)
+  const byTypeBankInc={};
+  offerings.filter(e=>e.online==='온라인입금').forEach(e=>{byTypeBankInc[e.type]=(byTypeBankInc[e.type]||0)+e.amount;});
+
   el.innerHTML=`
-  <div class="rct-title">입 금 전 표</div>
-  <div class="rct-date">${dateVal}</div>
-  <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-    <table class="approv-tbl">
-      <tr><th>부회계</th><th>회계</th><th>차장</th><th>부장</th></tr>
-      <tr><td></td><td></td><td></td><td></td></tr>
-    </table>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+    <div class="rct-title" style="font-size:18px;letter-spacing:3px">입 금 전 표</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div class="rct-date">${dateVal}</div>
+      <table class="approv-tbl">
+        <tr><th>부회계</th><th>회계</th><th>차장</th><th>부장</th></tr>
+        <tr><td></td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
   </div>
 
-  <div style="font-weight:800;margin-bottom:6px;color:var(--navy);font-size:13px">Ⅰ. 수입내역</div>
-  <table class="rct-tbl" style="margin-bottom:16px">
-    <colgroup>
-      <col style="width:72px">
-      <col style="width:130px">
-      <col style="width:130px">
-      <col style="width:100px">
-      <col>
-    </colgroup>
-    <thead>
-      <tr><th>구분</th><th>항목</th><th>금액(원)</th><th>통장입금</th><th>비고</th></tr>
-    </thead>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+
+    <!-- 수입내역 -->
+    <div>
+      <div style="font-weight:800;margin-bottom:4px;color:var(--navy);font-size:12px">Ⅰ. 수입내역</div>
+      <table class="rct-tbl" style="width:100%">
+        <colgroup><col style="width:52px"><col><col style="width:82px"><col style="width:70px"></colgroup>
+        <thead><tr><th>구분</th><th>항목</th><th>금액(원)</th><th>통장입금</th></tr></thead>
+        <tbody>
+          ${genOff.map((t,i)=>`<tr>
+            ${i===0?`<td class="cat-cell" rowspan="${genOff.length}" style="font-size:10px">일반<br>헌금</td>`:''}
+            <td class="item-cell" style="font-size:10px">${t}</td>
+            <td class="amt-cell" style="font-size:10px">${byTypeInc[t]?fmtN(byTypeInc[t]):'—'}</td>
+            <td class="bank-cell" style="font-size:10px">${byTypeBankInc[t]?fmtN(byTypeBankInc[t]):'—'}</td>
+          </tr>`).join('')}
+          <tr>
+            <td class="cat-cell" rowspan="3" style="font-size:10px">특별<br>헌금</td>
+            <td class="item-cell" style="font-size:10px">건축헌금</td>
+            <td class="amt-cell" style="font-size:10px">${byTypeInc['건축헌금']?fmtN(byTypeInc['건축헌금']):'—'}</td>
+            <td class="bank-cell" style="font-size:10px">${byTypeBankInc['건축헌금']?fmtN(byTypeBankInc['건축헌금']):'—'}</td>
+          </tr>
+          <tr>
+            <td class="item-cell" style="font-size:10px">전도헌금</td>
+            <td class="amt-cell" style="font-size:10px">${byTypeInc['전도헌금']?fmtN(byTypeInc['전도헌금']):'—'}</td>
+            <td class="bank-cell" style="font-size:10px">${byTypeBankInc['전도헌금']?fmtN(byTypeBankInc['전도헌금']):'—'}</td>
+          </tr>
+          <tr>
+            <td class="item-cell" style="font-size:10px">지역봉사헌금</td>
+            <td class="amt-cell" style="font-size:10px">${byTypeInc['지역봉사헌금']?fmtN(byTypeInc['지역봉사헌금']):'—'}</td>
+            <td class="bank-cell" style="font-size:10px">${byTypeBankInc['지역봉사헌금']?fmtN(byTypeBankInc['지역봉사헌금']):'—'}</td>
+          </tr>
+          <tr style="background:#e8eff6;font-weight:800">
+            <td colspan="2" style="text-align:center;font-size:11px">수입 총계</td>
+            <td class="amt-cell" style="color:var(--blue);font-size:11px">${fmtN(totInc)}</td>
+            <td class="bank-cell" style="font-size:11px">${bankInc?fmtN(bankInc):'—'}</td>
+          </tr>
+          <tr style="background:#f0f6fb;font-weight:800">
+            <td colspan="2" style="text-align:center;font-size:10px;color:var(--g2)">현금합계</td>
+            <td class="amt-cell" style="font-size:10px;color:var(--g2)">${fmtN(cashInc)}</td>
+            <td></td>
+          </tr>
+          <tr style="background:#dce8f5;font-weight:800">
+            <td colspan="2" style="text-align:center;font-size:11px;color:var(--navy)">통장+현금 합계</td>
+            <td colspan="2" class="amt-cell" style="font-size:11px;color:var(--navy);font-weight:800">${fmtN(totInc)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 지출내역 -->
+    <div>
+      <div style="font-weight:800;margin-bottom:4px;color:var(--navy);font-size:12px">Ⅱ. 지출내역</div>
+      <table class="rct-tbl" style="width:100%">
+        <colgroup><col style="width:52px"><col><col style="width:82px"></colgroup>
+        <thead><tr><th>구분</th><th>부서</th><th>금액(원)</th></tr></thead>
+        <tbody>
+          ${genDept.map((d,i)=>`<tr>
+            ${i===0?`<td class="cat-cell" rowspan="${genDept.length}" style="font-size:10px">일반<br>회계</td>`:''}
+            <td class="item-cell" style="font-size:10px">${d}</td>
+            <td class="amt-cell" style="font-size:10px">${byDeptOut[d]?fmtN(byDeptOut[d]):'—'}</td>
+          </tr>`).join('')}
+          <tr>
+            <td class="cat-cell" rowspan="3" style="font-size:10px">특별<br>회계</td>
+            <td class="item-cell" style="font-size:10px">건축헌금</td>
+            <td class="amt-cell" style="font-size:10px">${byDeptOut['건축헌금']?fmtN(byDeptOut['건축헌금']):'—'}</td>
+          </tr>
+          <tr>
+            <td class="item-cell" style="font-size:10px">전도헌금</td>
+            <td class="amt-cell" style="font-size:10px">${byDeptOut['전도헌금']?fmtN(byDeptOut['전도헌금']):'—'}</td>
+          </tr>
+          <tr>
+            <td class="item-cell" style="font-size:10px">사회봉사</td>
+            <td class="amt-cell" style="font-size:10px">${byDeptOut['사회봉사']?fmtN(byDeptOut['사회봉사']):'—'}</td>
+          </tr>
+          <tr style="background:#e8eff6;font-weight:800">
+            <td colspan="2" style="text-align:center;font-size:11px">지출 총계</td>
+            <td class="amt-cell" style="color:var(--red);font-size:11px">${fmtN(totOut)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Ⅲ. 수입-지출 -->
+  <div style="font-weight:800;margin-bottom:4px;color:var(--navy);font-size:12px">Ⅲ. 수입 - 지출</div>
+  <table class="rct-tbl" style="margin-bottom:10px">
+    <colgroup><col style="width:120px"><col style="width:160px"><col style="width:120px"><col></colgroup>
     <tbody>
-      ${genOff.map((t,i)=>`<tr>
-        ${i===0?`<td class="cat-cell" rowspan="${genOff.length}">일반<br>헌금</td>`:''}
-        <td class="item-cell">${t}</td>
-        <td class="amt-cell">${byTypeInc[t]?fmtN(byTypeInc[t]):'—'}</td>
-        <td class="bank-cell">—</td>
-        <td class="note-cell"></td>
-      </tr>`).join('')}
       <tr>
-        <td class="cat-cell" rowspan="3">특별<br>헌금</td>
-        <td class="item-cell">건축헌금</td>
-        <td class="amt-cell">${byTypeInc['건축헌금']?fmtN(byTypeInc['건축헌금']):'—'}</td>
-        <td class="bank-cell">—</td><td class="note-cell"></td>
+        <td style="font-weight:800;font-size:11px">수입 총계</td>
+        <td></td>
+        <td class="rc-n" style="font-size:11px">${fmtN(totInc)}</td>
+        <td></td>
       </tr>
       <tr>
-        <td class="item-cell">전도헌금</td>
-        <td class="amt-cell">${byTypeInc['전도헌금']?fmtN(byTypeInc['전도헌금']):'—'}</td>
-        <td class="bank-cell">—</td><td class="note-cell"></td>
+        <td rowspan="2" style="font-size:11px">지출 총계</td>
+        <td style="font-size:11px">송금지출액</td>
+        <td class="rc-n" style="font-size:11px">${fmtN(remitOut)}</td>
+        <td></td>
       </tr>
       <tr>
-        <td class="item-cell">지역봉사헌금</td>
-        <td class="amt-cell">${byTypeInc['지역봉사헌금']?fmtN(byTypeInc['지역봉사헌금']):'—'}</td>
-        <td class="bank-cell">—</td><td class="note-cell"></td>
+        <td style="font-size:11px">현금지급액</td>
+        <td class="rc-n" style="font-size:11px">${fmtN(cashOut)}</td>
+        <td></td>
       </tr>
       <tr style="background:#e8eff6;font-weight:800">
-        <td colspan="2" style="text-align:center;font-weight:800">수입 총계</td>
-        <td class="amt-cell" style="color:var(--blue)">${fmtN(totInc)}</td>
-        <td colspan="2" style="font-size:11px;color:var(--g2)">현금합계 ${fmtN(totInc)}</td>
+        <td colspan="2" style="text-align:center;font-size:11px">수입 - 지출</td>
+        <td class="rc-n" style="font-size:11px">${fmtN(totInc-totOut)}</td>
+        <td style="font-size:11px">잔액 ${fmtN(totInc-totOut)}</td>
       </tr>
     </tbody>
   </table>
 
-  <div style="font-weight:800;margin-bottom:6px;color:var(--navy);font-size:13px">Ⅱ. 지출내역</div>
-  <table class="rct-tbl" style="margin-bottom:16px">
-    <colgroup>
-      <col style="width:72px">
-      <col style="width:160px">
-      <col style="width:130px">
-      <col>
-    </colgroup>
-    <thead>
-      <tr><th>구분</th><th>부서</th><th>금액(원)</th><th>비고</th></tr>
-    </thead>
-    <tbody>
-      ${genDept.map((d,i)=>`<tr>
-        ${i===0?`<td class="cat-cell" rowspan="${genDept.length}">일반<br>회계</td>`:''}
-        <td class="item-cell">${d}</td>
-        <td class="amt-cell">${byDeptOut[d]?fmtN(byDeptOut[d]):'—'}</td>
-        <td class="note-cell"></td>
-      </tr>`).join('')}
-      <tr>
-        <td class="cat-cell" rowspan="3">특별<br>회계</td>
-        <td class="item-cell">건축헌금</td>
-        <td class="amt-cell">${byDeptOut['건축헌금']?fmtN(byDeptOut['건축헌금']):'—'}</td>
-        <td class="note-cell"></td>
-      </tr>
-      <tr>
-        <td class="item-cell">전도헌금</td>
-        <td class="amt-cell">${byDeptOut['전도헌금']?fmtN(byDeptOut['전도헌금']):'—'}</td>
-        <td class="note-cell"></td>
-      </tr>
-      <tr>
-        <td class="item-cell">사회봉사</td>
-        <td class="amt-cell">${byDeptOut['사회봉사']?fmtN(byDeptOut['사회봉사']):'—'}</td>
-        <td class="note-cell"></td>
-      </tr>
-      <tr style="background:#e8eff6;font-weight:800">
-        <td colspan="2" style="text-align:center;font-weight:800">지출 총계</td>
-        <td class="amt-cell" style="color:var(--red)">${fmtN(totOut)}</td>
-        <td></td>
-      </tr>
-    </tbody>
-  </table>
-  <table class="rct-tbl">
-    <tbody>
-      <tr><td colspan="2" style="font-weight:800">수입 총계</td><td class="rc-n">${fmtN(totInc)}</td><td></td></tr>
-      <tr><td rowspan="2">지출총계</td><td>송금지출액</td><td class="rc-n">${fmtN(remitOut)}</td><td></td></tr>
-      <tr><td>현금지급액</td><td class="rc-n">${fmtN(cashOut)}</td><td></td></tr>
-      <tr style="background:#e8eff6;font-weight:800"><td colspan="2" style="text-align:center">수입 - 지출</td><td class="rc-n">${fmtN(totInc-totOut)}</td><td>잔액 ${fmtN(totInc-totOut)}</td></tr>
-    </tbody>
-  </table>
-  <div style="text-align:center;font-size:16px;font-weight:800;margin-top:20px;color:var(--navy)">서부광성교회</div>`;
+  <div style="text-align:center;font-size:15px;font-weight:800;color:var(--navy)">서부광성교회</div>`;
   showResult('rec-result');
 };
 
