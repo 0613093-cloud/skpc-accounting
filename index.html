@@ -557,7 +557,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   <div class="card">
     <div class="card-title" style="margin-bottom:12px">지출 내역 입력</div>
     <div class="g3">
-      <div class="fg"><div class="flbl">날짜 (자동)</div><input class="finp" id="exp-date" readonly></div>
+      <div class="fg"><div class="flbl">날짜 (수정 가능)</div><input type="date" class="finp" id="exp-date"></div>
       <div class="fg"><div class="flbl">요청자</div><input class="finp" id="exp-requester" placeholder="요청자명"></div>
       <div class="fg"><div class="flbl">수취자명</div>
         <input class="finp" id="exp-recipient" placeholder="수취자명" oninput="lookupAccount()" list="exp-recip-list">
@@ -1507,7 +1507,8 @@ window.deleteOffering=function(id){
 // EXPENSE TAB
 // ============================================================
 function initExpenseTab(){
-  document.getElementById('exp-date').value=TODAY;
+  const expDateEl=document.getElementById('exp-date');
+  if(expDateEl&&!expDateEl.value) expDateEl.value=TODAY;
   buildRadioGroup('exp-deptRadio',getDeptTypes(),ST.get('selDept',getDeptTypes()[0]),(v)=>ST.set('selDept',v));
   updateRecipientDatalist();
   const exps=getExpenses();
@@ -1543,7 +1544,8 @@ window.addExpense=function(){
   if(!amount){alert('금액을 입력하세요.');return;}
   if(recipient&&account){const r=getRecipients();r[recipient]=account;ST.set('recipients',r);}
   const exps=getExpenses();
-  exps.push({id:uid(),date:TODAY,dept,requester,recipient,account,amount,paytype,content,memo});
+  const expDate=document.getElementById('exp-date')?.value||TODAY;
+  exps.push({id:uid(),date:expDate,dept,requester,recipient,account,amount,paytype,content,memo});
   setExpenses(exps);clearExpForm();
 };
 window.clearExpForm=function(){
