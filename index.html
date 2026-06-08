@@ -295,7 +295,10 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, onSnapshot,
+    collection, getDocs, deleteDoc, writeBatch
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCkPtoF5GOq3IjJwoecpJ4e9Dyd7oZQTUU",
@@ -306,167 +309,188 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     appId: "1:1035277328486:web:83b462a36a480f9e4a0da7"
   };
 
-  const fbApp = initializeApp(firebaseConfig);
-  const db = getFirestore(fbApp);
+  let db;
+  try {
+    const fbApp = initializeApp(firebaseConfig);
+    db = getFirestore(fbApp);
+    console.log('[Firebase] 앱 초기화 성공');
+  } catch(e) {
+    console.error('[Firebase] 앱 초기화 실패:', e);
+    window._fbStatus && window._fbStatus('offline');
+    window._appInit && window._appInit();
+  }
 
-  // ── Firestore 컬렉션 구조 ──
-  // /skpc/data  → 단일 문서에 모든 데이터 저장 (설정값)
-  // /skpc/accountBook → 배열 → 개별 문서로 저장
-  // /skpc/expenseBook
-  // /skpc/sponsorBook
+  const MAIN_DOC  = doc(db, 'skpc', 'config');
+  const COL_OFF   = collection(db, 'skpc_offerings');
+  const COL_EXP   = collection(db, 'skpc_expenses');
+  const COL_SPON  = collection(db, 'skpc_sponsors');
 
-  const MAIN_DOC = doc(db, 'skpc', 'config');
-  const COL_OFF  = collection(db, 'skpc_offerings');
-  const COL_EXP  = collection(db, 'skpc_expenses');
-  const COL_SPON = collection(db, 'skpc_sponsors');
-
-  // Firestore → localStorage 동기화 함수
+  // ── 초기 데이터 동기화 ──
   async function syncFromFirestore() {
     try {
-      // 1) config 문서 (설정값들)
-      const snap = await getDoc(MAIN_DOC);
+      window._fbStatus && window._fbStatus('connecting');
+
+      const [snap, offSnap, expSnap, sponSnap] = await Promise.all([
+        getDoc(MAIN_DOC),
+        getDocs(COL_OFF),
+        getDocs(COL_EXP),
+        getDocs(COL_SPON)
+      ]);
+
+      // config 문서
       if(snap.exists()) {
         const data = snap.data();
-        const configKeys = ['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers'];
-        configKeys.forEach(k => {
+        ['offeringTypes','deptTypes','sponsorTypes','recipients',
+         'annualBudget','bankActual','deptOfficers'].forEach(k => {
           if(data[k] !== undefined) {
             try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
           }
         });
-        // deptCustomRows
         if(data.deptCustomRows) {
           Object.entries(data.deptCustomRows).forEach(([k,v]) => {
             try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
           });
         }
       }
-      // 2) 헌금 목록
-      const offSnap = await getDocs(COL_OFF);
+
+      // 헌금
       const offerings = [];
       offSnap.forEach(d => offerings.push(d.data()));
       offerings.sort((a,b) => (a.date||'').localeCompare(b.date||''));
       localStorage.setItem('accountBook', JSON.stringify(offerings));
-      // 3) 지출 목록
-      const expSnap = await getDocs(COL_EXP);
+
+      // 지출
       const expenses = [];
       expSnap.forEach(d => expenses.push(d.data()));
       localStorage.setItem('expenseBook', JSON.stringify(expenses));
-      // 4) 찬조 목록
-      const sponSnap = await getDocs(COL_SPON);
+
+      // 찬조
       const sponsors = [];
       sponSnap.forEach(d => sponsors.push(d.data()));
       localStorage.setItem('sponsorBook', JSON.stringify(sponsors));
 
-      console.log('[Firebase] 동기화 완료');
+      console.log('[Firebase] 초기 동기화 완료 ✅');
       window._fbReady = true;
       window._fbStatus && window._fbStatus('online');
+      window._appInit && window._appInit();
+
     } catch(e) {
-      console.error('[Firebase] 동기화 실패:', e);
+      const msg = e.message || '';
+      if(msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
+        console.error('[Firebase] ❌ 보안 규칙 오류 - Firebase 콘솔에서 규칙을 확인하세요:', e);
+        window._fbStatusMsg && window._fbStatusMsg('규칙 오류');
+      } else if(msg.includes('unavailable') || msg.includes('network')) {
+        console.error('[Firebase] ❌ 네트워크 오류:', e);
+      } else {
+        console.error('[Firebase] ❌ 연결 오류:', e);
+      }
       window._fbStatus && window._fbStatus('offline');
+      // 오프라인이어도 앱은 정상 실행 (localStorage 사용)
+      window._appInit && window._appInit();
     }
   }
 
-  // ── 실시간 리스너 (다른 사람이 저장하면 자동 갱신) ──
-  onSnapshot(MAIN_DOC, (snap) => {
-    if(!snap.exists()) return;
-    const data = snap.data();
-    const configKeys = ['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers'];
-    configKeys.forEach(k => {
-      if(data[k] !== undefined) {
-        try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
-      }
-    });
-    if(data.deptCustomRows) {
-      Object.entries(data.deptCustomRows).forEach(([k,v]) => {
-        try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
+  // ── 실시간 리스너 ──
+  function setupListeners() {
+    onSnapshot(MAIN_DOC, (snap) => {
+      if(!snap.exists()) return;
+      const data = snap.data();
+      ['offeringTypes','deptTypes','sponsorTypes','recipients',
+       'annualBudget','bankActual','deptOfficers'].forEach(k => {
+        if(data[k] !== undefined) {
+          try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
+        }
       });
-    }
-    window._fbLiveRefresh && window._fbLiveRefresh('config');
-  });
+      if(data.deptCustomRows) {
+        Object.entries(data.deptCustomRows).forEach(([k,v]) => {
+          try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
+        });
+      }
+      window._fbLiveRefresh && window._fbLiveRefresh('config');
+    }, (err) => {
+      console.warn('[Firebase] config 리스너 오류:', err.message);
+      window._fbStatus && window._fbStatus('offline');
+    });
 
-  onSnapshot(COL_OFF, (snap) => {
-    const items = [];
-    snap.forEach(d => items.push(d.data()));
-    items.sort((a,b) => (a.date||'').localeCompare(b.date||''));
-    localStorage.setItem('accountBook', JSON.stringify(items));
-    window._fbLiveRefresh && window._fbLiveRefresh('accountBook');
-  });
+    onSnapshot(COL_OFF, (snap) => {
+      const items = [];
+      snap.forEach(d => items.push(d.data()));
+      items.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+      localStorage.setItem('accountBook', JSON.stringify(items));
+      window._fbLiveRefresh && window._fbLiveRefresh('accountBook');
+    }, (err) => console.warn('[Firebase] offerings 리스너:', err.message));
 
-  onSnapshot(COL_EXP, (snap) => {
-    const items = [];
-    snap.forEach(d => items.push(d.data()));
-    localStorage.setItem('expenseBook', JSON.stringify(items));
-    window._fbLiveRefresh && window._fbLiveRefresh('expenseBook');
-  });
+    onSnapshot(COL_EXP, (snap) => {
+      const items = [];
+      snap.forEach(d => items.push(d.data()));
+      localStorage.setItem('expenseBook', JSON.stringify(items));
+      window._fbLiveRefresh && window._fbLiveRefresh('expenseBook');
+    }, (err) => console.warn('[Firebase] expenses 리스너:', err.message));
 
-  onSnapshot(COL_SPON, (snap) => {
-    const items = [];
-    snap.forEach(d => items.push(d.data()));
-    localStorage.setItem('sponsorBook', JSON.stringify(items));
-    window._fbLiveRefresh && window._fbLiveRefresh('sponsorBook');
-  });
+    onSnapshot(COL_SPON, (snap) => {
+      const items = [];
+      snap.forEach(d => items.push(d.data()));
+      localStorage.setItem('sponsorBook', JSON.stringify(items));
+      window._fbLiveRefresh && window._fbLiveRefresh('sponsorBook');
+    }, (err) => console.warn('[Firebase] sponsors 리스너:', err.message));
+  }
 
-  // ── 저장 함수들 (앱에서 호출) ──
+  // ── 저장 함수들 ──
   window._fbSaveConfig = async function(key, value) {
     try {
       await setDoc(MAIN_DOC, { [key]: value }, { merge: true });
-    } catch(e) { console.error('[FB] config 저장 실패:', e); }
+      window._fbStatus && window._fbStatus('saved');
+    } catch(e) { console.error('[FB] config 저장 실패:', e.message); }
   };
 
   window._fbSaveConfigMulti = async function(obj) {
     try {
       await setDoc(MAIN_DOC, obj, { merge: true });
-    } catch(e) { console.error('[FB] config multi 저장 실패:', e); }
-  };
-
-  window._fbSaveItem = async function(colName, id, data) {
-    try {
-      let colRef;
-      if(colName==='accountBook') colRef = COL_OFF;
-      else if(colName==='expenseBook') colRef = COL_EXP;
-      else if(colName==='sponsorBook') colRef = COL_SPON;
-      else return;
-      await setDoc(doc(db, colRef.path, id), data);
-    } catch(e) { console.error('[FB] item 저장 실패:', e); }
-  };
-
-  window._fbDeleteItem = async function(colName, id) {
-    try {
-      const { deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      let colPath;
-      if(colName==='accountBook') colPath = 'skpc_offerings';
-      else if(colName==='expenseBook') colPath = 'skpc_expenses';
-      else if(colName==='sponsorBook') colPath = 'skpc_sponsors';
-      else return;
-      await deleteDoc(doc(db, colPath, id));
-    } catch(e) { console.error('[FB] item 삭제 실패:', e); }
+      window._fbStatus && window._fbStatus('saved');
+    } catch(e) { console.error('[FB] config multi 저장 실패:', e.message); }
   };
 
   window._fbSaveAll = async function(key, arr) {
-    // 배열 전체를 개별 문서로 저장 (배치)
-    const { writeBatch } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
     let colPath;
-    if(key==='accountBook') colPath = 'skpc_offerings';
-    else if(key==='expenseBook') colPath = 'skpc_expenses';
-    else if(key==='sponsorBook') colPath = 'skpc_sponsors';
+    if(key==='accountBook') colPath='skpc_offerings';
+    else if(key==='expenseBook') colPath='skpc_expenses';
+    else if(key==='sponsorBook') colPath='skpc_sponsors';
     else return;
     try {
+      window._fbStatus && window._fbStatus('saving');
       const batch = writeBatch(db);
-      // 기존 삭제 후 재작성 (500개 제한 주의)
       const snapAll = await getDocs(collection(db, colPath));
       snapAll.forEach(d => batch.delete(d.ref));
       arr.forEach(item => {
         if(item.id) batch.set(doc(db, colPath, item.id), item);
       });
       await batch.commit();
-    } catch(e) { console.error('[FB] saveAll 실패:', e); }
+      window._fbStatus && window._fbStatus('saved');
+    } catch(e) {
+      console.error('[FB] saveAll 실패:', e.message);
+      window._fbStatus && window._fbStatus('offline');
+    }
   };
 
-  // 초기 동기화 실행
-  syncFromFirestore().then(() => {
-    // Firebase 준비 완료 → 앱 init
-    if(typeof window._appInit === 'function') window._appInit();
-  });
+  window._fbDeleteItem = async function(colName, id) {
+    let colPath;
+    if(colName==='accountBook') colPath='skpc_offerings';
+    else if(colName==='expenseBook') colPath='skpc_expenses';
+    else if(colName==='sponsorBook') colPath='skpc_sponsors';
+    else return;
+    try {
+      await deleteDoc(doc(db, colPath, id));
+    } catch(e) { console.error('[FB] 삭제 실패:', e.message); }
+  };
+
+  // 상태 메시지 함수
+  window._fbStatusMsg = function(msg) {
+    const txt = document.getElementById('fbTxt');
+    if(txt) txt.textContent = msg;
+  };
+
+  // 실행
+  syncFromFirestore().then(() => setupListeners());
 </script>
 </head>
 <body>
@@ -933,14 +957,123 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   </div>
   <div id="data-mgr" class="card hidden">
     <div class="card-title" style="margin-bottom:10px">데이터 관리</div>
-    <div class="alert alert-warn">⚠️ 삭제는 되돌릴 수 없습니다.</div>
-    <div class="flex gap8 mt12">
-      <button class="btn btn-outline" onclick="exportData()">📤 내보내기</button>
-      <button class="btn btn-outline" onclick="importData()">📥 불러오기</button>
-      <button class="btn btn-red" onclick="clearOffering()">헌금 전체삭제</button>
-      <button class="btn btn-red" onclick="clearExpense()">지출 전체삭제</button>
+
+    <!-- 서브탭 -->
+    <div class="snav mb12">
+      <div class="sb on" onclick="switchDataTab('dtab-view',this)">📋 전체 내역 조회·수정</div>
+      <div class="sb" onclick="switchDataTab('dtab-io',this)">💾 내보내기·불러오기</div>
     </div>
-    <input type="file" id="import-file" accept=".json" class="hidden" onchange="doImport(event)">
+
+    <!-- 전체 내역 조회·수정 탭 -->
+    <div id="dtab-view">
+      <!-- 헌금 전체 조회 -->
+      <div class="card" style="border:1px solid var(--blue-pale);margin-bottom:14px">
+        <div class="card-hd">
+          <div class="card-title">📊 전체 헌금내역</div>
+          <div class="flex gap8 items-c">
+            <span id="dm-off-count" class="badge b-navy"></span>
+            <span id="dm-off-total" style="font-family:var(--fnum);font-weight:700;color:var(--blue);font-size:13px"></span>
+          </div>
+        </div>
+        <!-- 필터 -->
+        <div class="g3 mb8">
+          <div class="fg"><div class="flbl">기간(시작)</div><input type="date" class="finp" id="dm-off-from"></div>
+          <div class="fg"><div class="flbl">기간(종료)</div><input type="date" class="finp" id="dm-off-to"></div>
+          <div class="fg"><div class="flbl">헌금구분</div><select class="fsel" id="dm-off-type"><option value="">전체</option></select></div>
+        </div>
+        <div class="g2 mb8">
+          <div class="fg"><div class="flbl">성도명</div><input class="finp" id="dm-off-name" placeholder="이름 검색..."></div>
+          <div class="fg"><div class="flbl">입금방식</div>
+            <select class="fsel" id="dm-off-online"><option value="">전체</option><option>현금입금</option><option>온라인입금</option></select></div>
+        </div>
+        <div class="flex gap8 mb12">
+          <button class="btn btn-navy" onclick="dmLoadOfferings()">🔍 조회</button>
+          <button class="btn btn-outline" onclick="dmResetOff()">초기화</button>
+          <button class="btn btn-outline btn-sm" onclick="printSection('dm-off-print')">🖨️ 인쇄</button>
+        </div>
+        <div id="dm-off-print">
+          <div class="tbl-wrap"><table class="tbl" id="dm-off-table">
+            <thead><tr>
+              <th style="width:30px">#</th>
+              <th style="width:90px">날짜</th>
+              <th style="width:110px">헌금구분</th>
+              <th>성도명</th>
+              <th class="nc" style="width:100px">금액(원)</th>
+              <th style="width:80px">입금방식</th>
+              <th>비고</th>
+              <th style="width:50px" class="no-print">삭제</th>
+            </tr></thead>
+            <tbody id="dm-off-tbody"></tbody>
+            <tfoot><tr>
+              <td colspan="4" style="text-align:center;font-weight:800">합계</td>
+              <td class="nc" id="dm-off-foot" style="color:var(--blue)"></td>
+              <td colspan="3"></td>
+            </tr></tfoot>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- 지출 전체 조회 -->
+      <div class="card" style="border:1px solid var(--red-l)">
+        <div class="card-hd">
+          <div class="card-title">💸 전체 지출내역</div>
+          <div class="flex gap8 items-c">
+            <span id="dm-exp-count" class="badge b-red"></span>
+            <span id="dm-exp-total" style="font-family:var(--fnum);font-weight:700;color:var(--red);font-size:13px"></span>
+          </div>
+        </div>
+        <!-- 필터 -->
+        <div class="g3 mb8">
+          <div class="fg"><div class="flbl">기간(시작)</div><input type="date" class="finp" id="dm-exp-from"></div>
+          <div class="fg"><div class="flbl">기간(종료)</div><input type="date" class="finp" id="dm-exp-to"></div>
+          <div class="fg"><div class="flbl">부서</div><select class="fsel" id="dm-exp-dept"><option value="">전체</option></select></div>
+        </div>
+        <div class="g2 mb8">
+          <div class="fg"><div class="flbl">수취자명</div><input class="finp" id="dm-exp-recip" placeholder="수취자 검색..."></div>
+          <div class="fg"><div class="flbl">지급방식</div>
+            <select class="fsel" id="dm-exp-pay"><option value="">전체</option><option>송금지급</option><option>현금지급</option><option>이자</option></select></div>
+        </div>
+        <div class="flex gap8 mb12">
+          <button class="btn btn-navy" onclick="dmLoadExpenses()">🔍 조회</button>
+          <button class="btn btn-outline" onclick="dmResetExp()">초기화</button>
+          <button class="btn btn-outline btn-sm" onclick="printSection('dm-exp-print')">🖨️ 인쇄</button>
+        </div>
+        <div id="dm-exp-print">
+          <div class="tbl-wrap"><table class="tbl" id="dm-exp-table">
+            <thead><tr>
+              <th style="width:30px">#</th>
+              <th style="width:90px">날짜</th>
+              <th style="width:90px">부서</th>
+              <th style="width:70px">요청자</th>
+              <th>수취자</th>
+              <th>계좌번호</th>
+              <th class="nc" style="width:100px">금액(원)</th>
+              <th>내용</th>
+              <th style="width:70px">지급방식</th>
+              <th style="width:50px" class="no-print">삭제</th>
+            </tr></thead>
+            <tbody id="dm-exp-tbody"></tbody>
+            <tfoot><tr>
+              <td colspan="6" style="text-align:center;font-weight:800">합계</td>
+              <td class="nc" id="dm-exp-foot" style="color:var(--red)"></td>
+              <td colspan="3"></td>
+            </tr></tfoot>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 내보내기·불러오기 탭 -->
+    <div id="dtab-io" class="hidden">
+      <div class="alert alert-warn">⚠️ 삭제는 되돌릴 수 없습니다.</div>
+      <div class="flex gap8 mt12">
+        <button class="btn btn-outline" onclick="exportData()">📤 내보내기</button>
+        <button class="btn btn-outline" onclick="importData()">📥 불러오기</button>
+        <button class="btn btn-red" onclick="clearOffering()">헌금 전체삭제</button>
+        <button class="btn btn-red" onclick="clearExpense()">지출 전체삭제</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" class="hidden" onchange="doImport(event)">
+    </div>
   </div>
 </div>
 </main>
@@ -1115,6 +1248,9 @@ window._fbStatus = function(status){
     dot.style.background='#e74c3c';
     txt.textContent='오프라인 모드';
     txt.style.color='rgba(255,200,200,.9)';
+  } else if(status==='connecting'){
+    dot.style.background='#f39c12';
+    txt.textContent='연결 중...';
   } else if(status==='saving'){
     dot.style.background='#f39c12';
     txt.textContent='저장 중...';
@@ -1216,32 +1352,12 @@ function buildInputSheet(num){
 
   el.innerHTML=`
   <div class="pg-hd"><div class="pg-title">📋 헌금내역 입력 — 시트 ${num}</div></div>
-  <div class="g2">
-    <div class="card">
+  <div class="card">
       <div class="card-title" style="margin-bottom:10px">기본 정보</div>
       <div class="fg"><div class="flbl">입력일자 (수정 가능)</div><input type="date" class="finp" id="s${num}-date" value="${TODAY}"></div>
       <div class="fg"><div class="flbl">작성자</div>
         <select class="fsel" id="s${num}-writer">${WRITERS.map(w=>`<option ${w===st.writer?'selected':''}>${w}</option>`).join('')}</select></div>
     </div>
-    <div class="card">
-      <div class="card-title" style="margin-bottom:8px">💵 현금 실물 확인</div>
-      <table class="cash-tbl">
-        <thead><tr><th>권종</th><th>수량</th><th>소계</th></tr></thead>
-        <tbody>
-          ${[['50000','5만원'],['10000','1만원'],['5000','5천원'],['1000','1천원'],['500','500원'],['100','100원']].map(([v,l])=>`
-          <tr><td>${l}</td>
-            <td><input type="number" min="0" value="0" id="s${num}-c${v}" oninput="calcCash(${num})" style="width:72px;text-align:right;padding:3px 6px;border:1px solid var(--g4);border-radius:4px;font-family:var(--fnum);font-size:12px"></td>
-            <td id="s${num}-r${v}" style="font-family:var(--fnum)">0</td></tr>`).join('')}
-          <tr style="background:var(--blue-xp)">
-            <td colspan="2" style="font-weight:800;text-align:center;color:var(--navy)">현금 합계</td>
-            <td id="s${num}-cashTotal" style="font-family:var(--fnum);font-weight:800;color:var(--navy)">0</td></tr>
-        </tbody>
-      </table>
-      <div class="match-box match-pend" id="s${num}-matchBox">
-        <span class="match-val" id="s${num}-matchTxt">금액 입력 후 결과 표시</span>
-      </div>
-    </div>
-  </div>
   <div class="card">
     <div class="card-title" style="margin-bottom:8px">헌금 종류 선택</div>
     <div class="rpwrap" id="s${num}-typeRadio"></div>
@@ -1290,6 +1406,25 @@ function buildInputSheet(num){
       <thead><tr><th>#</th><th>일자</th><th>헌금구분</th><th>성도명</th><th class="nc">금액(원)</th><th>입금방식</th><th>비고</th><th>찬조</th><th>삭제</th></tr></thead>
       <tbody id="s${num}-tbody"></tbody>
     </table></div>
+    <div class="divider"></div>
+  <div class="card">
+      <div class="card-title" style="margin-bottom:8px">💵 현금 실물 확인</div>
+      <table class="cash-tbl">
+        <thead><tr><th>권종</th><th>수량</th><th>소계</th></tr></thead>
+        <tbody>
+          ${[['50000','5만원'],['10000','1만원'],['5000','5천원'],['1000','1천원'],['500','500원'],['100','100원']].map(([v,l])=>`
+          <tr><td>${l}</td>
+            <td><input type="number" min="0" value="0" id="s${num}-c${v}" oninput="calcCash(${num})" style="width:72px;text-align:right;padding:3px 6px;border:1px solid var(--g4);border-radius:4px;font-family:var(--fnum);font-size:12px"></td>
+            <td id="s${num}-r${v}" style="font-family:var(--fnum)">0</td></tr>`).join('')}
+          <tr style="background:var(--blue-xp)">
+            <td colspan="2" style="font-weight:800;text-align:center;color:var(--navy)">현금 합계</td>
+            <td id="s${num}-cashTotal" style="font-family:var(--fnum);font-weight:800;color:var(--navy)">0</td></tr>
+        </tbody>
+      </table>
+      <div class="match-box match-pend" id="s${num}-matchBox">
+        <span class="match-val" id="s${num}-matchTxt">금액 입력 후 결과 표시</span>
+      </div>
+    </div>
     <div class="divider"></div>
     <div class="flex gap8 jend">
       <button class="btn btn-green" onclick="submitEntries(${num})">✅ 확인 · 전송</button>
@@ -1565,7 +1700,12 @@ window.doExpenseSearch=function(){
   if(tbody) tbody.innerHTML=exps.map((e,i)=>`
     <tr id="exp-row-${e.id}">
       <td>${i+1}</td><td style="font-family:var(--fnum)">${e.date}</td>
-      <td><span class="badge b-gold">${e.dept}</span></td>
+      <td>
+        <select style="border:none;background:transparent;font-family:var(--fn);font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;padding:2px 4px;border-radius:4px" 
+          onchange="updateExpDept('${e.id}',this.value)">
+          ${getDeptTypes().map(d=>'<option value="'+d+'"'+(d===e.dept?' selected':'')+'>'+d+'</option>').join('')}
+        </select>
+      </td>
       <td>${e.requester||'—'}</td><td>${e.recipient||'—'}</td>
       <td style="font-size:11px;color:var(--g3)">${e.account||'—'}</td>
       <td class="nc" style="font-weight:700;color:var(--red)">${fmtN(e.amount)}</td>
@@ -1599,6 +1739,11 @@ window.saveExpRow=function(id){
   exps[idx].amount=getRaw(amtEl)||exps[idx].amount;
   exps[idx].paytype=document.getElementById(`ec-pay-${id}`)?.value||exps[idx].paytype;
   setExpenses(exps);doExpenseSearch();
+};
+window.updateExpDept=function(id,dept){
+  const exps=getExpenses();
+  const idx=exps.findIndex(e=>e.id===id);
+  if(idx>=0){exps[idx].dept=dept;setExpenses(exps);}
 };
 window.deleteExpense=function(id){
   if(!confirm('삭제?')) return;setExpenses(getExpenses().filter(e=>e.id!==id));doExpenseSearch();
@@ -1808,10 +1953,41 @@ window.renderDeptReport=function(){
   });
   const budget=getBudget();
   const officerData=ST.get('deptOfficers',{});
+  const hiddenDepts=ST.get('hiddenDepts_'+ym,[]); // 숨긴 부서 목록
   const container=document.getElementById('deptreport-content');
   container.innerHTML='';
 
+  // 숨기기 컨트롤 바
+  const ctrlBar=document.createElement('div');
+  ctrlBar.className='no-print';
+  ctrlBar.style.cssText='background:#fff;border:1px solid var(--g4);border-radius:var(--rl);padding:12px 16px;margin-bottom:14px;box-shadow:var(--sh)';
+  const ctrlLbl=document.createElement('div');
+  ctrlLbl.style.cssText='font-size:12px;font-weight:800;color:var(--g2);margin-bottom:8px';
+  ctrlLbl.textContent='부서 표시/숨기기 — 숨긴 부서는 인쇄에서도 제외됩니다';
+  ctrlBar.appendChild(ctrlLbl);
+  const ctrlBtns=document.createElement('div');
+  ctrlBtns.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
   depts.forEach(function(dept){
+    const hidden=hiddenDepts.indexOf(dept)!==-1;
+    const btn=document.createElement('button');
+    btn.textContent=(hidden?'👁️ ':'✅ ')+dept;
+    btn.style.cssText='padding:4px 12px;border-radius:20px;border:1.5px solid '
+      +(hidden?'var(--g4)':'var(--blue)')
+      +';background:'+(hidden?'var(--g6)':'var(--blue-xp)')
+      +';color:'+(hidden?'var(--g3)':'var(--navy)')
+      +';font-size:11px;font-weight:700;cursor:pointer';
+    btn.addEventListener('click',(function(d){
+      return function(){toggleDeptVisibility(d,ym);};
+    })(dept));
+    ctrlBtns.appendChild(btn);
+  });
+  ctrlBar.appendChild(ctrlBtns);
+  container.appendChild(ctrlBar);
+
+  depts.forEach(function(dept){
+    const isHidden=hiddenDepts.indexOf(dept)!==-1;
+    if(isHidden) return; // 숨긴 부서 건너뜀
+
     const dMo=moExp.filter(function(e){return e.dept===dept;});
     const dCu=cumExp.filter(function(e){return e.dept===dept;});
     const moT=dMo.reduce(function(s,e){return s+e.amount;},0);
@@ -1821,38 +1997,28 @@ window.renderDeptReport=function(){
     const customRows=ST.get(customKey,[]);
     const crT=customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
     const crInc=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
-    const moTall=moT+crT;
-    const cuTall=cuT+crT;
+    const moTall=moT+crT;const cuTall=cuT+crT;
 
-    // Create card element via DOM
     const card=document.createElement('div');card.className='dr-card';
 
     // Head
     const head=document.createElement('div');head.className='dr-head';
     const title=document.createElement('h3');title.textContent=dept;
     head.appendChild(title);
-
-    // Officers
     const off=document.createElement('div');off.className='dr-officers';
     [['부장','head','dr-head-'],['차장','deputy','dr-dep-'],['회계','acct','dr-acct-']].forEach(function(o){
-      const sp=document.createElement('span');
-      sp.textContent=o[0]+': ';
+      const sp=document.createElement('span');sp.textContent=o[0]+': ';
       const inp=document.createElement('input');
-      inp.placeholder='성함';
-      inp.value=officers[o[1]]||'';
-      inp.id=o[2]+dept;
-      inp.style.width='70px';
+      inp.placeholder='성함';inp.value=officers[o[1]]||'';
+      inp.id=o[2]+dept;inp.style.width='70px';
       inp.addEventListener('change',function(){saveDeptOfficer(dept);});
-      sp.appendChild(inp);
-      off.appendChild(sp);
+      sp.appendChild(inp);off.appendChild(sp);
     });
-    head.appendChild(off);
-    card.appendChild(head);
+    head.appendChild(off);card.appendChild(head);
 
-    // Body
     const body=document.createElement('div');body.className='dr-body';
 
-    // Header row
+    // Col header row
     const hrow=document.createElement('div');hrow.className='dr-row';
     ['날짜','적요','수입','지출','잔액','비고'].forEach(function(h,i){
       const dc=document.createElement('div');dc.className='dc';
@@ -1864,23 +2030,34 @@ window.renderDeptReport=function(){
     });
     body.appendChild(hrow);
 
-    // DB rows
+    // ── 상단 행추가 버튼 ──
+    const addBtnTop=document.createElement('div');
+    addBtnTop.className='dr-add-btn no-print';
+    addBtnTop.style.marginBottom='4px';
+    addBtnTop.textContent='+ 상단에 행 추가';
+    addBtnTop.addEventListener('click',function(){addDeptRowTop(dept,ym);});
+    body.appendChild(addBtnTop);
+
+    // DB expense rows
     var runBal=0;
     dMo.forEach(function(e){
       runBal-=e.amount;
+      var balColor=runBal>=0?'var(--blue)':'var(--red)';
       const row=document.createElement('div');row.className='dr-row';
       const cols=[
         {txt:e.date,style:'text-align:center;font-size:11px;font-family:var(--fnum)'},
         {txt:e.content||'지출',style:'font-family:var(--fn)'},
         {txt:'',style:''},
         {txt:fmtN(e.amount),style:'text-align:right;color:var(--red)'},
-        {txt:fmtN(runBal),style:'text-align:right;font-weight:700;color:'+(runBal>=0?'var(--blue)':'var(--red)')},
+        {txt:fmtN(runBal),style:'text-align:right;font-weight:700;color:'+balColor},
         {txt:e.memo||'',style:'font-family:var(--fn);font-size:11px'}
       ];
       cols.forEach(function(col){
         const dc=document.createElement('div');dc.className='dc';
         if(col.style) col.style.split(';').forEach(function(s){
-          const p=s.split(':');if(p[0]&&p[1]) dc.style[p[0].trim().replace(/-([a-z])/g,function(m,l){return l.toUpperCase();})]=p[1].trim();
+          const p=s.split(':');if(p[0]&&p[1]){
+            dc.style[p[0].trim().replace(/-([a-z])/g,function(m,l){return l.toUpperCase();})]=p[1].trim();
+          }
         });
         dc.textContent=col.txt;
         row.appendChild(dc);
@@ -1937,11 +2114,13 @@ window.renderDeptReport=function(){
       // Memo + delete
       const d5=document.createElement('div');d5.className='dc';
       d5.style.display='flex';d5.style.gap='4px';d5.style.alignItems='center';
-      const iMemo=document.createElement('input');iMemo.value=r.memo||'';iMemo.placeholder='비고';
-      iMemo.style.cssText='flex:1;border:none;background:transparent;font-size:11px;font-family:var(--fn)';
+      const iMemo=document.createElement('input');iMemo.value=r.memo||'';iMemo.placeholder='비고 입력';
+      iMemo.style.cssText='flex:1;border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;font-family:var(--fn);padding:2px 0';
       iMemo.addEventListener('change',function(){updateDeptRow(dept,ym,r.id,'memo',this.value);});
+      iMemo.addEventListener('blur',function(){updateDeptRow(dept,ym,r.id,'memo',this.value);});
       const btnDel=document.createElement('button');
-      btnDel.textContent='\u00d7';
+      btnDel.className='no-print';
+      btnDel.textContent='×';
       btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
       btnDel.addEventListener('click',function(){deleteDeptRow(dept,ym,r.id);});
       d5.appendChild(iMemo);d5.appendChild(btnDel);row.appendChild(d5);
@@ -1949,25 +2128,25 @@ window.renderDeptReport=function(){
       body.appendChild(row);
     });
 
-    // Spacer + add button
+    // 하단 행추가 버튼
     const spacer=document.createElement('div');
     spacer.style.cssText='height:10px;border-bottom:1px solid var(--g5)';
     body.appendChild(spacer);
-    const addBtn=document.createElement('div');addBtn.className='dr-add-btn';
-    addBtn.textContent='+ 행 추가';
-    addBtn.addEventListener('click',function(){addDeptRow(dept,ym);});
-    body.appendChild(addBtn);
+    const addBtnBottom=document.createElement('div');
+    addBtnBottom.className='dr-add-btn no-print';
+    addBtnBottom.textContent='+ 하단에 행 추가';
+    addBtnBottom.addEventListener('click',function(){addDeptRow(dept,ym);});
+    body.appendChild(addBtnBottom);
 
     // Footer 월계
     const moBalColor=(crInc-moTall)>=0?'var(--blue)':(moTall>0?'var(--red)':'var(--g3)');
     const foot=document.createElement('div');foot.className='dr-foot';
-    [
-      {txt:'월 계',style:'text-align:center;font-family:var(--fn)'},
-      {txt:'',style:'font-family:var(--fn)'},
-      {txt:crInc?fmtN(crInc):'—',style:'text-align:right'},
-      {txt:fmtN(moTall),style:'text-align:right'},
-      {txt:fmtN(crInc-moTall),style:'text-align:right;color:'+moBalColor},
-      {txt:'',style:''}
+    [{txt:'월 계',style:'text-align:center;font-family:var(--fn)'},
+     {txt:'',style:'font-family:var(--fn)'},
+     {txt:crInc?fmtN(crInc):'—',style:'text-align:right'},
+     {txt:fmtN(moTall),style:'text-align:right'},
+     {txt:fmtN(crInc-moTall),style:'text-align:right;color:'+moBalColor},
+     {txt:'',style:''}
     ].forEach(function(col){
       const dc=document.createElement('div');dc.className='dc';
       dc.style.cssText=col.style;dc.textContent=col.txt;
@@ -1978,13 +2157,12 @@ window.renderDeptReport=function(){
     // Footer 누계
     const cuBalColor=(crInc-cuTall)>=0?'#7fffb8':'#ffb3b3';
     const foot2=document.createElement('div');foot2.className='dr-foot2';
-    [
-      {txt:'누 계',style:'text-align:center;font-family:var(--fn);color:#fff'},
-      {txt:'',style:'font-family:var(--fn)'},
-      {txt:crInc?fmtN(crInc):'—',style:'text-align:right;color:#fff'},
-      {txt:fmtN(cuTall),style:'text-align:right;color:#fff'},
-      {txt:fmtN(crInc-cuTall),style:'text-align:right;font-weight:800;color:'+cuBalColor},
-      {txt:'',style:'color:#fff'}
+    [{txt:'누 계',style:'text-align:center;font-family:var(--fn);color:#fff'},
+     {txt:'',style:'font-family:var(--fn)'},
+     {txt:crInc?fmtN(crInc):'—',style:'text-align:right;color:#fff'},
+     {txt:fmtN(cuTall),style:'text-align:right;color:#fff'},
+     {txt:fmtN(crInc-cuTall),style:'text-align:right;font-weight:800;color:'+cuBalColor},
+     {txt:'',style:'color:#fff'}
     ].forEach(function(col){
       const dc=document.createElement('div');dc.className='dc';
       dc.style.cssText=col.style;dc.textContent=col.txt;
@@ -1995,6 +2173,24 @@ window.renderDeptReport=function(){
     container.appendChild(card);
   });
 }
+window.toggleDeptVisibility=function(dept,ym){
+  const key='hiddenDepts_'+ym;
+  const hidden=ST.get(key,[]);
+  const idx=hidden.indexOf(dept);
+  if(idx===-1) hidden.push(dept);
+  else hidden.splice(idx,1);
+  ST.set(key,hidden);
+  renderDeptReport();
+};
+
+window.addDeptRowTop=function(dept,ym){
+  const key='deptCustomRows_'+ym+'_'+dept;
+  const rows=ST.get(key,[]);
+  rows.unshift({id:uid(),date:ym+'-01',content:'',income:0,amount:0,memo:''});
+  ST.set(key,rows);
+  renderDeptReport();
+};
+
 window.saveDeptOfficer=function(dept){
   const data=ST.get('deptOfficers',{});
   data[dept]={
@@ -2490,7 +2686,237 @@ window.switchMgr=function(id,btn){
     const el=document.getElementById(x);if(el) el.classList.toggle('hidden',x!==id);
   });
 };
-function renderManage(){renderOffTypeList();renderDeptTypeList();renderRecipList();renderSponTypeList();renderBudgetForm();}
+function renderManage(){
+  renderOffTypeList();renderDeptTypeList();renderRecipList();renderSponTypeList();renderBudgetForm();
+  dmInitFilters();
+}
+
+// ── 데이터 탭 서브탭 전환 ──
+window.switchDataTab=function(id,btn){
+  document.querySelectorAll('#data-mgr .snav .sb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  ['dtab-view','dtab-io'].forEach(x=>{
+    const el=document.getElementById(x);
+    if(el) el.classList.toggle('hidden',x!==id);
+  });
+  if(id==='dtab-view'){dmInitFilters();dmLoadOfferings();dmLoadExpenses();}
+};
+
+// ── 필터 초기화 ──
+function dmInitFilters(){
+  const types=[...new Set(getOfferings().map(e=>e.type))].sort();
+  const ts=document.getElementById('dm-off-type');
+  if(ts) ts.innerHTML='<option value="">전체</option>'+types.map(t=>'<option>'+t+'</option>').join('');
+  const depts=[...new Set(getExpenses().map(e=>e.dept))].sort();
+  const ds=document.getElementById('dm-exp-dept');
+  if(ds) ds.innerHTML='<option value="">전체</option>'+depts.map(d=>'<option>'+d+'</option>').join('');
+  const yr=new Date().getFullYear();
+  ['dm-off-from','dm-exp-from'].forEach(function(id){const el=document.getElementById(id);if(el&&!el.value) el.value=yr+'-01-01';});
+  ['dm-off-to','dm-exp-to'].forEach(function(id){const el=document.getElementById(id);if(el&&!el.value) el.value=TODAY;});
+}
+
+// ── 전체 헌금 조회 ──
+window.dmLoadOfferings=function(){
+  var data=getOfferings();
+  const from=document.getElementById('dm-off-from')?.value||'';
+  const to=document.getElementById('dm-off-to')?.value||'';
+  const type=document.getElementById('dm-off-type')?.value||'';
+  const name=(document.getElementById('dm-off-name')?.value||'').trim();
+  const online=document.getElementById('dm-off-online')?.value||'';
+  if(from) data=data.filter(e=>e.date>=from);
+  if(to) data=data.filter(e=>e.date<=to);
+  if(type) data=data.filter(e=>e.type===type);
+  if(name) data=data.filter(e=>e.name?.includes(name));
+  if(online) data=data.filter(e=>e.online===online);
+  data.sort((a,b)=>b.date.localeCompare(a.date));
+  const total=data.reduce((s,e)=>s+e.amount,0);
+  const allOffTypes=getOffTypes();
+  const tbody=document.getElementById('dm-off-tbody');
+  if(tbody){
+    tbody.innerHTML='';
+    if(!data.length){
+      const tr=document.createElement('tr');
+      const td=document.createElement('td');td.colSpan=8;td.className='tbl-empty';
+      td.textContent='데이터가 없습니다';tr.appendChild(td);tbody.appendChild(tr);
+    } else {
+      data.forEach(function(e,i){
+        const tr=document.createElement('tr');
+        // No
+        const t0=document.createElement('td');t0.textContent=i+1;tr.appendChild(t0);
+        // 날짜
+        const t1=document.createElement('td');
+        const iDate=document.createElement('input');iDate.type='date';iDate.value=e.date;
+        iDate.style.cssText='border:none;background:transparent;font-family:var(--fnum);font-size:11px;width:96px';
+        iDate.addEventListener('change',function(){dmUpdateOff(e.id,'date',this.value);});
+        t1.appendChild(iDate);tr.appendChild(t1);
+        // 헌금구분
+        const t2=document.createElement('td');
+        const selType=document.createElement('select');
+        selType.style.cssText='border:none;background:transparent;font-size:11px;color:var(--navy);font-weight:700;width:100%';
+        allOffTypes.forEach(function(tp){const o=document.createElement('option');o.value=tp;o.textContent=tp;if(tp===e.type)o.selected=true;selType.appendChild(o);});
+        selType.addEventListener('change',function(){dmUpdateOff(e.id,'type',this.value);});
+        t2.appendChild(selType);tr.appendChild(t2);
+        // 성도명
+        const t3=document.createElement('td');
+        const iName=document.createElement('input');iName.value=e.name||'';
+        iName.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:12px;width:100%';
+        iName.addEventListener('change',function(){dmUpdateOff(e.id,'name',this.value);});
+        t3.appendChild(iName);tr.appendChild(t3);
+        // 금액
+        const t4=document.createElement('td');t4.className='nc';
+        const iAmt=document.createElement('input');iAmt.value=fmtN(e.amount);
+        iAmt.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-family:var(--fnum);font-size:12px;text-align:right;width:90px;color:var(--blue)';
+        iAmt.addEventListener('input',function(){fmtAmt(this);});
+        iAmt.addEventListener('change',function(){dmUpdateOff(e.id,'amount',getRaw(this));});
+        t4.appendChild(iAmt);tr.appendChild(t4);
+        // 입금방식
+        const t5=document.createElement('td');
+        const selOnl=document.createElement('select');
+        selOnl.style.cssText='border:none;background:transparent;font-size:11px;width:100%';
+        ['현금입금','온라인입금'].forEach(function(v){const o=document.createElement('option');o.value=v;o.textContent=v;if(v===e.online)o.selected=true;selOnl.appendChild(o);});
+        selOnl.addEventListener('change',function(){dmUpdateOff(e.id,'online',this.value);});
+        t5.appendChild(selOnl);tr.appendChild(t5);
+        // 비고
+        const t6=document.createElement('td');
+        const iMemo=document.createElement('input');iMemo.value=e.memo||'';
+        iMemo.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;width:100%';
+        iMemo.addEventListener('change',function(){dmUpdateOff(e.id,'memo',this.value);});
+        t6.appendChild(iMemo);tr.appendChild(t6);
+        // 삭제
+        const t7=document.createElement('td');t7.className='no-print';
+        const btnDel=document.createElement('button');btnDel.className='btn btn-red btn-xs';btnDel.textContent='삭제';
+        btnDel.addEventListener('click',function(){dmDeleteOff(e.id);});
+        t7.appendChild(btnDel);tr.appendChild(t7);
+        tbody.appendChild(tr);
+      });
+    }
+  }
+  const cnt=document.getElementById('dm-off-count');if(cnt) cnt.textContent=data.length+'건';
+  const tot=document.getElementById('dm-off-total');if(tot) tot.textContent=fmtN(total)+'원';
+  const ft=document.getElementById('dm-off-foot');if(ft) ft.textContent=fmtN(total)+'원';
+}
+window.dmResetOff=function(){
+  ['dm-off-type','dm-off-name','dm-off-online'].forEach(function(id){const el=document.getElementById(id);if(el) el.value='';});
+  const yr=new Date().getFullYear();
+  const f=document.getElementById('dm-off-from');if(f) f.value=yr+'-01-01';
+  const t=document.getElementById('dm-off-to');if(t) t.value=TODAY;
+  dmLoadOfferings();
+};
+window.dmUpdateOff=function(id,field,val){
+  const arr=getOfferings();
+  const idx=arr.findIndex(e=>e.id===id);
+  if(idx>=0){arr[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;setOfferings(arr);}
+};
+window.dmDeleteOff=function(id){
+  if(!confirm('헌금 항목을 삭제하시겠습니까?')) return;
+  setOfferings(getOfferings().filter(e=>e.id!==id));
+  dmLoadOfferings();
+};
+
+// ── 전체 지출 조회 ──
+window.dmLoadExpenses=function(){
+  var data=getExpenses();
+  const from=document.getElementById('dm-exp-from')?.value||'';
+  const to=document.getElementById('dm-exp-to')?.value||'';
+  const dept=document.getElementById('dm-exp-dept')?.value||'';
+  const recip=(document.getElementById('dm-exp-recip')?.value||'').trim();
+  const pay=document.getElementById('dm-exp-pay')?.value||'';
+  if(from) data=data.filter(e=>e.date>=from);
+  if(to) data=data.filter(e=>e.date<=to);
+  if(dept) data=data.filter(e=>e.dept===dept);
+  if(recip) data=data.filter(e=>e.recipient?.includes(recip));
+  if(pay) data=data.filter(e=>e.paytype===pay);
+  data.sort((a,b)=>b.date.localeCompare(a.date));
+  const total=data.reduce((s,e)=>s+e.amount,0);
+  const allDeptTypes=getDeptTypes();
+  const tbody=document.getElementById('dm-exp-tbody');
+  if(tbody){
+    tbody.innerHTML='';
+    if(!data.length){
+      const tr=document.createElement('tr');
+      const td=document.createElement('td');td.colSpan=10;td.className='tbl-empty';
+      td.textContent='데이터가 없습니다';tr.appendChild(td);tbody.appendChild(tr);
+    } else {
+      data.forEach(function(e,i){
+        const tr=document.createElement('tr');
+        function mkInp(val,w,family,color,field){
+          const inp=document.createElement('input');inp.value=val||'';
+          inp.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;width:'+w+(family?';font-family:'+family:'')+(color?';color:'+color:'');
+          inp.addEventListener('change',function(){dmUpdateExp(e.id,field,this.value);});
+          return inp;
+        }
+        // No
+        const t0=document.createElement('td');t0.textContent=i+1;tr.appendChild(t0);
+        // 날짜
+        const t1=document.createElement('td');
+        const iDate=document.createElement('input');iDate.type='date';iDate.value=e.date;
+        iDate.style.cssText='border:none;background:transparent;font-family:var(--fnum);font-size:11px;width:96px';
+        iDate.addEventListener('change',function(){dmUpdateExp(e.id,'date',this.value);});
+        t1.appendChild(iDate);tr.appendChild(t1);
+        // 부서
+        const t2=document.createElement('td');
+        const selDept=document.createElement('select');
+        selDept.style.cssText='border:none;background:transparent;font-size:11px;color:var(--navy);font-weight:700;width:100%';
+        allDeptTypes.forEach(function(d){const o=document.createElement('option');o.value=d;o.textContent=d;if(d===e.dept)o.selected=true;selDept.appendChild(o);});
+        selDept.addEventListener('change',function(){dmUpdateExp(e.id,'dept',this.value);});
+        t2.appendChild(selDept);tr.appendChild(t2);
+        // 요청자, 수취자, 계좌
+        ['requester','recipient','account'].forEach(function(f,fi){
+          const td=document.createElement('td');
+          const widths=['60px','80px','110px'];
+          const families=[null,null,'var(--fnum)'];
+          const colors=[null,null,'var(--g2)'];
+          const inp=mkInp(e[f],widths[fi],families[fi],colors[fi],f);
+          if(fi===2) inp.style.fontSize='10px';
+          td.appendChild(inp);tr.appendChild(td);
+        });
+        // 금액
+        const t6=document.createElement('td');t6.className='nc';
+        const iAmt=document.createElement('input');iAmt.value=fmtN(e.amount);
+        iAmt.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-family:var(--fnum);font-size:12px;text-align:right;width:90px;color:var(--red)';
+        iAmt.addEventListener('input',function(){fmtAmt(this);});
+        iAmt.addEventListener('change',function(){dmUpdateExp(e.id,'amount',getRaw(this));});
+        t6.appendChild(iAmt);tr.appendChild(t6);
+        // 내용
+        const t7=document.createElement('td');
+        t7.appendChild(mkInp(e.content,'90px',null,null,'content'));tr.appendChild(t7);
+        // 지급방식
+        const t8=document.createElement('td');
+        const selPay=document.createElement('select');
+        selPay.style.cssText='border:none;background:transparent;font-size:11px;width:100%';
+        ['송금지급','현금지급','이자'].forEach(function(v){const o=document.createElement('option');o.value=v;o.textContent=v;if(v===e.paytype)o.selected=true;selPay.appendChild(o);});
+        selPay.addEventListener('change',function(){dmUpdateExp(e.id,'paytype',this.value);});
+        t8.appendChild(selPay);tr.appendChild(t8);
+        // 삭제
+        const t9=document.createElement('td');t9.className='no-print';
+        const btnDel=document.createElement('button');btnDel.className='btn btn-red btn-xs';btnDel.textContent='삭제';
+        btnDel.addEventListener('click',function(){dmDeleteExp(e.id);});
+        t9.appendChild(btnDel);tr.appendChild(t9);
+        tbody.appendChild(tr);
+      });
+    }
+  }
+  const cnt=document.getElementById('dm-exp-count');if(cnt) cnt.textContent=data.length+'건';
+  const tot=document.getElementById('dm-exp-total');if(tot) tot.textContent=fmtN(total)+'원';
+  const ft=document.getElementById('dm-exp-foot');if(ft) ft.textContent=fmtN(total)+'원';
+}
+window.dmResetExp=function(){
+  ['dm-exp-dept','dm-exp-recip','dm-exp-pay'].forEach(function(id){const el=document.getElementById(id);if(el) el.value='';});
+  const yr=new Date().getFullYear();
+  const f=document.getElementById('dm-exp-from');if(f) f.value=yr+'-01-01';
+  const t=document.getElementById('dm-exp-to');if(t) t.value=TODAY;
+  dmLoadExpenses();
+};
+window.dmUpdateExp=function(id,field,val){
+  const arr=getExpenses();
+  const idx=arr.findIndex(e=>e.id===id);
+  if(idx>=0){arr[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;setExpenses(arr);}
+};
+window.dmDeleteExp=function(id){
+  if(!confirm('지출 항목을 삭제하시겠습니까?')) return;
+  setExpenses(getExpenses().filter(e=>e.id!==id));
+  dmLoadExpenses();
+};
 
 function renderOffTypeList(){
   const el=document.getElementById('off-type-list');if(!el) return;
