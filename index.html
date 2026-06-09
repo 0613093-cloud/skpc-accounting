@@ -2390,9 +2390,11 @@ window.renderDeptReport=function(){
       const dc0=document.createElement('div');dc0.className='dc';
       dc0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
       dc0.textContent=e.date;row.appendChild(dc0);
-      // 적요
+      // 적요 - content(앱입력) 또는 item(엑셀업로드) 필드 모두 표시
       const dc1=document.createElement('div');dc1.className='dc';
-      dc1.style.fontFamily='var(--fn)';dc1.textContent=e.content||'지출';row.appendChild(dc1);
+      dc1.style.fontFamily='var(--fn)';
+      dc1.textContent=e.content||e.item||'';
+      row.appendChild(dc1);
       // 수입 (보고서 전용 편집 - DB 저장 없음)
       const dc2=document.createElement('div');dc2.className='dc';dc2.style.textAlign='right';
       const iInc2=document.createElement('input');
