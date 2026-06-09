@@ -610,11 +610,23 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   <div class="result-section" id="off-result">
     <div class="card">
       <div class="card-hd"><div class="card-title">헌금 내역</div>
-        <div class="flex gap8 items-c"><span id="off-count" class="badge b-navy"></span>
+        <div class="flex gap8 items-c" style="flex-wrap:wrap">
+          <span style="font-size:11px;color:#27ae60;font-weight:600;background:#e8f8f0;padding:3px 10px;border-radius:12px;border:1px solid #a8dfc0">✏️ 셀 클릭 후 바로 수정 · 자동 저장</span>
+          <span id="off-count" class="badge b-navy"></span>
           <span id="off-total" style="font-family:var(--fnum);font-weight:700;color:var(--blue);font-size:14px"></span></div>
       </div>
       <div class="tbl-wrap"><table class="tbl">
-        <thead><tr><th>#</th><th>날짜</th><th>헌금구분</th><th>성도명</th><th class="nc">금액(원)</th><th>입금방식</th><th>비고</th><th>시트</th><th class="no-print">삭제</th></tr></thead>
+        <thead><tr>
+  <th>#</th>
+  <th>날짜 ✏️</th>
+  <th>헌금구분 ✏️</th>
+  <th>성도명 ✏️</th>
+  <th class="nc">금액(원) ✏️</th>
+  <th>입금방식 ✏️</th>
+  <th>비고 ✏️</th>
+  <th>시트 ✏️</th>
+  <th class="no-print">삭제</th>
+</tr></thead>
         <tbody id="off-tbody"></tbody>
         <tfoot><tr><td colspan="4" style="text-align:center;font-weight:800">합계</td>
           <td class="nc" id="off-foot-total"></td><td colspan="4"></td></tr></tfoot>
@@ -1808,21 +1820,130 @@ window.doOfferingSearch=function(){
   if(nf) books=books.filter(e=>e.name?.includes(nf));
   const total=books.reduce((s,e)=>s+e.amount,0);
   const tbody=document.getElementById('off-tbody');
-  if(tbody) tbody.innerHTML=books.map((e,i)=>`
-    <tr>
-      <td>${i+1}</td><td style="font-family:var(--fnum)">${e.date}</td>
-      <td><span class="badge b-navy">${e.type}</span></td>
-      <td>${e.name}</td>
-      <td class="nc" style="font-weight:700;color:var(--blue)">${fmtN(e.amount)}</td>
-      <td><span class="badge ${e.online==='온라인입금'?'b-green':'b-gray'}">${e.online||'현금입금'}</span></td>
-      <td>${e.memo||'—'}</td>
-      <td><span class="badge b-gray">시트${e.sheet||1}</span></td>
-      <td><button class="btn btn-red btn-xs" onclick="deleteOffering('${e.id}')">삭제</button></td>
-    </tr>`).join('')||`<tr><td colspan="9" class="tbl-empty">데이터가 없습니다</td></tr>`;
+  const allTypes=getOffTypes();
+
+  if(tbody){
+    tbody.innerHTML='';
+    if(!books.length){
+      const tr=document.createElement('tr');
+      const td=document.createElement('td');td.colSpan=9;td.className='tbl-empty';
+      td.textContent='데이터가 없습니다';tr.appendChild(td);tbody.appendChild(tr);
+    } else {
+      books.forEach(function(e,i){
+        const tr=document.createElement('tr');
+        tr.id='off-row-'+e.id;
+
+        // # 번호
+        const t0=document.createElement('td');t0.textContent=i+1;tr.appendChild(t0);
+
+        // 날짜 (인라인 편집)
+        const t1=document.createElement('td');
+        const iDate=document.createElement('input');iDate.type='date';iDate.value=e.date;
+        iDate.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-family:var(--fnum);font-size:11px;width:102px;cursor:pointer';
+        iDate.title='클릭하여 날짜 수정';
+        iDate.addEventListener('change',function(){updateOffering(e.id,'date',this.value);});
+        t1.appendChild(iDate);tr.appendChild(t1);
+
+        // 헌금구분 (인라인 select)
+        const t2=document.createElement('td');
+        const selType=document.createElement('select');
+        selType.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;color:var(--navy);font-weight:700;cursor:pointer;max-width:110px';
+        selType.title='클릭하여 헌금구분 수정';
+        allTypes.forEach(function(tp){
+          const o=document.createElement('option');o.value=tp;o.textContent=tp;
+          if(tp===e.type)o.selected=true;selType.appendChild(o);
+        });
+        selType.addEventListener('change',function(){updateOffering(e.id,'type',this.value);});
+        t2.appendChild(selType);tr.appendChild(t2);
+
+        // 성도명 (인라인 편집)
+        const t3=document.createElement('td');
+        const iName=document.createElement('input');iName.value=e.name||'';
+        iName.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:12px;width:120px;cursor:text';
+        iName.title='클릭하여 성도명 수정';
+        iName.addEventListener('change',function(){updateOffering(e.id,'name',this.value);});
+        t3.appendChild(iName);tr.appendChild(t3);
+
+        // 금액 (인라인 편집)
+        const t4=document.createElement('td');t4.className='nc';
+        const iAmt=document.createElement('input');iAmt.value=fmtN(e.amount);
+        iAmt.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-family:var(--fnum);font-size:12px;text-align:right;width:90px;color:var(--blue);font-weight:700;cursor:text';
+        iAmt.title='클릭하여 금액 수정';
+        iAmt.addEventListener('input',function(){fmtAmt(this);});
+        iAmt.addEventListener('change',function(){updateOffering(e.id,'amount',getRaw(this));});
+        t4.appendChild(iAmt);tr.appendChild(t4);
+
+        // 입금방식 (인라인 select)
+        const t5=document.createElement('td');
+        const selOnl=document.createElement('select');
+        selOnl.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;cursor:pointer;max-width:90px';
+        selOnl.title='클릭하여 입금방식 수정';
+        const onlineNorm=isOnlinePayment(e)?'온라인입금':'현금입금';
+        // 정규화된 값이 다르면 DB 업데이트
+        if(e.online!==onlineNorm){
+          const arr=getOfferings();
+          const oi=arr.findIndex(function(x){return x.id===e.id;});
+          if(oi>=0){arr[oi].online=onlineNorm;setOfferings(arr);}
+        }
+        ['현금입금','온라인입금'].forEach(function(v){
+          const o=document.createElement('option');o.value=v;o.textContent=v;
+          if(v===onlineNorm)o.selected=true;selOnl.appendChild(o);
+        });
+        selOnl.addEventListener('change',function(){updateOffering(e.id,'online',this.value);});
+        t5.appendChild(selOnl);tr.appendChild(t5);
+
+        // 비고 (인라인 편집)
+        const t6=document.createElement('td');
+        const iMemo=document.createElement('input');iMemo.value=e.memo||'';iMemo.placeholder='비고';
+        iMemo.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;width:100px;cursor:text';
+        iMemo.title='클릭하여 비고 수정';
+        iMemo.addEventListener('change',function(){updateOffering(e.id,'memo',this.value);});
+        t6.appendChild(iMemo);tr.appendChild(t6);
+
+        // 시트 (인라인 편집)
+        const t7=document.createElement('td');
+        const iSheet=document.createElement('input');iSheet.value=e.sheet||'';iSheet.placeholder='시트';
+        iSheet.style.cssText='border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;width:60px;text-align:center;cursor:text';
+        iSheet.addEventListener('change',function(){updateOffering(e.id,'sheet',this.value);});
+        t7.appendChild(iSheet);tr.appendChild(t7);
+
+        // 삭제 버튼
+        const t8=document.createElement('td');t8.className='no-print';
+        const btnDel=document.createElement('button');btnDel.className='btn btn-red btn-xs';btnDel.textContent='삭제';
+        btnDel.addEventListener('click',function(){deleteOffering(e.id);});
+        t8.appendChild(btnDel);tr.appendChild(t8);
+
+        tbody.appendChild(tr);
+      });
+    }
+  }
   const ft=document.getElementById('off-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
   const tot=document.getElementById('off-total');if(tot) tot.textContent=`${fmtN(total)}원 (${books.length}건)`;
   const cnt=document.getElementById('off-count');if(cnt) cnt.textContent=`${books.length}건`;
   showResult('off-result');
+};
+
+// 헌금 항목 필드 업데이트 (인라인 편집 → DB 반영)
+window.updateOffering=function(id,field,val){
+  const arr=getOfferings();
+  const idx=arr.findIndex(e=>e.id===id);
+  if(idx<0) return;
+  if(field==='amount'){
+    arr[idx][field]=parseInt((val+'').replace(/,/g,''))||0;
+  } else {
+    arr[idx][field]=val;
+  }
+  setOfferings(arr);
+  // 금액 합계 실시간 갱신
+  if(field==='amount'){
+    const total=arr.reduce((s,e)=>s+Number(e.amount||0),0);
+    const ft=document.getElementById('off-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
+    const tot=document.getElementById('off-total');
+    if(tot){
+      const cnt=arr.length;
+      tot.textContent=`${fmtN(total)}원 (${cnt}건)`;
+    }
+  }
 };
 window.resetOfferingSearch=function(){
   ['off-fdate','off-ftype'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
@@ -2099,27 +2220,57 @@ function renderMonthlyGeneral(ym){
   const moExp=expenses.filter(e=>monthOf(e.date)===ym);
   const cumOff=offerings.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=ym);
   const cumExp=expenses.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=ym);
-  // 이전 달 잔액 = 이월금 + 해당연도 전월까지 수입 - 지출
+
+  // 이전 달 잔액
   const prevYm=mo===1?`${yr-1}-12`:`${yr}-${String(mo-1).padStart(2,'0')}`;
   const prevCumOff=offerings.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm);
   const prevCumExp=expenses.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm);
   const carryBase=getCarryoverForYear(yr);
   const prevBal=carryBase+prevCumOff.reduce((s,e)=>s+Number(e.amount||0),0)-prevCumExp.reduce((s,e)=>s+Number(e.amount||0),0);
-  const moInc=moOff.reduce((s,e)=>s+Number(e.amount||0),0);
-  const moExpT=moExp.reduce((s,e)=>s+Number(e.amount||0),0);
-  const cuInc=cumOff.reduce((s,e)=>s+Number(e.amount||0),0);
-  const cuExpT=cumExp.reduce((s,e)=>s+Number(e.amount||0),0);
-  const bal=carryBase+cuInc-cuExpT;
-  const budget=getBudget();
+
+  // 수입 헌금유형 목록
   const incTypes=['십일조헌금','월정헌금','감사헌금','주일헌금','헌신예배','교회학교','장학헌금','부활절','맥추감사헌금','추수감사헌금','성탄절','일천번제','선교헌금','비전헌금','기타'];
-  const outTypes=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','장학위원회','재정부','감사부','건축대출금상환적금','대출금이자','건축대출금상환'];
+
+  // 지출 부서 목록
+  // ★ '건축대출금상환'은 제외하고 '건축대출금 상환(일반회계)'를 별도 항목으로 추가
+  const outTypes=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','장학위원회','재정부','감사부','건축대출금상환적금','대출금이자','건축대출금 상환(일반회계)'];
+
   const byTypeInc={};cumOff.forEach(e=>{byTypeInc[e.type]=(byTypeInc[e.type]||0)+Number(e.amount||0);});
   const byTypeMo={};moOff.forEach(e=>{byTypeMo[e.type]=(byTypeMo[e.type]||0)+Number(e.amount||0);});
   const byDeptCu={};cumExp.forEach(e=>{byDeptCu[e.dept]=(byDeptCu[e.dept]||0)+Number(e.amount||0);});
   const byDeptMo={};moExp.forEach(e=>{byDeptMo[e.dept]=(byDeptMo[e.dept]||0)+Number(e.amount||0);});
+
+  const budget=getBudget();
+
+  // ★ 수입 합계 = incTypes 목록 항목들의 합산 (목록에 없는 유형 제외)
+  const cuIncTable=incTypes.reduce((s,t)=>s+(byTypeInc[t]||0),0);
+  const moIncTable=incTypes.reduce((s,t)=>s+(byTypeMo[t]||0),0);
+  // 총계용은 전체 헌금 합계 유지
+  const moInc=moOff.reduce((s,e)=>s+Number(e.amount||0),0);
+  const cuInc=cumOff.reduce((s,e)=>s+Number(e.amount||0),0);
+
+  // ★ 지출 합계 = outTypes 목록 항목들의 합산
+  //   '건축대출금 상환(일반회계)'는 DB의 '건축대출금상환' 부서 데이터를 제외하고 별도 입력값만 반영
+  //   '건축대출금상환' 부서 실제 데이터는 합계에서 제외
+  const EXCLUDE_DEPT='건축대출금상환'; // DB에서 이 부서는 합계 제외
+  const cuExpTable=outTypes.reduce((s,d)=>{
+    if(d==='건축대출금 상환(일반회계)') return s+(byDeptCu['건축대출금 상환(일반회계)']||0);
+    return s+(byDeptCu[d]||0);
+  },0);
+  const moExpTable=outTypes.reduce((s,d)=>{
+    if(d==='건축대출금 상환(일반회계)') return s+(byDeptMo['건축대출금 상환(일반회계)']||0);
+    return s+(byDeptMo[d]||0);
+  },0);
+  // 총계용 지출 = 전체 - '건축대출금상환' 제외
+  const moExpT=moExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
+  const cuExpT=cumExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
+  const bal=carryBase+cuInc-cuExpT;
+
   const budTotIn=incTypes.reduce((s,t)=>s+(parseN(budget['in_'+t])||0),0);
   const budTotOut=outTypes.reduce((s,d)=>s+(parseN(budget['out_'+d])||0),0);
-  const totalYrPct=budTotIn?(Math.round((cuInc/budTotIn)*1000)/10)+'%':'—';
+  const totalYrPct=budTotIn?(Math.round((cuIncTable/budTotIn)*1000)/10)+'%':'—';
+  const totalOutPct=budTotOut?(Math.round((cuExpTable/budTotOut)*1000)/10)+'%':'—';
+
   const el=document.getElementById('monthly-content');
   el.innerHTML=`
   <!-- PAGE 1: 총계 + 수입 -->
@@ -2155,8 +2306,8 @@ function renderMonthlyGeneral(ym){
               <td></td></tr>`;}).join('')}
         </tbody>
         <tfoot><tr><td>합계</td><td class="nc">${fmtN(budTotIn)}</td>
-          <td class="nc" style="font-weight:800;color:var(--blue)">${fmtN(cuInc)}</td>
-          <td class="nc">${fmtN(moInc)}</td><td class="nc">${totalYrPct}</td><td></td></tr></tfoot>
+          <td class="nc" style="font-weight:800;color:var(--blue)">${fmtN(cuIncTable)}</td>
+          <td class="nc">${fmtN(moIncTable)}</td><td class="nc">${totalYrPct}</td><td></td></tr></tfoot>
       </table>
     </div>
   </div>
@@ -2168,7 +2319,12 @@ function renderMonthlyGeneral(ym){
       <table class="tbl">
         <thead><tr><th>항목</th><th class="nc">당년예산(A)</th><th class="nc">누계(B)</th><th class="nc">월계(C)</th><th class="nc">진도%(B/A)</th><th>비고</th></tr></thead>
         <tbody>
-          ${outTypes.map(d=>{const bA=parseN(budget['out_'+d])||0;const bB=byDeptCu[d]||0;const bC=byDeptMo[d]||0;const pct=bA?Math.round(bB/bA*1000)/10:0;
+          ${outTypes.map(d=>{
+            const bA=parseN(budget['out_'+d])||0;
+            // '건축대출금 상환(일반회계)' → DB '건축대출금 상환(일반회계)' 부서 데이터만 반영
+            const bB=byDeptCu[d]||0;
+            const bC=byDeptMo[d]||0;
+            const pct=bA?Math.round(bB/bA*1000)/10:0;
             return `<tr><td>${d}</td><td class="nc">${bA?fmtN(bA):'—'}</td>
               <td class="nc" style="font-weight:${bB?'700':'400'}">${bB?fmtN(bB):'—'}</td>
               <td class="nc">${bC?fmtN(bC):'—'}</td>
@@ -2176,8 +2332,8 @@ function renderMonthlyGeneral(ym){
               <td></td></tr>`;}).join('')}
         </tbody>
         <tfoot><tr><td>합계</td><td class="nc">${fmtN(budTotOut)}</td>
-          <td class="nc" style="font-weight:800;color:var(--red)">${fmtN(cuExpT)}</td>
-          <td class="nc">${fmtN(moExpT)}</td><td class="nc"></td><td></td></tr></tfoot>
+          <td class="nc" style="font-weight:800;color:var(--red)">${fmtN(cuExpTable)}</td>
+          <td class="nc">${fmtN(moExpTable)}</td><td class="nc">${totalOutPct}</td><td></td></tr></tfoot>
       </table>
     </div>
   </div>`;
@@ -3566,7 +3722,7 @@ function renderBudgetForm(){
   const el=document.getElementById('budget-form');if(!el) return;
   const budget=getBudget();
   const incTypes=['십일조헌금','월정헌금','감사헌금','주일헌금','헌신예배','교회학교','장학헌금','부활절','맥추감사헌금','추수감사헌금','성탄절','일천번제','선교헌금','비전헌금','기타'];
-  const outTypes=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','대출금이자','건축대출금상환적금'];
+  const outTypes=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환적금','대출금이자','건축대출금 상환(일반회계)'];
   el.innerHTML=`<div class="g2">
     <div>
       <div class="flbl" style="margin-bottom:6px;font-size:12px">수입 예산</div>
@@ -3576,7 +3732,7 @@ function renderBudgetForm(){
     <div>
       <div class="flbl" style="margin-bottom:6px;font-size:12px">지출 예산</div>
       ${outTypes.map(d=>`<div class="fg"><div class="flbl">${d}</div>
-        <input class="finp num-in" id="bud-out-${d}" value="${parseN(budget['out_'+d])||''}" placeholder="0" type="number"></div>`).join('')}
+        <input class="finp num-in" id="bud-out-${d.replace(/[()\s]/g,'_')}" value="${parseN(budget['out_'+d])||''}" placeholder="0" type="number"></div>`).join('')}
     </div>
   </div>`;
 }
@@ -3635,7 +3791,7 @@ window.saveCarryover=function(){
 window.saveBudget=function(){
   const budget={};
   ['십일조헌금','월정헌금','감사헌금','주일헌금','헌신예배','교회학교','장학헌금','부활절','맥추감사헌금','추수감사헌금','성탄절','일천번제','선교헌금','비전헌금','기타'].forEach(t=>{budget['in_'+t]=parseN(document.getElementById(`bud-in-${t}`)?.value)||0;});
-  ['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','대출금이자','건축대출금상환적금'].forEach(d=>{budget['out_'+d]=parseN(document.getElementById(`bud-out-${d}`)?.value)||0;});
+  ['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','대출금이자','건축대출금상환적금','건축대출금 상환(일반회계)'].forEach(d=>{budget['out_'+d]=parseN(document.getElementById('bud-out-'+d.replace(/[()\s]/g,'_'))?.value)||0;});
   ST.set('annualBudget',budget);alert('예산이 저장되었습니다.');
 };
 
