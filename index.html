@@ -3362,7 +3362,7 @@ window.handleExcelSelect=function(ev){
       setProgress(30,'양식 구조 확인 중...');
 
       const data=new Uint8Array(e.target.result);
-      const wb=XLSX.read(data,{type:'array',cellDates:true});
+      const wb=XLSX.read(data,{type:'array',cellDates:true,dateNF:'yyyy-mm-dd'});
 
       setProgress(55,'데이터 행 분석 중...');
 
@@ -3506,7 +3506,7 @@ function validateAndParse(wb, fileName){
         const amount=parseN(String(row[3]||'0'));
         const writer=String(row[4]||'').trim();
         const onlineRaw=row[5];
-        const online=onlineRaw===true||onlineRaw==='TRUE'||onlineRaw==='true';
+        const online=onlineRaw===true||onlineRaw==='TRUE'||onlineRaw==='true'||onlineRaw==='1';
         const etcDate=normalizeDate(row[6]);
         const interestRaw=row[7];
         const interest=(interestRaw===false||interestRaw===0||!interestRaw)?0:parseN(String(interestRaw));
@@ -3532,7 +3532,7 @@ function validateAndParse(wb, fileName){
         const acc=String(row[6]||'').trim();
         // row[7] = 빈칸 (None)
         const cashRaw=row[8];
-        const transfer=(cashRaw===true||cashRaw==='TRUE'||cashRaw==='true')?'현금':'이체';
+        const transfer=(cashRaw===true||cashRaw==='TRUE'||cashRaw==='true'||cashRaw==='1')?'현금':'이체';
         const interestRaw=row[9];
         const interest=(interestRaw===false||!interestRaw)?0:parseN(String(interestRaw));
         const payDate=normalizeDate(row[10]);
