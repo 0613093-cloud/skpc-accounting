@@ -40,10 +40,9 @@ html,body{height:100%;font-family:var(--fn);font-size:14px;background:var(--g6);
 .hdr-date{font-family:var(--fnum);font-size:12px;color:rgba(255,255,255,.7)}
 
 /* NAV */
-.nav{background:var(--navy);display:flex;overflow-x:auto;flex-shrink:0;border-bottom:2px solid rgba(255,255,255,.08)}
+/* .nav base overridden by 2-row nav below */
 .nav::-webkit-scrollbar{height:8px}.nav::-webkit-scrollbar-track{background:var(--navy-d)}.nav::-webkit-scrollbar-thumb{background:var(--blue-l);border-radius:4px;border:1px solid var(--navy)}.nav::-webkit-scrollbar-thumb:hover{background:#fff}
-.nav-item{padding:0 18px;height:44px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.6);cursor:pointer;
-  white-space:nowrap;font-size:12px;font-weight:700;transition:all .2s;border-bottom:3px solid transparent;flex-shrink:0}
+/* .nav-item overridden by 2-row nav */
 .nav-item:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.06)}
 .nav-item.active{color:#fff;border-bottom-color:var(--blue-l);background:rgba(74,144,196,.15)}
 
@@ -275,7 +274,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 @media print{
   .no-print{display:none!important}
   .card{box-shadow:none;border:1px solid #ccc}
-  .hdr,.nav{display:none!important}
+  .hdr,.nav,.nav-groups-row,.nav-items-row{display:none!important}
   .app{height:auto!important;overflow:visible!important}
   .content{overflow:visible!important;height:auto!important;padding:0!important}
   .tab-pane{display:none!important}
@@ -341,6 +340,104 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   .rpt-hd h2 { text-align:center !important; padding:6px 0 !important; }
   .rpt-meta { text-align:right; font-size:10px; margin-bottom:8px; }
 }
+
+/* ===== NAV 그룹 & 드롭다운 ===== */
+/* ===== 2줄 계층 NAV ===== */
+
+/* 전체 nav 래퍼 */
+.nav{
+  background:var(--navy);
+  display:flex;flex-direction:column;
+  overflow:visible;flex-shrink:0;
+  border-bottom:2px solid rgba(255,255,255,.12);
+}
+
+/* 1행: 그룹 라벨 바 */
+.nav-groups-row{
+  display:flex;align-items:stretch;
+  background:rgba(0,0,0,.25);
+  border-bottom:1px solid rgba(255,255,255,.1);
+  flex-shrink:0;
+}
+.nav-group-pill{
+  display:flex;align-items:center;justify-content:center;
+  padding:0 20px;height:28px;
+  font-size:11px;font-weight:700;letter-spacing:.5px;
+  color:rgba(255,255,255,.6);
+  white-space:nowrap;cursor:pointer;
+  border-right:1px solid rgba(255,255,255,.1);
+  transition:all .2s;position:relative;
+}
+/* 그룹별 배경 쉐이드 */
+#grp-weekly  { background:rgba(26,80,160,.45); }   /* 파란 톤 - 주간업무 */
+#grp-monthly { background:rgba(20,100,80,.45); }   /* 초록 톤 - 월간업무 */
+#grp-manage  { background:rgba(80,40,120,.45); }   /* 보라 톤 - 관리 */
+.nav-group-pill:hover{ filter:brightness(1.2); color:#fff; }
+.nav-group-pill.active-group{
+  color:#fff;font-weight:800;filter:brightness(1.3);
+}
+.nav-group-pill::after{
+  content:'';position:absolute;bottom:-1px;left:10%;right:10%;
+  height:2px;background:var(--gold,#c8a84b);
+  opacity:0;transition:opacity .2s;border-radius:1px;
+}
+.nav-group-pill.active-group::after{opacity:1;}
+
+/* 2행: 탭 아이템 바 */
+.nav-items-row{
+  display:flex;align-items:stretch;
+  overflow-x:auto;flex-shrink:0;
+}
+.nav-items-row::-webkit-scrollbar{height:3px;}
+.nav-items-row::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);}
+
+/* 탭 아이템 - 그룹별 쉐이드 배경 */
+.nav-item{
+  padding:0 13px;height:36px;
+  display:flex;align-items:center;gap:4px;
+  color:rgba(255,255,255,.65);cursor:pointer;
+  white-space:nowrap;font-size:11px;font-weight:600;
+  transition:all .2s;border-bottom:3px solid transparent;
+  flex-shrink:0;
+}
+/* 주간업무 탭 (구분선 이전) */
+.nav-item.grp-weekly  { background:rgba(26,80,160,.18); }
+/* 월간업무 탭 */
+.nav-item.grp-monthly { background:rgba(20,100,80,.18); }
+/* 관리 탭 */
+.nav-item.grp-manage  { background:rgba(80,40,120,.18); }
+.nav-item:hover{color:#fff;filter:brightness(1.15);}
+.nav-item.active{
+  color:#fff;
+  border-bottom-color:var(--gold,#c8a84b);
+  filter:brightness(1.25);
+  font-weight:700;
+}
+/* 그룹 구분선 */
+.nav-group-sep{
+  width:2px;background:rgba(255,255,255,.2);
+  margin:4px 1px;flex-shrink:0;border-radius:1px;
+}
+
+/* 드롭다운 */
+.nav-dropdown-wrap{position:relative;cursor:pointer;user-select:none;}
+.nav-dropdown-wrap>span{display:flex;align-items:center;gap:4px;}
+.nav-arr{font-size:10px;opacity:.6;margin-left:1px;}
+.nav-dropdown{
+  display:none;position:absolute;top:100%;left:0;z-index:200;
+  background:#fff;border:1.5px solid var(--navy,#1a2456);border-radius:8px;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);min-width:110px;overflow:hidden;
+  margin-top:2px;
+}
+.nav-dropdown.open{display:block;}
+.nav-drop-item{
+  padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;
+  color:var(--navy,#1a2456);white-space:nowrap;
+  border-bottom:1px solid #f0f2f8;
+}
+.nav-drop-item:last-child{border-bottom:none;}
+.nav-drop-item:hover{background:#f0f4ff;}
+.nav-drop-item.active{background:var(--navy,#1a2456);color:#fff;}
 </style>
 
 <!-- Firebase SDK -->
@@ -573,21 +670,40 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 </header>
 
 <nav class="nav" id="mainNav">
-  <div class="nav-item active" data-tab="input1">📋 헌금입력 1</div>
-  <div class="nav-item" data-tab="input2">📋 헌금입력 2</div>
-  <div class="nav-item" data-tab="input3">📋 헌금입력 3</div>
-  <div class="nav-item" data-tab="offering">📊 헌금정리</div>
-  <div class="nav-item" data-tab="expense">💸 지출정리</div>
-  <div class="nav-item" data-tab="sponsor">🎁 찬조내역</div>
-  <div class="nav-item" data-tab="monthly">📈 월간보고</div>
-  <div class="nav-item" data-tab="deptreport">🏢 부서보고서</div>
-  <div class="nav-item" data-tab="bankbal">🏦 통장잔액</div>
-  <div class="nav-item" data-tab="finsearch">🔍 재정검색</div>
-  <div class="nav-item" data-tab="query">📄 헌금조회</div>
-  <div class="nav-item" data-tab="weekly">📰 주보용</div>
-  <div class="nav-item" data-tab="receipt">🗒️ 입금전표</div>
-  <div class="nav-item" data-tab="online-off">🌐 온라인입금</div>
-  <div class="nav-item" data-tab="manage">⚙️ 관리</div>
+  <!-- 1행: 그룹 라벨 -->
+  <div class="nav-groups-row" id="navGroupsRow">
+    <div class="nav-group-pill active-group" id="grp-weekly" onclick="scrollToGroup('weekly')">주간업무</div>
+    <div class="nav-group-pill" id="grp-monthly" onclick="scrollToGroup('monthly')">월간업무</div>
+    <div class="nav-group-pill" id="grp-manage" onclick="scrollToGroup('manage')">관리</div>
+  </div>
+  <!-- 2행: 탭 아이템 -->
+  <div class="nav-items-row" id="navItemsRow">
+    <!-- 주간업무 -->
+    <div class="nav-item nav-dropdown-wrap grp-weekly active" id="navDropInput">
+      <span onclick="toggleInputDropdown(event)">📋 헌금입력<span class="nav-arr">▾</span></span>
+      <div class="nav-dropdown" id="inputDropMenu">
+        <div class="nav-drop-item" onclick="selectInputSheet(1)">입력 1</div>
+        <div class="nav-drop-item" onclick="selectInputSheet(2)">입력 2</div>
+        <div class="nav-drop-item" onclick="selectInputSheet(3)">입력 3</div>
+      </div>
+    </div>
+    <div class="nav-item grp-weekly" data-tab="receipt">🗒️ 입금전표</div>
+    <div class="nav-item grp-weekly" data-tab="query">당일헌금내역</div>
+    <div class="nav-item grp-weekly" data-tab="weekly">주보용 헌금내역</div>
+    <div class="nav-item grp-weekly" data-tab="online-off">온라인 입금내역</div>
+    <div class="nav-item grp-weekly" data-tab="offering">📊 누적헌금</div>
+    <div class="nav-item grp-weekly" data-tab="expense">💸 누적지출</div>
+    <div class="nav-item grp-weekly" data-tab="sponsor">찬조내역</div>
+    <!-- 월간업무 구분선 -->
+    <div class="nav-group-sep" id="sep-monthly"></div>
+    <div class="nav-item grp-monthly" data-tab="monthly">📈 월간보고</div>
+    <div class="nav-item grp-monthly" data-tab="deptreport">🏢 부서보고서</div>
+    <div class="nav-item grp-monthly" data-tab="bankbal">🏦 통장잔액</div>
+    <div class="nav-item grp-monthly" data-tab="finsearch">기간별 조회</div>
+    <!-- 관리 구분선 -->
+    <div class="nav-group-sep" id="sep-manage"></div>
+    <div class="nav-item grp-manage" data-tab="manage">⚙️ 관리</div>
+  </div>
 </nav>
 
 <main class="content">
@@ -813,6 +929,10 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 <!-- ===== 부서보고서 ===== -->
 <div id="tab-deptreport" class="tab-pane">
   <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
+  <div style="background:#e3f2fd;border:1.5px solid #90caf9;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:#1565c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span>📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력은 별도 URL을 사용하세요.</span>
+    <a href="skpc_dept_report.html" target="_blank" class="btn btn-blue btn-sm">🔗 부서보고서 입력 페이지 열기</a>
+  </div>
   <div class="month-bar">
     <label>보고 기준 월</label>
     <select id="dept-month"></select>
@@ -1045,6 +1165,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <div class="sub-btn" onclick="switchMgr('sponsor-mgr',this)">찬조유형</div>
     <div class="sub-btn" onclick="switchMgr('budget-mgr',this)">연간예산</div>
     <div class="sub-btn" onclick="switchMgr('carryover-mgr',this)">이월금 설정</div>
+    <div class="sub-btn" onclick="switchMgr('writer-mgr',this)">작성자</div>
     <div class="sub-btn" onclick="switchMgr('data-mgr',this)">데이터</div>
   </div>
   <div id="offering-mgr" class="card">
@@ -1088,6 +1209,19 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <div style="margin-top:14px;display:flex;gap:8px">
       <button class="btn btn-navy" onclick="saveCarryover()">💾 이월금 저장</button>
     </div>
+  </div>
+
+  <div id="writer-mgr" class="card hidden">
+    <div class="card-title" style="margin-bottom:10px">✍️ 작성자 관리</div>
+    <div style="background:#e8f4fd;padding:9px 14px;border-radius:7px;font-size:11px;color:#1a6fa0;margin-bottom:12px;border-left:3px solid #2980b9">
+      헌금입력 화면의 작성자 목록을 관리합니다. 추가·삭제 후 저장하면 즉시 반영됩니다.
+    </div>
+    <div class="flex gap8 mb12">
+      <input class="finp" id="new-writer-name" placeholder="새 작성자 이름" style="max-width:200px"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();addWriter();}">
+      <button class="btn btn-navy" onclick="addWriter()">＋ 추가</button>
+    </div>
+    <div id="writer-list"></div>
   </div>
   <div id="data-mgr" class="card hidden">
     <div class="card-title" style="margin-bottom:10px">데이터 관리</div>
@@ -1345,7 +1479,8 @@ const ST={
 const DEF_OFF_TYPES=['십일조헌금','월정헌금','감사헌금','주일헌금','비전헌금','맥추감사헌금','헌신예배','교회학교','장학헌금','추수감사헌금','일천번제','선교헌금','부활절','성탄절','신년헌금','기타','건축헌금','전도헌금','지역봉사헌금'];
 const DEF_DEPT_TYPES=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','기타(예비비)','건축헌금','전도헌금','사회봉사'];
 const DEF_SPON_TYPES=['교육부찬조','영상찬조','야외예배찬조','기타찬조'];
-const WRITERS=['이광원','유치주','하태식','김종우'];
+const DEF_WRITERS=['이광원','유치주','하태식','김종우'];
+function getWriters(){return ST.get('writers',DEF_WRITERS);}
 
 // 수취자 계좌 DB (지출내역정리 PDF 기반)
 const DEF_RECIPIENTS={
@@ -1522,13 +1657,97 @@ window._fbLiveRefresh = function(key){
 document.querySelectorAll('.nav-item').forEach(el=>{
   el.addEventListener('click',()=>{
     const tab=el.dataset.tab;
+    if(!tab) return;
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     el.classList.add('active');
+    document.getElementById('inputDropMenu')?.classList.remove('open');
     document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
     const tp=document.getElementById('tab-'+tab);if(tp) tp.classList.add('active');
+    updateActiveGroup(tab);
     onTabActivate(tab);
   });
 });
+
+// 현재 탭에 맞는 그룹 라벨 active 갱신
+function updateActiveGroup(tab){
+  const weeklyTabs=['receipt','query','weekly','online-off','offering','expense','sponsor','input1','input2','input3'];
+  const monthlyTabs=['monthly','deptreport','bankbal','finsearch'];
+  const manageTabs=['manage'];
+  let grp='weekly';
+  if(monthlyTabs.includes(tab)) grp='monthly';
+  if(manageTabs.includes(tab)) grp='manage';
+  document.querySelectorAll('.nav-group-pill').forEach(p=>p.classList.remove('active-group'));
+  const el=document.getElementById('grp-'+grp);
+  if(el) el.classList.add('active-group');
+}
+
+// 그룹 라벨 클릭 시 해당 첫 탭으로 스크롤
+window.scrollToGroup=function(grp){
+  const groupFirstTab={weekly:'navDropInput', monthly:'sep-monthly', manage:'sep-manage'};
+  const targetId=groupFirstTab[grp];
+  const el=document.getElementById(targetId)||document.querySelector('[data-tab="'+
+    (grp==='weekly'?'receipt':grp==='monthly'?'monthly':'manage')+'"]');
+  if(el){
+    el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+  }
+  // 그룹 first 탭 활성화
+  if(grp==='monthly'){
+    document.querySelector('[data-tab="monthly"]')?.click();
+  } else if(grp==='manage'){
+    document.querySelector('[data-tab="manage"]')?.click();
+  } else {
+    // 주간업무: 드롭다운 표시
+    document.getElementById('navDropInput')?.click();
+  }
+};
+
+// ── 헌금입력 드롭다운 ────────────────────────────────────────
+let _activeInputSheet=1;
+window.toggleInputDropdown=function(e){
+  e.stopPropagation();
+  const menu=document.getElementById('inputDropMenu');
+  if(menu) menu.classList.toggle('open');
+};
+// 외부 클릭시 드롭다운 닫기
+document.addEventListener('click',function(){
+  const menu=document.getElementById('inputDropMenu');
+  if(menu) menu.classList.remove('open');
+});
+window.selectInputSheet=function(num){
+  _activeInputSheet=num;
+  // 드롭다운 닫기
+  const menu=document.getElementById('inputDropMenu');
+  if(menu) menu.classList.remove('open');
+  // 드롭다운 아이템 active 표시
+  document.querySelectorAll('.nav-drop-item').forEach((el,i)=>{
+    el.classList.toggle('active', i+1===num);
+  });
+  // 헌금입력 nav-item active
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const wrap=document.getElementById('navDropInput');
+  if(wrap) wrap.classList.add('active');
+  updateActiveGroup('input'+num);
+  // 탭 전환
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  const tp=document.getElementById('tab-input'+num);
+  if(tp){tp.classList.add('active');buildInputSheet(num);}
+  // 드롭다운 버튼에 시트번호 표시
+  const btnSpan=wrap?.querySelector('span>span:first-child');
+  if(wrap){
+    const mainSpan=wrap.querySelector(':scope>span');
+    if(mainSpan) mainSpan.childNodes[0].textContent='📋 헌금입력 '+num+' ';
+  }
+};
+
+// ── 가장 가까운 이전 일요일 계산 ────────────────────────────
+function getLastSunday(fromDate){
+  const d=fromDate?new Date(fromDate):new Date();
+  // 오늘이 일요일(0)이면 오늘, 아니면 직전 일요일
+  const day=d.getDay(); // 0=일, 1=월 ... 6=토
+  d.setDate(d.getDate()-day);
+  return d.toISOString().slice(0,10);
+}
+
 function onTabActivate(tab){
   if(tab==='offering') initOfferingTab();
   if(tab==='expense'){initExpenseTab();}
@@ -1538,7 +1757,11 @@ function onTabActivate(tab){
   if(tab==='bankbal') initMonthSel('bank-month','bank-badge');
   if(tab==='query') initQueryTab();
   if(tab==='weekly') initWeeklyTab();
-  if(tab==='receipt'){document.getElementById('rec-date').value=TODAY;}
+  if(tab==='receipt'){
+    const recDate=document.getElementById('rec-date');
+    if(recDate&&!recDate.value) recDate.value=getLastSunday();
+    else if(recDate&&recDate.value===TODAY) recDate.value=getLastSunday();
+  }
   if(tab==='manage') renderManage();
   if(tab==='online-off') initOnlineTab();
   if(tab==='finsearch'){const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
@@ -1578,7 +1801,7 @@ const SPON_OFF_TYPES=['찬조','기타'];
 function buildInputSheet(num){
   const el=document.getElementById(`tab-input${num}`);if(!el) return;
   const SK=`istate_${num}`;
-  let st=ST.get(SK,{writer:WRITERS[0],selectedType:getOffTypes()[0],entries:[]});
+  let st=ST.get(SK,{writer:getWriters()[0],selectedType:getOffTypes()[0],entries:[]});
   st.entries=st.entries||[];
   const offTypes=getOffTypes();
 
@@ -1588,7 +1811,10 @@ function buildInputSheet(num){
       <div class="card-title" style="margin-bottom:10px">기본 정보</div>
       <div class="fg"><div class="flbl">입력일자 (수정 가능)</div><input type="date" class="finp" id="s${num}-date" value="${TODAY}"></div>
       <div class="fg"><div class="flbl">작성자</div>
-        <select class="fsel" id="s${num}-writer">${WRITERS.map(w=>`<option ${w===st.writer?'selected':''}>${w}</option>`).join('')}</select></div>
+        <select class="fsel" id="s${num}-writer">${getWriters().map(w=>`<option ${w===st.writer?'selected':''}>${w}</option>`).join('')}
+          </select>
+          <button type="button" class="btn btn-outline btn-sm" style="height:28px;padding:0 8px;font-size:11px;margin-left:4px"
+            onclick="addWriterFromInput(${num})" title="작성자 추가">＋</button></div>
     </div>
   <div class="card">
     <div class="card-title" style="margin-bottom:8px">헌금 종류 선택</div>
@@ -2722,7 +2948,7 @@ window.renderDeptReport=function(){
       const d0=document.createElement('div');d0.className='dc';
       d0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
       const iDate=document.createElement('input');iDate.type='date';iDate.value=dateV;
-      iDate.style.cssText='width:96px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center;cursor:pointer'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
+      iDate.style.cssText='width:110px;min-width:110px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center;cursor:pointer;padding-right:4px'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
       iDate.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           if(isDB||isBudget){saveViewField(rid,'date',this.value);}
@@ -3379,7 +3605,7 @@ function populateTypeSelect(selId){
 window.initQueryTab=function(){
   populateTypeSelect('qry-type');
   const el=document.getElementById('qry-date');
-  if(el&&!el.value) el.value=TODAY;
+  if(el&&!el.value) el.value=getLastSunday();
 };
 window.doQuerySearch=function(){
   let books=getOfferings();
@@ -3429,7 +3655,7 @@ function initWeeklyTab(){
 window.initWeeklyTab=function(){
   populateTypeSelect('wky-type');
   const el=document.getElementById('wky-date');
-  if(el&&!el.value) el.value=TODAY;
+  if(el&&!el.value) el.value=getLastSunday();
 };
 window.doWeeklySearch=function(){
   let books=getOfferings();
@@ -3676,10 +3902,11 @@ window.renderReceipt=function(){
 // ============================================================
 window.switchMgr=function(id,btn){
   document.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-  ['offering-mgr','dept-mgr','account-mgr','sponsor-mgr','budget-mgr','carryover-mgr','data-mgr'].forEach(x=>{
+  ['offering-mgr','dept-mgr','account-mgr','sponsor-mgr','budget-mgr','carryover-mgr','writer-mgr','data-mgr'].forEach(x=>{
     const el=document.getElementById(x);if(el) el.classList.toggle('hidden',x!==id);
   });
   if(id==='carryover-mgr') renderCarryoverForm();
+  if(id==='writer-mgr') renderWriterMgr();
 };
 function renderManage(){
   renderOffTypeList();renderDeptTypeList();renderRecipList();renderSponTypeList();renderBudgetForm();
@@ -4089,6 +4316,74 @@ window.saveCarryover=function(){
   ST.set('carryover',co);
   if(window._fbSaveConfig) window._fbSaveConfig('carryover',co);
   alert('✅ 이월금이 저장되었습니다.\n월간 보고서에 자동 반영됩니다.');
+};
+
+
+// ── 작성자 관리 ──────────────────────────────────────────────
+function renderWriterMgr(){
+  const el=document.getElementById('writer-list');if(!el)return;
+  const writers=getWriters();
+  el.innerHTML=writers.length
+    ? writers.map((w,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border,#e2e8f0);border-radius:7px;margin-bottom:6px;background:#fafbff">
+        <span style="flex:1;font-size:13px;font-weight:600">${w}</span>
+        ${i===0?'<span style="font-size:10px;color:#888;padding:2px 8px;border-radius:10px;background:#f0f2f8">기본</span>':''}
+        <button class="btn btn-red btn-sm" onclick="deleteWriter('${w.replace(/'/g,"\'")}')" ${writers.length<=1?'disabled':''}>삭제</button>
+      </div>`).join('')
+    : '<div style="color:#aaa;padding:12px;text-align:center">작성자가 없습니다</div>';
+}
+
+window.addWriter=function(){
+  const inp=document.getElementById('new-writer-name');
+  const name=(inp?.value||'').trim();
+  if(!name){alert('이름을 입력하세요.');return;}
+  const writers=getWriters();
+  if(writers.includes(name)){alert('이미 등록된 작성자입니다.');return;}
+  writers.push(name);
+  ST.set('writers',writers);
+  if(window._fbSaveConfig) window._fbSaveConfig('writers',writers);
+  inp.value='';
+  renderWriterMgr();
+  refreshAllWriterSelects();
+  alert('✅ "'+name+'" 추가되었습니다.');
+};
+
+window.deleteWriter=function(name){
+  const writers=getWriters();
+  if(writers.length<=1){alert('작성자는 최소 1명 이상 있어야 합니다.');return;}
+  if(!confirm('"'+name+'" 작성자를 삭제하시겠습니까?'))return;
+  ST.set('writers',writers.filter(w=>w!==name));
+  if(window._fbSaveConfig) window._fbSaveConfig('writers',writers.filter(w=>w!==name));
+  renderWriterMgr();
+  refreshAllWriterSelects();
+};
+
+// 헌금입력 시트의 작성자 셀렉트 동기화
+function refreshAllWriterSelects(){
+  [1,2,3].forEach(num=>{
+    const sel=document.getElementById('s'+num+'-writer');
+    if(!sel)return;
+    const cur=sel.value;
+    const writers=getWriters();
+    sel.innerHTML=writers.map(w=>`<option${w===cur?' selected':''}>${w}</option>`).join('');
+  });
+}
+
+// 입력 화면에서 직접 작성자 추가
+window.addWriterFromInput=function(num){
+  const name=prompt('추가할 작성자 이름을 입력하세요:','');
+  if(!name||!name.trim())return;
+  const trimmed=name.trim();
+  const writers=getWriters();
+  if(!writers.includes(trimmed)){
+    writers.push(trimmed);
+    ST.set('writers',writers);
+    if(window._fbSaveConfig) window._fbSaveConfig('writers',writers);
+  }
+  refreshAllWriterSelects();
+  // 방금 추가한 작성자 선택
+  const sel=document.getElementById('s'+num+'-writer');
+  if(sel) sel.value=trimmed;
 };
 
 window.saveBudget=function(){
