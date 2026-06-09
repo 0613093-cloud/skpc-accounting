@@ -395,6 +395,12 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
             try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
           });
         }
+        // deptTopRows_, deptView_ 동적 키 복원
+        Object.keys(data).forEach(function(k){
+          if(k.startsWith('deptTopRows_')||k.startsWith('deptView_')){
+            try{localStorage.setItem(k,JSON.stringify(data[k]));}catch(e){}
+          }
+        });
       }
 
       // 헌금
@@ -989,6 +995,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       </div>
     </div>
   </div>
+  <!-- 기타 헌금유형 온라인입금 동적 렌더링 영역 -->
+  <div id="online-other-wrap" class="flex gap12" style="flex-wrap:wrap;margin-top:12px"></div>
 </div>
 
 <!-- ===== 관리 ===== -->
@@ -1290,20 +1298,9 @@ const ST={
     if(configKeys.includes(k) && window._fbSaveConfig){
       window._fbSaveConfig(k,v);
     }
-    // deptCustomRows (동적 키)
-    if(k.startsWith('deptCustomRows_') && window._fbSaveConfigMulti){
-      const dm={}; 
-      try{
-        // 모든 deptCustomRows 키 수집
-        for(let i=0;i<localStorage.length;i++){
-          const lk=localStorage.key(i);
-          if(lk&&lk.startsWith('deptCustomRows_')){
-            try{dm[lk]=JSON.parse(localStorage.getItem(lk));}catch{}
-          }
-        }
-        dm[k]=v;
-      }catch{}
-      window._fbSaveConfig('deptCustomRows',dm);
+    // deptCustomRows / deptTopRows / deptView (동적 키 - Firebase 직접 저장)
+    if(k.startsWith('deptCustomRows_')||k.startsWith('deptTopRows_')||k.startsWith('deptView_')){
+      if(window._fbSaveConfig) window._fbSaveConfig(k,v);
     }
   }
 };
@@ -2377,57 +2374,141 @@ window.renderDeptReport=function(){
     addBtnTop.addEventListener('click',function(){addDeptRowTop(dept,ym);});
     body.appendChild(addBtnTop);
 
-    // DB expense rows (수입칸은 보고서 전용 편집 - DB 영향 없음)
-    var runBal=0;
-    const incViewKey='deptViewIncome_'+ym+'_'+dept;
-    const incViewData=ST.get(incViewKey,{});
-    dMo.forEach(function(e){
-      const viewInc=parseInt(incViewData[e.id])||0;
-      runBal=runBal+viewInc-e.amount;
-      var balColor=runBal>=0?'var(--blue)':'var(--red)';
+    // 저장된 보고서 뷰 데이터 로드
+    const viewKey='deptView_'+ym+'_'+dept;
+    const viewData=ST.get(viewKey,{}); // {id: {income, amount, memo}}
+
+    // 행 렌더 헬퍼 (DB행/상단행/하단행 공통)
+    function renderEditableRow(rowInfo){
+      // rowInfo: {id, date, content, income, amount, memo, isDB, dbObj}
+      const savedView=viewData[rowInfo.id]||{};
+      const inc  = rowInfo.isDB ? (savedView.income  !== undefined ? savedView.income  : 0)                      : (parseInt(rowInfo.income)||0);
+      const exp  = rowInfo.isDB ? (savedView.amount  !== undefined ? savedView.amount  : Number(rowInfo.dbObj.amount||0)) : (parseInt(rowInfo.amount)||0);
+      const memo = rowInfo.isDB ? (savedView.memo    !== undefined ? savedView.memo    : rowInfo.dbObj.memo||'') : (rowInfo.memo||'');
+      runBal = runBal + inc - exp;
+      const balColor = runBal>=0 ? 'var(--blue)' : 'var(--red)';
       const row=document.createElement('div');row.className='dr-row';
+
       // 날짜
-      const dc0=document.createElement('div');dc0.className='dc';
-      dc0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
-      dc0.textContent=e.date;row.appendChild(dc0);
-      // 적요 - content(앱입력) 또는 item(엑셀업로드) 필드 모두 표시
-      const dc1=document.createElement('div');dc1.className='dc';
-      dc1.style.fontFamily='var(--fn)';
-      dc1.textContent=e.content||e.item||'';
-      row.appendChild(dc1);
-      // 수입 (보고서 전용 편집 - DB 저장 없음)
-      const dc2=document.createElement('div');dc2.className='dc';dc2.style.textAlign='right';
-      const iInc2=document.createElement('input');
-      iInc2.value=viewInc?fmtN(viewInc):'';
-      iInc2.placeholder='0';
-      iInc2.title='보고서 표시용 수입 (DB에 저장되지 않음)';
-      iInc2.style.cssText='width:90px;border:none;border-bottom:1px dashed var(--blue-l);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)';
-      iInc2.addEventListener('input',function(){fmtAmt(this);});
-      iInc2.addEventListener('change',(function(eid){
+      const d0=document.createElement('div');d0.className='dc';
+      d0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
+      if(rowInfo.isDB){
+        d0.textContent=rowInfo.date;
+      } else {
+        const iDate=document.createElement('input');iDate.value=rowInfo.date;
+        iDate.style.cssText='width:86px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center';
+        iDate.addEventListener('change',function(){updateDeptTopRow(dept,ym,rowInfo.id,'date',this.value);});
+        d0.appendChild(iDate);
+      }
+      row.appendChild(d0);
+
+      // 적요
+      const d1=document.createElement('div');d1.className='dc';
+      if(rowInfo.isDB){
+        d1.style.fontFamily='var(--fn)';
+        d1.textContent=rowInfo.content;
+      } else {
+        const iCont=document.createElement('input');iCont.value=rowInfo.content||'';iCont.placeholder='적요';
+        iCont.style.cssText='width:100%;border:none;background:transparent;font-size:12px;font-family:var(--fn)';
+        iCont.addEventListener('change',function(){updateDeptTopRow(dept,ym,rowInfo.id,'content',this.value);});
+        d1.appendChild(iCont);
+      }
+      row.appendChild(d1);
+
+      // 수입 (편집 가능 - 보고서 뷰 DB에 저장)
+      const d2=document.createElement('div');d2.className='dc';d2.style.textAlign='right';
+      const iInc=document.createElement('input');
+      iInc.value=inc?fmtN(inc):'';iInc.placeholder='0';
+      iInc.style.cssText='width:90px;border:none;border-bottom:1px dashed var(--blue-l);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)';
+      iInc.addEventListener('input',function(){fmtAmt(this);});
+      iInc.addEventListener('change',(function(rid,isDB){
         return function(){
           const v=getRaw(this);
-          const d=ST.get(incViewKey,{});
-          d[eid]=v;ST.set(incViewKey,d);
+          const vd=ST.get(viewKey,{});
+          if(!vd[rid]) vd[rid]={};
+          vd[rid].income=v;
+          ST.set(viewKey,vd);
+          if(window._fbSaveConfig) window._fbSaveConfig(viewKey,vd);
           renderDeptReport();
         };
-      })(e.id));
-      dc2.appendChild(iInc2);row.appendChild(dc2);
-      // 지출
-      const dc3=document.createElement('div');dc3.className='dc';
-      dc3.style.cssText='text-align:right;color:var(--red)';
-      dc3.textContent=fmtN(e.amount);row.appendChild(dc3);
+      })(rowInfo.id, rowInfo.isDB));
+      d2.appendChild(iInc);row.appendChild(d2);
+
+      // 지출 (편집 가능 - 보고서 뷰 DB에 저장)
+      const d3=document.createElement('div');d3.className='dc';d3.style.textAlign='right';
+      const iExp=document.createElement('input');
+      iExp.value=exp?fmtN(exp):'';iExp.placeholder='0';
+      iExp.style.cssText='width:90px;border:none;border-bottom:1px dashed #fca5a5;background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--red)';
+      iExp.addEventListener('input',function(){fmtAmt(this);});
+      iExp.addEventListener('change',(function(rid,isDB){
+        return function(){
+          const v=getRaw(this);
+          const vd=ST.get(viewKey,{});
+          if(!vd[rid]) vd[rid]={};
+          vd[rid].amount=v;
+          ST.set(viewKey,vd);
+          if(window._fbSaveConfig) window._fbSaveConfig(viewKey,vd);
+          renderDeptReport();
+        };
+      })(rowInfo.id, rowInfo.isDB));
+      d3.appendChild(iExp);row.appendChild(d3);
+
       // 잔액
-      const dc4=document.createElement('div');dc4.className='dc';
-      dc4.style.cssText='text-align:right;font-weight:700;color:'+balColor;
-      dc4.textContent=fmtN(runBal);row.appendChild(dc4);
-      // 비고
-      const dc5=document.createElement('div');dc5.className='dc';
-      dc5.style.cssText='font-family:var(--fn);font-size:11px';
-      dc5.textContent=e.memo||'';row.appendChild(dc5);
+      const d4=document.createElement('div');d4.className='dc';
+      d4.style.cssText='text-align:right;font-weight:700;color:'+balColor;
+      d4.textContent=fmtN(runBal);row.appendChild(d4);
+
+      // 비고 + 삭제버튼
+      const d5=document.createElement('div');d5.className='dc';
+      d5.style.display='flex';d5.style.gap='4px';d5.style.alignItems='center';
+      const iMemo=document.createElement('input');iMemo.value=memo;iMemo.placeholder='비고 입력';
+      iMemo.style.cssText='flex:1;border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;font-family:var(--fn);padding:2px 0';
+      iMemo.addEventListener('change',(function(rid,isDB){
+        return function(){
+          const v=this.value;
+          if(isDB){
+            const vd=ST.get(viewKey,{});
+            if(!vd[rid]) vd[rid]={};
+            vd[rid].memo=v;
+            ST.set(viewKey,vd);
+            if(window._fbSaveConfig) window._fbSaveConfig(viewKey,vd);
+          } else {
+            updateDeptTopRow(dept,ym,rid,'memo',v);
+          }
+        };
+      })(rowInfo.id, rowInfo.isDB));
+      d5.appendChild(iMemo);
+      if(!rowInfo.isDB){
+        const btnDel=document.createElement('button');
+        btnDel.className='no-print';btnDel.textContent='×';
+        btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
+        btnDel.addEventListener('click',function(){deleteDeptTopRow(dept,ym,rowInfo.id);});
+        d5.appendChild(btnDel);
+      }
+      row.appendChild(d5);
       body.appendChild(row);
+    }
+
+    // ── 상단 행 (DB 행 위) ──
+    var runBal=0;
+    const topRowKey='deptTopRows_'+ym+'_'+dept;
+    const topRows=ST.get(topRowKey,[]);
+    topRows.forEach(function(r){
+      renderEditableRow({id:r.id,date:r.date,content:r.content,income:r.income||0,amount:r.amount||0,memo:r.memo||'',isDB:false});
     });
 
-    // Custom rows
+    // ── DB expense rows ──
+    dMo.forEach(function(e){
+      renderEditableRow({
+        id:e.id,
+        date:e.date,
+        content:e.content||e.item||'',
+        isDB:true,
+        dbObj:e
+      });
+    });
+
+    // Custom rows (하단 추가 행)
     customRows.forEach(function(r){
       const rInc=parseInt(r.income)||0;
       const rExp=parseInt(r.amount)||0;
@@ -2516,14 +2597,34 @@ window.renderDeptReport=function(){
     });
     body.appendChild(foot);
 
-    // Footer 누계
-    const cuBalColor=(crInc-cuTall)>=0?'#7fffb8':'#ffb3b3';
+    // Footer 연누계 (해당 연도 1월~해당월 전체)
+    // 연누계 수입: 해당 연도 deptTopRows + deptCustomRows + viewData income 합산
+    var yearIncTotal=0;
+    var yearExpTotal=cuTall; // DB 지출 연누계 (기존 cuTall)
+    // 연도 내 모든 월 viewData 수입 합산
+    for(var mi=1;mi<=mo;mi++){
+      const mym=yr+'-'+(mi<10?'0':'')+mi;
+      const mViewKey='deptView_'+mym+'_'+dept;
+      const mViewData=ST.get(mViewKey,{});
+      // DB rows income
+      const mExp=expenses.filter(function(e){return e.dept===dept&&monthOf(e.date)===mym;});
+      mExp.forEach(function(e){yearIncTotal+=parseInt((mViewData[e.id]||{}).income)||0;});
+      // topRows income
+      const mTopRows=ST.get('deptTopRows_'+mym+'_'+dept,[]);
+      mTopRows.forEach(function(r){yearIncTotal+=parseInt(r.income)||0;});
+      // customRows income
+      const mCustomRows=ST.get('deptCustomRows_'+mym+'_'+dept,[]);
+      mCustomRows.forEach(function(r){yearIncTotal+=parseInt(r.income)||0;});
+    }
+    // 이번달 viewData 추가 (이미 위에서 포함됨)
+    const yearBal=yearIncTotal-yearExpTotal;
+    const cuBalColor=yearBal>=0?'#7fffb8':'#ffb3b3';
     const foot2=document.createElement('div');foot2.className='dr-foot2';
-    [{txt:'누 계',style:'text-align:center;font-family:var(--fn);color:#fff'},
+    [{txt:'연누계',style:'text-align:center;font-family:var(--fn);color:#fff;font-size:11px'},
      {txt:'',style:'font-family:var(--fn)'},
-     {txt:crInc?fmtN(crInc):'—',style:'text-align:right;color:#fff'},
-     {txt:fmtN(cuTall),style:'text-align:right;color:#fff'},
-     {txt:fmtN(crInc-cuTall),style:'text-align:right;font-weight:800;color:'+cuBalColor},
+     {txt:yearIncTotal?fmtN(yearIncTotal):'—',style:'text-align:right;color:#fff'},
+     {txt:fmtN(yearExpTotal),style:'text-align:right;color:#fff'},
+     {txt:fmtN(yearBal),style:'text-align:right;font-weight:800;color:'+cuBalColor},
      {txt:'',style:'color:#fff'}
     ].forEach(function(col){
       const dc=document.createElement('div');dc.className='dc';
@@ -2535,6 +2636,26 @@ window.renderDeptReport=function(){
     container.appendChild(card);
   });
 }
+
+// ── 상단 행 업데이트/삭제 (deptTopRows) ──────────────────────
+window.updateDeptTopRow=function(dept,ym,rowId,field,value){
+  const key='deptTopRows_'+ym+'_'+dept;
+  const rows=ST.get(key,[]);
+  const idx=rows.findIndex(function(r){return r.id===rowId;});
+  if(idx<0) return;
+  rows[idx][field]=value;
+  ST.set(key,rows);
+  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+};
+
+window.deleteDeptTopRow=function(dept,ym,rowId){
+  const key='deptTopRows_'+ym+'_'+dept;
+  const rows=ST.get(key,[]).filter(function(r){return r.id!==rowId;});
+  ST.set(key,rows);
+  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+  renderDeptReport();
+};
+
 window.toggleDeptVisibility=function(dept,ym){
   const key='hiddenDepts_'+ym;
   const hidden=ST.get(key,[]);
@@ -2546,9 +2667,10 @@ window.toggleDeptVisibility=function(dept,ym){
 };
 
 window.addDeptRowTop=function(dept,ym){
-  const key='deptCustomRows_'+ym+'_'+dept;
+  // DB 행 '위'에 표시되는 상단 전용 저장소
+  const key='deptTopRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]);
-  rows.unshift({id:uid(),date:ym+'-01',content:'',income:0,amount:0,memo:''});
+  rows.push({id:uid(),date:ym+'-01',content:'',income:0,amount:0,memo:''});
   ST.set(key,rows);
   renderDeptReport();
 };
@@ -2594,24 +2716,33 @@ window.deleteDeptRow=function(dept,ym,id){
 // ============================================================
 function initOnlineTab(){
   const books=getOfferings();
-  const ONLINE_TYPES=['십일조헌금','비전헌금'];
-  const onlineBooks=books.filter(e=>e.online==='온라인입금'&&ONLINE_TYPES.includes(e.type));
+  // isOnlinePayment 헬퍼로 전체 온라인입금 인식 (true/TRUE/'true'/온라인입금 모두)
+  const onlineBooks=books.filter(e=>isOnlinePayment(e));
   const dates=[...new Set(onlineBooks.map(e=>e.date))].sort().reverse();
   const fd=document.getElementById('online-fdate');
   if(fd) fd.innerHTML='<option value="">전체</option>'+dates.map(d=>`<option>${d}</option>`).join('');
-  // stats
+  // 헌금유형 필터 옵션도 전체 온라인 유형으로 채우기
+  const ft=document.getElementById('online-ftype');
+  if(ft){
+    const types=[...new Set(onlineBooks.map(e=>e.type))].sort();
+    ft.innerHTML='<option value="">전체 (십일조+비전)</option>'+types.map(t=>`<option>${t}</option>`).join('');
+  }
+  // 통계박스: 십일조/비전 + 합계 + 성도수
   const tijoTotal=onlineBooks.filter(e=>e.type==='십일조헌금').reduce((s,e)=>s+e.amount,0);
   const visionTotal=onlineBooks.filter(e=>e.type==='비전헌금').reduce((s,e)=>s+e.amount,0);
+  const allTotal=onlineBooks.reduce((s,e)=>s+e.amount,0);
   const sw=document.getElementById('online-stats-wrap');
   if(sw) sw.innerHTML=`
     <div class="stat blue"><div class="stat-lbl">십일조 온라인입금</div><div class="stat-val">${fmtN(tijoTotal)}</div><div class="stat-sub">원 (${onlineBooks.filter(e=>e.type==='십일조헌금').length}건)</div></div>
     <div class="stat navy"><div class="stat-lbl">비전헌금 온라인입금</div><div class="stat-val">${fmtN(visionTotal)}</div><div class="stat-sub">원 (${onlineBooks.filter(e=>e.type==='비전헌금').length}건)</div></div>
-    <div class="stat green"><div class="stat-lbl">온라인 합계</div><div class="stat-val">${fmtN(tijoTotal+visionTotal)}</div><div class="stat-sub">원 (${onlineBooks.length}건)</div></div>
+    <div class="stat green"><div class="stat-lbl">온라인 합계</div><div class="stat-val">${fmtN(allTotal)}</div><div class="stat-sub">원 (${onlineBooks.length}건)</div></div>
     <div class="stat gold"><div class="stat-lbl">성도 수</div><div class="stat-val">${[...new Set(onlineBooks.map(e=>e.name))].length}</div><div class="stat-sub">명</div></div>`;
+  // 자동 조회
+  doOnlineSearch();
 }
 window.doOnlineSearch=function(){
-  const ONLINE_TYPES=['십일조헌금','비전헌금'];
-  let books=getOfferings().filter(e=>e.online==='온라인입금'&&ONLINE_TYPES.includes(e.type));
+  // 온라인입금 전체 (모든 헌금유형, isOnlinePayment 헬퍼 사용)
+  let books=getOfferings().filter(e=>isOnlinePayment(e));
   const df=document.getElementById('online-fdate')?.value||'';
   const tf=document.getElementById('online-ftype')?.value||'';
   const nf=(document.getElementById('online-fname')?.value||'').trim();
@@ -2635,7 +2766,7 @@ window.doOnlineSearch=function(){
   const ft=document.getElementById('online-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
   const tot=document.getElementById('online-total');if(tot) tot.textContent=`${fmtN(total)}원 (${books.length}건)`;
   const cnt=document.getElementById('online-count');if(cnt) cnt.textContent=`${books.length}건`;
-  // Sub tables by type
+  // 헌금유형별 소계 (십일조/비전 기존 DOM 유지 + 동적 생성)
   const tijoBooks=books.filter(e=>e.type==='십일조헌금');
   const visionBooks=books.filter(e=>e.type==='비전헌금');
   const tijoTot=tijoBooks.reduce((s,e)=>s+e.amount,0);
@@ -2652,6 +2783,27 @@ window.doOnlineSearch=function(){
     <td class="nc" style="font-weight:700">${fmtN(e.amount)}</td><td>${e.memo||'—'}</td></tr>`).join('')
     ||`<tr><td colspan="4" class="tbl-empty">데이터 없음</td></tr>`;
   const vt=document.getElementById('online-vision-total');if(vt) vt.textContent=fmtN(visTot)+'원';
+  // 기타 헌금유형 동적 렌더링
+  const otherTypes=[...new Set(books.filter(e=>e.type!=='십일조헌금'&&e.type!=='비전헌금').map(e=>e.type))];
+  const otherWrap=document.getElementById('online-other-wrap');
+  if(otherWrap){
+    if(!otherTypes.length){otherWrap.innerHTML='';return;}
+    otherWrap.innerHTML=otherTypes.map(type=>{
+      const tb=books.filter(e=>e.type===type);
+      const tot=tb.reduce((s,e)=>s+e.amount,0);
+      return `<div class="card" style="flex:1;min-width:220px">
+        <div class="card-hd"><div class="card-title">${type} — 온라인입금</div>
+          <span style="font-family:var(--fnum);font-weight:700;color:var(--blue)">${fmtN(tot)}원</span></div>
+        <div class="tbl-wrap"><table class="tbl">
+          <thead><tr><th>날짜</th><th>성도명</th><th class="nc">금액(원)</th><th>비고</th></tr></thead>
+          <tbody>${tb.map(e=>`<tr>
+            <td style="font-family:var(--fnum)">${e.date}</td><td>${e.name}</td>
+            <td class="nc" style="font-weight:700">${fmtN(e.amount)}</td><td>${e.memo||'—'}</td></tr>`).join('')
+            ||`<tr><td colspan="4" class="tbl-empty">데이터 없음</td></tr>`}
+          </tbody>
+        </table></div></div>`;
+    }).join('');
+  }
   const res=document.getElementById('online-result');if(res) res.classList.add('show');
 };
 window.resetOnlineSearch=function(){
@@ -2846,10 +2998,16 @@ function getTypeColorIdx(type){
   }
   return _typeColorMap[type];
 }
+// 온라인입금 여부 판단 (중앙 헬퍼 - 모든 곳에서 사용)
+function isOnlinePayment(e){
+  const v=e.online;
+  return v===true||v==='TRUE'||v==='true'||v==='1'||v==='온라인입금'||String(v).toLowerCase()==='true';
+}
 function getOnlineBadge(e){
-  const isOnline=e.online===true||e.online==='TRUE'||e.online==='true';
+  const v=e.online;
+  const isOnline=v===true||v==='TRUE'||v==='true'||v==='1'||String(v).toLowerCase()==='true';
   return isOnline
-    ? '<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #90caf9">🌐 온라인</span>'
+    ? '<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #90caf9">🌐 온라인입금</span>'
     : '<span style="background:#f1f8e9;color:#33691e;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #aed581">🏛 현장</span>';
 }
 function populateTypeSelect(selId){
@@ -2871,8 +3029,8 @@ window.doQuerySearch=function(){
   if(df) books=books.filter(e=>e.date===df);
   if(nf) books=books.filter(e=>e.name?.includes(nf));
   if(tf) books=books.filter(e=>e.type===tf);
-  if(onf==='online')  books=books.filter(e=>e.online===true||e.online==='TRUE'||e.online==='true');
-  if(onf==='offline') books=books.filter(e=>!e.online||e.online===false||e.online==='FALSE'||e.online==='false');
+  if(onf==='online')  books=books.filter(e=>e.online===true||e.online==='TRUE'||e.online==='true'||e.online==='온라인입금'||e.online==='1');
+  if(onf==='offline') books=books.filter(e=>!e.online||e.online===false||e.online==='FALSE'||e.online==='false'||e.online==='현금입금');
   // 헌금구분 내림차순 → 성도성명 내림차순
   books.sort((a,b)=>{
     const tc=(b.type||'').localeCompare(a.type||'','ko');
@@ -2890,7 +3048,7 @@ window.doQuerySearch=function(){
       <td><span class="off-color-badge off-color-${ci}">${e.type}</span></td>
       <td>${e.name}</td>
       <td class="nc" style="font-weight:700">${fmtN(e.amount)}</td>
-      <td>${getOnlineBadge(e)}</td>
+      <td>${isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #90caf9">🌐 온라인입금</span>':''}</td>
       <td>${e.memo||'—'}</td></tr>`;
   }).join('')||`<tr><td colspan="8" class="tbl-empty">데이터가 없습니다</td></tr>`;
   const tb=document.getElementById('qry-total-badge');
@@ -2921,8 +3079,8 @@ window.doWeeklySearch=function(){
   if(df) books=books.filter(e=>e.date===df);
   if(nf) books=books.filter(e=>e.name?.includes(nf));
   if(tf) books=books.filter(e=>e.type===tf);
-  if(onf==='online')  books=books.filter(e=>e.online===true||e.online==='TRUE'||e.online==='true');
-  if(onf==='offline') books=books.filter(e=>!e.online||e.online===false||e.online==='FALSE'||e.online==='false');
+  if(onf==='online')  books=books.filter(e=>e.online===true||e.online==='TRUE'||e.online==='true'||e.online==='온라인입금'||e.online==='1');
+  if(onf==='offline') books=books.filter(e=>!e.online||e.online===false||e.online==='FALSE'||e.online==='false'||e.online==='현금입금');
   // 헌금구분 내림차순 → 성도성명 내림차순
   books.sort((a,b)=>{
     const tc=(b.type||'').localeCompare(a.type||'','ko');
@@ -2938,7 +3096,7 @@ window.doWeeklySearch=function(){
       <td style="font-family:var(--fnum)">${fmtMD(e.date)}(${dayKor(e.date)})</td>
       <td><span class="off-color-badge off-color-${ci}">${e.type}</span></td>
       <td>${e.name}</td>
-      <td>${getOnlineBadge(e)}</td>
+      <td>${isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #90caf9">🌐 온라인입금</span>':''}</td>
       <td>${e.memo||'—'}</td></tr>`;
   }).join('')||`<tr><td colspan="7" class="tbl-empty">데이터가 없습니다</td></tr>`;
   const res=document.getElementById('wky-result');if(res) res.classList.add('show');
@@ -3155,7 +3313,13 @@ window.dmLoadOfferings=function(){
   if(to) data=data.filter(e=>e.date<=to);
   if(type) data=data.filter(e=>e.type===type);
   if(name) data=data.filter(e=>e.name?.includes(name));
-  if(online) data=data.filter(e=>e.online===online);
+  if(online){
+    data=data.filter(function(e){
+      const ov=e.online;
+      const norm=(ov===true||ov==='TRUE'||ov==='true'||ov==='1'||ov==='온라인입금'||String(ov).toLowerCase()==='true')?'온라인입금':'현금입금';
+      return norm===online;
+    });
+  }
   data.sort((a,b)=>b.date.localeCompare(a.date));
   const total=data.reduce((s,e)=>s+e.amount,0);
   const allOffTypes=getOffTypes();
@@ -3201,7 +3365,19 @@ window.dmLoadOfferings=function(){
         const t5=document.createElement('td');
         const selOnl=document.createElement('select');
         selOnl.style.cssText='border:none;background:transparent;font-size:11px;width:100%';
-        ['현금입금','온라인입금'].forEach(function(v){const o=document.createElement('option');o.value=v;o.textContent=v;if(v===e.online)o.selected=true;selOnl.appendChild(o);});
+        // online 값 정규화: true/'TRUE'/'true' → '온라인입금'
+        const onlineNorm=(function(v){
+          if(v===true||v==='TRUE'||v==='true'||v==='1'||String(v).toLowerCase()==='true') return '온라인입금';
+          if(v==='온라인입금') return '온라인입금';
+          return '현금입금';
+        })(e.online);
+        // DB에 정규화된 값 저장 (true→온라인입금)
+        if(e.online!==onlineNorm){
+          const arr=getOfferings();
+          const oi=arr.findIndex(function(x){return x.id===e.id;});
+          if(oi>=0){arr[oi].online=onlineNorm;setOfferings(arr);}
+        }
+        ['현금입금','온라인입금'].forEach(function(v){const o=document.createElement('option');o.value=v;o.textContent=v;if(v===onlineNorm)o.selected=true;selOnl.appendChild(o);});
         selOnl.addEventListener('change',function(){dmUpdateOff(e.id,'online',this.value);});
         t5.appendChild(selOnl);tr.appendChild(t5);
         // 비고
@@ -3860,7 +4036,7 @@ function validateAndParse(wb, fileName){
         const amount=parseN(String(row[3]||'0'));
         const writer=String(row[4]||'').trim();
         const onlineRaw=row[5];
-        const online=onlineRaw===true||onlineRaw==='TRUE'||onlineRaw==='true'||onlineRaw==='1';
+        const online=onlineRaw===true||onlineRaw==='TRUE'||onlineRaw==='true'||onlineRaw==='1'||String(onlineRaw).toLowerCase()==='true';
         const etcDate=normalizeDate(row[6]);
         const interestRaw=row[7];
         const interest=(interestRaw===false||interestRaw===0||!interestRaw)?0:parseN(String(interestRaw));
@@ -4038,7 +4214,12 @@ window.confirmExcelUpload=function(){
 
   if(offering.length){
     const arr=getOfferings();
-    offering.forEach(r=>arr.push(r));
+    offering.forEach(r=>{
+      // online 필드 boolean 정규화
+      const ov=r.online;
+      r.online=(ov===true||ov==='TRUE'||ov==='true'||ov==='1'||String(ov).toLowerCase()==='true');
+      arr.push(r);
+    });
     setOfferings(arr);
   }
   if(expense.length){
