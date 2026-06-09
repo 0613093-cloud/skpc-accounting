@@ -1098,73 +1098,85 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
         </div>
       </div>
 
-      <!-- ★ 엑셀 불러오기 -->
-      <div class="card-title" style="font-size:13px;margin-bottom:8px">📥 엑셀에서 불러오기</div>
-      <div class="alert alert-warn" style="margin-bottom:10px">⚠️ 기존 데이터에 <strong>추가</strong>됩니다. 덮어쓰기 원하면 아래 삭제 후 불러오세요.</div>
-      <div class="flex gap8" style="flex-wrap:wrap;margin-bottom:10px">
-        <button class="btn btn-navy" onclick="document.getElementById('imp-excel').click()">📂 엑셀 파일 업로드 (.xlsx)</button>
-        <button class="btn btn-outline" onclick="importData()">📂 JSON 불러오기</button>
-      </div>
-      <input type="file" id="imp-excel" accept=".xlsx,.xls" class="hidden" onchange="importExcel(event)">
-      <input type="file" id="import-file" accept=".json" class="hidden" onchange="doImport(event)">
+      <!-- ★ 엑셀 불러오기 - 3단계 UX -->
+      <div class="card-title" style="font-size:13px;margin-bottom:10px;padding-top:4px;border-top:1px solid var(--border,#e2e8f0)">📥 엑셀 파일 업로드</div>
 
-      <!-- 불러오기 결과 미리보기 -->
-      <div id="excel-import-preview" class="hidden"></div>
-
-      <!-- 엑셀 양식 안내 -->
-      <div class="card-title" style="font-size:13px;margin-top:18px;margin-bottom:8px">📋 엑셀 양식 안내 (실제 사용 중인 양식 그대로 사용 가능)</div>
-      <div style="display:flex;gap:6px;margin-bottom:8px;border-bottom:1px solid var(--border,#e2e8f0);padding-bottom:0">
-        <div id="fmt-tab-off" onclick="switchFmtTab('off')" style="padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--navy,#1a2456);color:var(--navy,#1a2456);margin-bottom:-1px">헌금내역</div>
-        <div id="fmt-tab-exp" onclick="switchFmtTab('exp')" style="padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#888;margin-bottom:-1px">지출내역</div>
-        <div id="fmt-tab-spon" onclick="switchFmtTab('spon')" style="padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#888;margin-bottom:-1px">찬조내역</div>
+      <!-- STEP 1: 파일 선택 -->
+      <div id="imp-step1" style="border:2px dashed var(--border,#e2e8f0);border-radius:12px;padding:24px;text-align:center;background:#fafbff;cursor:pointer;transition:all .2s" onclick="document.getElementById('imp-excel').click()" onmouseover="this.style.borderColor='var(--navy,#1a2456)'" onmouseout="document.getElementById('imp-step1').style.borderColor='var(--border,#e2e8f0)'">
+        <div style="font-size:36px;margin-bottom:8px">📂</div>
+        <div style="font-size:13px;font-weight:700;color:var(--navy,#1a2456);margin-bottom:4px">엑셀 파일을 클릭하여 선택하세요</div>
+        <div style="font-size:11px;color:#888">헌금내역.xlsx · 지출내역.xlsx · 찬조내역.xlsx 지원</div>
+        <input type="file" id="imp-excel" accept=".xlsx,.xls" style="display:none" onchange="handleExcelSelect(event)">
       </div>
-      <div id="fmt-body-off" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:#f0f4ff"><th style="padding:7px 10px;border:1px solid #dde">열</th><th style="padding:7px 10px;border:1px solid #dde">헤더명</th><th style="padding:7px 10px;border:1px solid #dde">예시</th><th style="padding:7px 10px;border:1px solid #dde">필수</th><th style="padding:7px 10px;border:1px solid #dde">저장 위치</th></tr></thead>
-        <tbody>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">A</td><td style="padding:6px 10px;border:1px solid #eee">일자</td><td style="padding:6px 10px;border:1px solid #eee">2026-01-04</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">날짜</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">B</td><td style="padding:6px 10px;border:1px solid #eee">구분</td><td style="padding:6px 10px;border:1px solid #eee">감사헌금</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">헌금유형</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">C</td><td style="padding:6px 10px;border:1px solid #eee">성도성명</td><td style="padding:6px 10px;border:1px solid #eee">홍길동</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">이름</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">D</td><td style="padding:6px 10px;border:1px solid #eee">금액</td><td style="padding:6px 10px;border:1px solid #eee">100000</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">금액</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">E</td><td style="padding:6px 10px;border:1px solid #eee">작성자</td><td style="padding:6px 10px;border:1px solid #eee">하태식</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">메모에 저장</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">F</td><td style="padding:6px 10px;border:1px solid #eee">온라인 송금여부</td><td style="padding:6px 10px;border:1px solid #eee">TRUE / FALSE</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">online 필드</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">G</td><td style="padding:6px 10px;border:1px solid #eee">기타일자</td><td style="padding:6px 10px;border:1px solid #eee">2026-01-01</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">자동 처리</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">H</td><td style="padding:6px 10px;border:1px solid #eee">이자및기타</td><td style="padding:6px 10px;border:1px solid #eee">5000</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">메모에 추가</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">I</td><td style="padding:6px 10px;border:1px solid #eee">기타사유</td><td style="padding:6px 10px;border:1px solid #eee">메모내용</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">메모에 저장</td></tr>
-        </tbody>
-      </table></div>
-      <div id="fmt-body-exp" class="hidden" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:#f0f4ff"><th style="padding:7px 10px;border:1px solid #dde">열</th><th style="padding:7px 10px;border:1px solid #dde">헤더명</th><th style="padding:7px 10px;border:1px solid #dde">예시</th><th style="padding:7px 10px;border:1px solid #dde">필수</th><th style="padding:7px 10px;border:1px solid #dde">저장 위치</th></tr></thead>
-        <tbody>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">A</td><td style="padding:6px 10px;border:1px solid #eee">일자</td><td style="padding:6px 10px;border:1px solid #eee">2026-01-04</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">날짜</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">B</td><td style="padding:6px 10px;border:1px solid #eee">부서</td><td style="padding:6px 10px;border:1px solid #eee">친교부</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">부서</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">C</td><td style="padding:6px 10px;border:1px solid #eee">금액</td><td style="padding:6px 10px;border:1px solid #eee">359900</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">금액</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">D</td><td style="padding:6px 10px;border:1px solid #eee">요청자</td><td style="padding:6px 10px;border:1px solid #eee">유치주</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">메모에 저장</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">E</td><td style="padding:6px 10px;border:1px solid #eee">수취자명</td><td style="padding:6px 10px;border:1px solid #eee">박혜숙</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">수취자</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">F</td><td style="padding:6px 10px;border:1px solid #eee">내용</td><td style="padding:6px 10px;border:1px solid #eee">식당부식 및 식자재</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">지출항목</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">G</td><td style="padding:6px 10px;border:1px solid #eee">입금계좌</td><td style="padding:6px 10px;border:1px solid #eee">농협 302-0285-454671</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">계좌번호 자동저장</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">H</td><td style="padding:6px 10px;border:1px solid #eee">현금지급</td><td style="padding:6px 10px;border:1px solid #eee">TRUE / FALSE</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">TRUE=현금, FALSE=이체</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">I</td><td style="padding:6px 10px;border:1px solid #eee">이자및기타</td><td style="padding:6px 10px;border:1px solid #eee">1000</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">메모에 추가</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">J</td><td style="padding:6px 10px;border:1px solid #eee">지급일</td><td style="padding:6px 10px;border:1px solid #eee">2026-01-05</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">메모에 추가</td></tr>
-        </tbody>
-      </table></div>
-      <div id="fmt-body-spon" class="hidden" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:#f0f4ff"><th style="padding:7px 10px;border:1px solid #dde">열</th><th style="padding:7px 10px;border:1px solid #dde">헤더명</th><th style="padding:7px 10px;border:1px solid #dde">예시</th><th style="padding:7px 10px;border:1px solid #dde">필수</th><th style="padding:7px 10px;border:1px solid #dde">저장 위치</th></tr></thead>
-        <tbody>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">A</td><td style="padding:6px 10px;border:1px solid #eee">일자</td><td style="padding:6px 10px;border:1px solid #eee">2026-01-15</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">날짜</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">B</td><td style="padding:6px 10px;border:1px solid #eee">구분(찬조유형)</td><td style="padding:6px 10px;border:1px solid #eee">교육부찬조</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">찬조유형</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">C</td><td style="padding:6px 10px;border:1px solid #eee">성도성명</td><td style="padding:6px 10px;border:1px solid #eee">홍길동</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">이름</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">D</td><td style="padding:6px 10px;border:1px solid #eee">금액</td><td style="padding:6px 10px;border:1px solid #eee">200000</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center">✅</td><td style="padding:6px 10px;border:1px solid #eee">금액</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">E</td><td style="padding:6px 10px;border:1px solid #eee">부서</td><td style="padding:6px 10px;border:1px solid #eee">총무부</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">부서</td></tr>
-          <tr><td style="padding:6px 10px;border:1px solid #eee;text-align:center">F</td><td style="padding:6px 10px;border:1px solid #eee">비고</td><td style="padding:6px 10px;border:1px solid #eee">메모내용</td><td style="padding:6px 10px;border:1px solid #eee;text-align:center"></td><td style="padding:6px 10px;border:1px solid #eee">메모</td></tr>
-        </tbody>
-      </table></div>
+
+      <!-- STEP 2: 검증 중 (숨김) -->
+      <div id="imp-step2" style="display:none;border-radius:12px;padding:20px;background:#f8f9ff;border:1.5px solid var(--border,#e2e8f0);margin-top:10px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div id="imp-spinner" style="width:24px;height:24px;border:3px solid #e2e8f0;border-top-color:var(--navy,#1a2456);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>
+          <div>
+            <div id="imp-step2-title" style="font-size:13px;font-weight:700;color:var(--navy,#1a2456)">파일 분석 중...</div>
+            <div id="imp-filename" style="font-size:11px;color:#888;margin-top:2px"></div>
+          </div>
+        </div>
+        <div id="imp-progress-wrap" style="background:#e9ecef;border-radius:4px;height:6px;overflow:hidden">
+          <div id="imp-progress-bar" style="height:100%;width:0%;background:var(--navy,#1a2456);border-radius:4px;transition:width .4s ease"></div>
+        </div>
+        <div id="imp-progress-msg" style="font-size:11px;color:#888;margin-top:6px">양식 확인 중...</div>
+      </div>
+
+      <!-- STEP 3: 검증 결과 (숨김) -->
+      <div id="imp-step3" style="display:none;margin-top:10px">
+        <!-- 검증 결과 카드 -->
+        <div id="imp-result-card" style="border-radius:12px;padding:16px;border:2px solid #e2e8f0">
+          <div id="imp-result-header" style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div id="imp-result-icon" style="font-size:28px"></div>
+            <div>
+              <div id="imp-result-title" style="font-size:14px;font-weight:700"></div>
+              <div id="imp-result-sub" style="font-size:11px;color:#888;margin-top:2px"></div>
+            </div>
+          </div>
+          <!-- 시트별 검증 결과 -->
+          <div id="imp-sheet-results" style="margin-bottom:12px"></div>
+          <!-- 경고/오류 목록 -->
+          <div id="imp-warnings" style="margin-bottom:12px"></div>
+          <!-- 데이터 미리보기 -->
+          <div id="imp-preview-table" style="margin-bottom:12px"></div>
+        </div>
+
+        <!-- 확인 완료 버튼 -->
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button id="imp-confirm-btn"
+            onclick="confirmExcelUpload()"
+            disabled
+            style="padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;border:none;cursor:not-allowed;background:#ccc;color:#fff;transition:all .3s;display:flex;align-items:center;gap:8px">
+            <span id="imp-confirm-icon">⏳</span>
+            <span id="imp-confirm-text">검증 대기 중...</span>
+          </button>
+          <button onclick="resetExcelUpload()" style="padding:11px 16px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;border:1.5px solid var(--border,#e2e8f0);background:#fff;cursor:pointer;color:#666">
+            🔄 다시 선택
+          </button>
+          <div id="imp-confirm-hint" style="font-size:11px;color:#888"></div>
+        </div>
+      </div>
+
+      <!-- 업로드 완료 결과 -->
+      <div id="imp-done" style="display:none;margin-top:10px"></div>
+
+      <!-- JSON 불러오기 -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border,#e2e8f0)">
+        <div class="card-title" style="font-size:12px;margin-bottom:8px;color:#888">🗂️ JSON 백업 불러오기</div>
+        <button class="btn btn-outline" onclick="importData()">📂 JSON 파일 선택</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)">
+      </div>
 
       <!-- 삭제 섹션 -->
-      <div class="card-title" style="font-size:13px;margin-top:20px;margin-bottom:8px;color:#e74c3c">🗑️ 전체 삭제</div>
-      <div class="alert alert-warn" style="margin-bottom:8px">⚠️ 삭제는 되돌릴 수 없습니다.</div>
-      <div class="flex gap8">
-        <button class="btn btn-red" onclick="clearOffering()">헌금 전체삭제</button>
-        <button class="btn btn-red" onclick="clearExpense()">지출 전체삭제</button>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border,#e2e8f0)">
+        <div class="card-title" style="font-size:12px;margin-bottom:8px;color:#e74c3c">🗑️ 전체 삭제</div>
+        <div style="background:#fff8e1;padding:10px 12px;border-radius:7px;border-left:3px solid #f0c040;font-size:11px;margin-bottom:8px">⚠️ 삭제는 되돌릴 수 없습니다.</div>
+        <div class="flex gap8">
+          <button class="btn btn-red" onclick="clearOffering()">헌금 전체삭제</button>
+          <button class="btn btn-red" onclick="clearExpense()">지출 전체삭제</button>
+        </div>
       </div>
     </div>
   </div>
@@ -3150,11 +3162,21 @@ window.doImport=function(ev){
   reader.readAsText(file);
 };
 
+
 // ============================================================
-// ★★★ EXCEL EXPORT FUNCTIONS ★★★
+// ★★★ EXCEL EXPORT / IMPORT (실제 양식 완전 대응) ★★★
 // ============================================================
 
-// 날짜 정규화
+// spin 애니메이션 스타일 (한 번만 삽입)
+(function(){
+  if(document.getElementById('skpc-spin-style')) return;
+  const s=document.createElement('style');
+  s.id='skpc-spin-style';
+  s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+  document.head.appendChild(s);
+})();
+
+// ── 날짜 정규화 ──────────────────────────────────────────────
 function normalizeDate(v){
   if(!v) return '';
   if(v instanceof Date){
@@ -3167,10 +3189,10 @@ function normalizeDate(v){
   return s;
 }
 
-// 컬럼 너비 설정
+// ── 컬럼 너비 ────────────────────────────────────────────────
 function setColWidths(ws,widths){ws['!cols']=widths.map(w=>({wch:w}));}
 
-// 헌금 시트 데이터 구성 (실제 헌금내역 양식)
+// ── 시트 데이터 빌더 ─────────────────────────────────────────
 function buildOfferingSheet(){
   const arr=getOfferings();
   const rows=[
@@ -3180,35 +3202,29 @@ function buildOfferingSheet(){
     ['일자','구분','성도성명','금액','작성자','온라인 송금여부','기타일자','이자및기타','기타사유']
   ];
   arr.forEach(r=>{
-    const online=r.online===true||r.online==='TRUE'||r.online==='true'?'TRUE':'FALSE';
-    const memo=r.memo||r.reason||'';
-    rows.push([r.date||'',r.type||'',r.name||'',Number(r.amount||0),r.sheet||'',online,'',0,memo]);
+    const online=r.online===true||r.online==='TRUE'||r.online==='true';
+    rows.push([r.date||'',r.type||'',r.name||'',Number(r.amount||0),r.sheet||r.writer||'',online,r.etcDate||'',r.interest||0,r.memo||r.reason||'']);
   });
   rows.push([]);
   rows.push(['합 계','','',arr.reduce((s,r)=>s+Number(r.amount||0),0),'','','','','']);
   return rows;
 }
-
-// 지출 시트 데이터 구성 (실제 지출내역 양식)
 function buildExpenseSheet(){
   const arr=getExpenses();
   const rows=[
     ['서부광성교회 지출내역'],
     ['내보내기: '+new Date().toLocaleString('ko-KR')+'  /  총 '+arr.length+'건'],
     [],
-    ['일자','부서','금액','요청자','수취자명','내용','입금계좌','현금지급','이자및기타','지급일']
+    ['일자','부서','금액','요청자','수취자명','내용','입금계좌','','현금지급','이자및기타','지급일']
   ];
   arr.forEach(r=>{
-    const cashPay=(r.transfer==='현금'||r.transfer==='cash')?'TRUE':'FALSE';
-    const requester=r.requester||r.memo||'';
-    rows.push([r.date||'',r.dept||'',Number(r.amount||0),requester,r.recip||'',r.item||'',r.acc||'',cashPay,0,r.payDate||'']);
+    const cashPay=(r.transfer==='현금');
+    rows.push([r.date||'',r.dept||'',Number(r.amount||0),r.requester||'',r.recip||'',r.item||'',r.acc||'','',cashPay,r.interest||0,r.payDate||'']);
   });
   rows.push([]);
-  rows.push(['합 계','',arr.reduce((s,r)=>s+Number(r.amount||0),0),'','','','','','','']);
+  rows.push(['합 계','',arr.reduce((s,r)=>s+Number(r.amount||0),0),'','','','','','','','']);
   return rows;
 }
-
-// 찬조 시트 데이터 구성
 function buildSponsorSheet(){
   const arr=getSponsors();
   const rows=[
@@ -3224,244 +3240,480 @@ function buildSponsorSheet(){
   rows.push(['합 계','','',arr.reduce((s,r)=>s+Number(r.amount||0),0),'','']);
   return rows;
 }
-
-// 요약 시트
 function buildSummarySheet(){
   const offs=getOfferings(),exps=getExpenses(),spons=getSponsors();
   const tOff=offs.reduce((s,r)=>s+Number(r.amount||0),0);
   const tExp=exps.reduce((s,r)=>s+Number(r.amount||0),0);
   const tSpon=spons.reduce((s,r)=>s+Number(r.amount||0),0);
-  const offByType={};
-  offs.forEach(r=>{if(!offByType[r.type])offByType[r.type]=0;offByType[r.type]+=Number(r.amount||0);});
-  const expByDept={};
-  exps.forEach(r=>{if(!expByDept[r.dept])expByDept[r.dept]=0;expByDept[r.dept]+=Number(r.amount||0);});
-  const rows=[
-    ['서부광성교회 회계 요약'],
-    ['내보내기: '+new Date().toLocaleString('ko-KR')],
-    [],
+  const byType={};offs.forEach(r=>{if(!byType[r.type])byType[r.type]=0;byType[r.type]+=Number(r.amount||0);});
+  const byDept={};exps.forEach(r=>{if(!byDept[r.dept])byDept[r.dept]=0;byDept[r.dept]+=Number(r.amount||0);});
+  return[
+    ['서부광성교회 회계 요약'],['내보내기: '+new Date().toLocaleString('ko-KR')],[],
     ['구분','총 건수','총 금액','비고'],
-    ['헌금 합계',offs.length,tOff,''],
-    ['지출 합계',exps.length,tExp,''],
-    ['찬조 합계',spons.length,tSpon,''],
-    ['수지 차액(헌금+찬조-지출)','',tOff+tSpon-tExp,''],
-    [],
-    ['◆ 헌금유형별 집계'],
-    ['헌금유형','금액','건수',''],
-    ...Object.entries(offByType).sort((a,b)=>b[1]-a[1]).map(([t,s])=>[t,s,offs.filter(r=>r.type===t).length,'']),
-    [],
-    ['◆ 부서별 지출 집계'],
-    ['부서','금액','건수',''],
-    ...Object.entries(expByDept).sort((a,b)=>b[1]-a[1]).map(([t,s])=>[t,s,exps.filter(r=>r.dept===t).length,''])
+    ['헌금 합계',offs.length,tOff,''],['지출 합계',exps.length,tExp,''],
+    ['찬조 합계',spons.length,tSpon,''],['수지 차액(헌금+찬조-지출)','',tOff+tSpon-tExp,''],
+    [],['◆ 헌금유형별 집계'],['헌금유형','금액','건수',''],
+    ...Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,s])=>[t,s,offs.filter(r=>r.type===t).length,'']),
+    [],['◆ 부서별 지출 집계'],['부서','금액','건수',''],
+    ...Object.entries(byDept).sort((a,b)=>b[1]-a[1]).map(([t,s])=>[t,s,exps.filter(r=>r.dept===t).length,''])
   ];
-  return rows;
 }
 
+// ── 내보내기 함수 ────────────────────────────────────────────
 window.exportExcelAll=function(){
-  if(typeof XLSX==='undefined'){alert('엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
+  if(typeof XLSX==='undefined'){alert('라이브러리 로딩 중입니다. 잠시 후 시도하세요.');return;}
   const wb=XLSX.utils.book_new();
-  const wsOff=XLSX.utils.aoa_to_sheet(buildOfferingSheet());
-  setColWidths(wsOff,[12,16,14,14,10,16,12,12,24]);
-  XLSX.utils.book_append_sheet(wb,wsOff,'헌금내역');
-  const wsExp=XLSX.utils.aoa_to_sheet(buildExpenseSheet());
-  setColWidths(wsExp,[12,12,14,10,12,26,24,10,12,12]);
-  XLSX.utils.book_append_sheet(wb,wsExp,'지출내역');
-  const wsSpon=XLSX.utils.aoa_to_sheet(buildSponsorSheet());
-  setColWidths(wsSpon,[12,16,14,14,10,24]);
-  XLSX.utils.book_append_sheet(wb,wsSpon,'찬조내역');
-  const wsSum=XLSX.utils.aoa_to_sheet(buildSummarySheet());
-  setColWidths(wsSum,[24,14,16,16]);
-  XLSX.utils.book_append_sheet(wb,wsSum,'요약');
-  const fname='SKPC_회계_전체_'+TODAY+'.xlsx';
-  XLSX.writeFile(wb,fname);
-  alert('✅ 전체 데이터를 엑셀로 내보냈습니다.\n파일명: '+fname);
-};
-
-window.exportExcelOffering=function(){
-  if(typeof XLSX==='undefined'){alert('엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(buildOfferingSheet());
-  setColWidths(ws,[12,16,14,14,10,16,12,12,24]);
-  XLSX.utils.book_append_sheet(wb,ws,'헌금내역');
-  const fname='SKPC_헌금내역_'+TODAY+'.xlsx';
-  XLSX.writeFile(wb,fname);
-  alert('✅ 헌금 데이터를 내보냈습니다.\n파일명: '+fname);
-};
-
-window.exportExcelExpense=function(){
-  if(typeof XLSX==='undefined'){alert('엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(buildExpenseSheet());
-  setColWidths(ws,[12,12,14,10,12,26,24,10,12,12]);
-  XLSX.utils.book_append_sheet(wb,ws,'지출내역');
-  const fname='SKPC_지출내역_'+TODAY+'.xlsx';
-  XLSX.writeFile(wb,fname);
-  alert('✅ 지출 데이터를 내보냈습니다.\n파일명: '+fname);
-};
-
-window.exportExcelSponsor=function(){
-  if(typeof XLSX==='undefined'){alert('엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(buildSponsorSheet());
-  setColWidths(ws,[12,16,14,14,10,24]);
+  const wo=XLSX.utils.aoa_to_sheet(buildOfferingSheet());setColWidths(wo,[12,16,14,14,10,16,12,12,24]);
+  XLSX.utils.book_append_sheet(wb,wo,'헌금내역');
+  const we=XLSX.utils.aoa_to_sheet(buildExpenseSheet());setColWidths(we,[12,12,14,10,12,26,24,4,10,12,12]);
+  XLSX.utils.book_append_sheet(wb,we,'지출내역');
+  const ws=XLSX.utils.aoa_to_sheet(buildSponsorSheet());setColWidths(ws,[12,16,14,14,10,24]);
   XLSX.utils.book_append_sheet(wb,ws,'찬조내역');
-  const fname='SKPC_찬조내역_'+TODAY+'.xlsx';
-  XLSX.writeFile(wb,fname);
-  alert('✅ 찬조 데이터를 내보냈습니다.\n파일명: '+fname);
+  const wm=XLSX.utils.aoa_to_sheet(buildSummarySheet());setColWidths(wm,[24,14,16,16]);
+  XLSX.utils.book_append_sheet(wb,wm,'요약');
+  const f='SKPC_회계_전체_'+TODAY+'.xlsx';XLSX.writeFile(wb,f);
+  alert('✅ 전체 데이터를 엑셀로 내보냈습니다.\n파일명: '+f);
+};
+window.exportExcelOffering=function(){
+  if(typeof XLSX==='undefined'){alert('라이브러리 로딩 중입니다. 잠시 후 시도하세요.');return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildOfferingSheet());setColWidths(ws,[12,16,14,14,10,16,12,12,24]);
+  XLSX.utils.book_append_sheet(wb,ws,'헌금내역');
+  const f='SKPC_헌금내역_'+TODAY+'.xlsx';XLSX.writeFile(wb,f);
+  alert('✅ 헌금 데이터를 내보냈습니다.\n파일명: '+f);
+};
+window.exportExcelExpense=function(){
+  if(typeof XLSX==='undefined'){alert('라이브러리 로딩 중입니다. 잠시 후 시도하세요.');return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildExpenseSheet());setColWidths(ws,[12,12,14,10,12,26,24,4,10,12,12]);
+  XLSX.utils.book_append_sheet(wb,ws,'지출내역');
+  const f='SKPC_지출내역_'+TODAY+'.xlsx';XLSX.writeFile(wb,f);
+  alert('✅ 지출 데이터를 내보냈습니다.\n파일명: '+f);
+};
+window.exportExcelSponsor=function(){
+  if(typeof XLSX==='undefined'){alert('라이브러리 로딩 중입니다. 잠시 후 시도하세요.');return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildSponsorSheet());setColWidths(ws,[12,16,14,14,10,24]);
+  XLSX.utils.book_append_sheet(wb,ws,'찬조내역');
+  const f='SKPC_찬조내역_'+TODAY+'.xlsx';XLSX.writeFile(wb,f);
+  alert('✅ 찬조 데이터를 내보냈습니다.\n파일명: '+f);
 };
 
 // ============================================================
-// ★★★ EXCEL IMPORT FUNCTION ★★★
-// 실제 헌금내역/지출내역 엑셀 양식 그대로 업로드 지원
+// ★ 엑셀 불러오기 - 3단계 UX
+//   1) 파일 선택  →  2) 양식 검증(로딩)  →  3) 결과+확인버튼
 // ============================================================
-window.importExcel=function(ev){
+
+// 전역: 검증 완료된 파싱 데이터 보관
+let _parsedExcelData = null;
+
+// ── UI 헬퍼 ─────────────────────────────────────────────────
+function impEl(id){ return document.getElementById(id); }
+function impShow(id){ const e=impEl(id); if(e) e.style.display=''; }
+function impHide(id){ const e=impEl(id); if(e) e.style.display='none'; }
+
+function setProgress(pct, msg){
+  const bar=impEl('imp-progress-bar');
+  const txt=impEl('imp-progress-msg');
+  if(bar) bar.style.width=pct+'%';
+  if(txt) txt.textContent=msg;
+}
+
+// ── 초기화 ──────────────────────────────────────────────────
+window.resetExcelUpload=function(){
+  _parsedExcelData=null;
+  impShow('imp-step1');
+  impHide('imp-step2');
+  impHide('imp-step3');
+  impHide('imp-done');
+  const fi=impEl('imp-excel');
+  if(fi) fi.value='';
+};
+
+// ── STEP 1→2: 파일 선택 이벤트 ──────────────────────────────
+window.handleExcelSelect=function(ev){
   const file=ev.target.files[0];
-  if(!file)return;
-  if(typeof XLSX==='undefined'){alert('엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
+  if(!file) return;
+  if(typeof XLSX==='undefined'){
+    alert('엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');
+    ev.target.value=''; return;
+  }
+
+  _parsedExcelData=null;
+
+  // STEP 1 숨기고, STEP 2 표시 (로딩 시작)
+  impHide('imp-step1');
+  impShow('imp-step2');
+  impHide('imp-step3');
+  impHide('imp-done');
+
+  const fnEl=impEl('imp-filename');
+  if(fnEl) fnEl.textContent=file.name+' ('+Math.round(file.size/1024)+'KB)';
+  const titleEl=impEl('imp-step2-title');
+  if(titleEl) titleEl.textContent='파일 읽는 중...';
+  setProgress(10,'파일 열기...');
+
+  const spinEl=impEl('imp-spinner');
+  if(spinEl) spinEl.style.display='';
+
   const reader=new FileReader();
   reader.onload=function(e){
     try{
+      setProgress(30,'양식 구조 확인 중...');
+
       const data=new Uint8Array(e.target.result);
       const wb=XLSX.read(data,{type:'array',cellDates:true});
-      let offAdded=0,expAdded=0,sponAdded=0;
-      const preview={offering:[],expense:[],sponsor:[]};
 
-      // 헤더행 탐색: 첫 컬럼이 '일자' 또는 '날짜'인 행
-      function findHeaderRow(raw){
-        for(let i=0;i<Math.min(raw.length,10);i++){
-          const row=raw[i];if(!row)continue;
-          const first=String(row[0]||'').trim();
-          if(first==='일자'||first==='날짜') return i;
-        }
-        return -1;
-      }
+      setProgress(55,'데이터 행 분석 중...');
 
-      // 시트 유형 판단
-      function detectSheetType(sheetName,headers){
-        const sn=sheetName;
-        if(sn.includes('헌금')) return 'offering';
-        if(sn.includes('지출')) return 'expense';
-        if(sn.includes('찬조')) return 'sponsor';
-        if(headers.includes('구분')&&(headers.includes('성도성명')||headers.includes('금액'))) return 'offering';
-        if(headers.includes('내용')&&headers.includes('수취자명')) return 'expense';
-        if(headers.includes('찬조유형')) return 'sponsor';
-        return null;
-      }
+      // 검증 실행
+      setTimeout(function(){
+        const result=validateAndParse(wb, file.name);
+        setProgress(85,'결과 정리 중...');
 
-      wb.SheetNames.forEach(sheetName=>{
-        const ws=wb.Sheets[sheetName];
-        const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
-        const hRow=findHeaderRow(raw);
-        if(hRow===-1) return;
-        const headers=raw[hRow].map(h=>String(h||'').trim());
-        const type=detectSheetType(sheetName,headers);
-        if(!type) return;
+        setTimeout(function(){
+          setProgress(100,'완료!');
+          if(spinEl) spinEl.style.display='none';
+          if(titleEl) titleEl.textContent='검증 완료';
 
-        // 데이터 행: 날짜 패턴 있는 행만
-        const dataRows=raw.slice(hRow+1).filter(r=>{
-          const v=r[0];
-          if(!v) return false;
-          if(v instanceof Date) return true;
-          return String(v).match(/\d{4}/);
-        });
-
-        if(type==='offering'){
-          // A:일자 B:구분 C:성도성명 D:금액 E:작성자 F:온라인송금여부 G:기타일자 H:이자및기타 I:기타사유
-          const arr=getOfferings();
-          dataRows.forEach(row=>{
-            const date=normalizeDate(row[0]);
-            const offType=String(row[1]||'').trim()||getOffTypes()[0];
-            const name=String(row[2]||'').trim();
-            const amount=parseN(String(row[3]||'0'));
-            const writer=String(row[4]||'').trim();
-            const onlineRaw=String(row[5]||'').trim();
-            const online=onlineRaw==='TRUE'||onlineRaw==='true';
-            const interest=parseN(String(row[7]||'0'));
-            const reason=String(row[8]||'').trim();
-            if(!date||!name||!amount) return;
-            let memo=reason||'';
-            if(interest) memo=(memo?memo+' / ':'')+'이자:'+fmtN(interest);
-            const item={id:uid(),date,type:offType,name,amount,online,memo,spon:false,sheet:writer,source:'excel'};
-            arr.push(item);preview.offering.push(item);offAdded++;
-          });
-          setOfferings(arr);
-        }
-        else if(type==='expense'){
-          // A:일자 B:부서 C:금액 D:요청자 E:수취자명 F:내용 G:입금계좌 H:현금지급 I:이자및기타 J:지급일
-          const arr=getExpenses();
-          dataRows.forEach(row=>{
-            const date=normalizeDate(row[0]);
-            const dept=String(row[1]||'').trim()||getDeptTypes()[0];
-            const amount=parseN(String(row[2]||'0'));
-            const requester=String(row[3]||'').trim();
-            const recip=String(row[4]||'').trim();
-            const item=String(row[5]||'').trim();
-            const acc=String(row[6]||'').trim();
-            const cashRaw=String(row[7]||'').trim();
-            const transfer=(cashRaw==='TRUE'||cashRaw==='true')?'현금':'이체';
-            const interest=parseN(String(row[8]||'0'));
-            const payDate=normalizeDate(row[9]);
-            if(!date||!item||!amount) return;
-            let memo='';
-            if(requester) memo='요청:'+requester;
-            if(interest) memo=(memo?memo+' ':'')+'이자:'+fmtN(interest);
-            if(payDate&&payDate!==date) memo=(memo?memo+' ':'')+'지급일:'+payDate;
-            const entry={id:uid(),date,dept,amount,recip,item,acc,transfer,requester,payDate,memo,source:'excel'};
-            arr.push(entry);preview.expense.push(entry);expAdded++;
-            if(recip&&acc){const r=getRecipients();r[recip]=acc;ST.set('recipients',r);}
-          });
-          setExpenses(arr);
-        }
-        else if(type==='sponsor'){
-          // A:일자 B:구분 C:성도성명 D:금액 E:부서 F:비고
-          const arr=getSponsors();
-          dataRows.forEach(row=>{
-            const date=normalizeDate(row[0]);
-            const sponType=String(row[1]||'').trim()||getSponTypes()[0];
-            const name=String(row[2]||'').trim();
-            const amount=parseN(String(row[3]||'0'));
-            const dept=String(row[4]||'').trim();
-            const memo=String(row[5]||'').trim();
-            if(!date||!name||!amount) return;
-            const entry={id:uid(),date,type:sponType,name,amount,dept,reason:memo,memo,source:'excel'};
-            arr.push(entry);preview.sponsor.push(entry);sponAdded++;
-          });
-          setSponsors(arr);
-        }
-      });
-
-      showExcelImportPreview(preview,offAdded,expAdded,sponAdded);
+          setTimeout(function(){
+            impHide('imp-step2');
+            impShow('imp-step3');
+            renderValidationResult(result);
+          },300);
+        },300);
+      },400);
 
     }catch(err){
-      console.error('Excel import error:',err);
-      alert('엑셀 파일 읽기 오류: '+err.message);
+      if(spinEl) spinEl.style.display='none';
+      if(titleEl) titleEl.textContent='오류 발생';
+      setProgress(100,'오류');
+      setTimeout(function(){
+        impHide('imp-step2');
+        impShow('imp-step3');
+        renderValidationResult({ok:false, fatal:true, fatalMsg:'파일을 읽을 수 없습니다: '+err.message, sheets:[]});
+      },200);
     }
   };
   reader.readAsArrayBuffer(file);
-  ev.target.value='';
 };
 
-function showExcelImportPreview(preview,offAdded,expAdded,sponAdded){
-  const el=document.getElementById('excel-import-preview');
-  if(!el) return;
-  el.classList.remove('hidden');
-  if(offAdded+expAdded+sponAdded===0){
-    el.innerHTML='<div style="background:#fff8e1;padding:12px;border-radius:7px;border-left:3px solid #f0c040;font-size:12px;margin-top:10px">⚠️ 불러온 데이터가 없습니다.<br>시트명에 <strong>헌금/지출/찬조</strong>가 포함되고, 첫 행 A열이 <strong>일자</strong>여야 합니다.</div>';
-    return;
-  }
-  let html='<div style="background:#e8f8f0;padding:12px;border-radius:7px;border-left:3px solid #27ae60;font-size:12px;margin-top:10px">✅ 불러오기 완료! 헌금 '+offAdded+'건 / 지출 '+expAdded+'건 / 찬조 '+sponAdded+'건 추가됨</div>';
-  function previewTable(title, rows, cols){
-    if(!rows.length) return '';
-    const hdrs=cols.map(c=>'<th style="padding:5px 8px;background:#f0f4ff;border:1px solid #dde">'+c+'</th>').join('');
-    const trs=rows.slice(-5).reverse().map(r=>'<tr>'+cols.map((_,i)=>'<td style="padding:4px 8px;border:1px solid #eee">'+(r[i]||'')+'</td>').join('')+'</tr>').join('');
-    return '<div style="margin-top:10px;font-weight:700;font-size:12px;color:#1a2456">'+title+' (최근 5건)</div><div style="overflow-x:auto;margin-top:4px"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr>'+hdrs+'</tr></thead><tbody>'+trs+'</tbody></table></div>';
-  }
-  if(preview.offering.length) html+=previewTable('헌금', preview.offering.map(r=>[r.date,r.type,r.name,fmtN(r.amount)+'원',r.memo||'']), ['날짜','유형','이름','금액','비고']);
-  if(preview.expense.length) html+=previewTable('지출', preview.expense.map(r=>[r.date,r.dept,r.item,fmtN(r.amount)+'원',r.recip||'']), ['날짜','부서','내용','금액','수취자']);
-  if(preview.sponsor.length) html+=previewTable('찬조', preview.sponsor.map(r=>[r.date,r.type,r.name,fmtN(r.amount)+'원',r.memo||'']), ['날짜','유형','이름','금액','비고']);
-  el.innerHTML=html;
+// ── 양식 검증 + 파싱 ────────────────────────────────────────
+// 지원 양식 정의
+const OFFERING_SCHEMA = {
+  type:'offering',
+  requiredHeaders:['일자','구분','성도성명','금액'],
+  allHeaders:['일자','구분','성도성명','금액','작성자','온라인 송금여부','기타일자','이자및기타','기타사유'],
+  sheetKeywords:['헌금 지출 찬조','헌금'],
+  label:'헌금내역'
+};
+const EXPENSE_SCHEMA = {
+  type:'expense',
+  requiredHeaders:['일자','부서','금액','내용'],
+  allHeaders:['일자','부서','금액','요청자','수취자명','내용','입금계좌','','현금지급','이자및기타','지급일'],
+  sheetKeywords:['Sheet1','지출'],
+  label:'지출내역'
+};
+const SPONSOR_SCHEMA = {
+  type:'sponsor',
+  requiredHeaders:['일자','구분','성도성명','금액'],
+  allHeaders:['일자','구분','성도성명','금액','부서','비고'],
+  sheetKeywords:['찬조'],
+  label:'찬조내역'
+};
+
+function detectSchema(sheetName, headers){
+  // 시트명 매칭
+  if(sheetName==='헌금 지출 찬조') return OFFERING_SCHEMA;
+  if(sheetName==='Sheet1'&&headers.includes('내용')) return EXPENSE_SCHEMA;
+  for(const kw of OFFERING_SCHEMA.sheetKeywords) if(sheetName.includes(kw)&&sheetName!=='Sheet1') return OFFERING_SCHEMA;
+  for(const kw of EXPENSE_SCHEMA.sheetKeywords)  if(sheetName.includes(kw)) return EXPENSE_SCHEMA;
+  for(const kw of SPONSOR_SCHEMA.sheetKeywords)  if(sheetName.includes(kw)) return SPONSOR_SCHEMA;
+  // 헤더로 판단
+  if(headers.includes('내용')&&headers.includes('수취자명')) return EXPENSE_SCHEMA;
+  if(headers.includes('성도성명')&&headers.includes('구분')) return OFFERING_SCHEMA;
+  if(headers.includes('찬조유형')) return SPONSOR_SCHEMA;
+  return null;
 }
 
-// 양식 탭 전환
+function validateAndParse(wb, fileName){
+  const result={ok:false, fatal:false, fatalMsg:'', fileName, sheets:[], totalRows:0, warnings:[], parsed:{offering:[],expense:[],sponsor:[]}};
+
+  if(!wb.SheetNames||wb.SheetNames.length===0){
+    result.fatal=true; result.fatalMsg='시트가 없는 파일입니다.'; return result;
+  }
+
+  let anyValid=false;
+
+  wb.SheetNames.forEach(sname=>{
+    const ws=wb.Sheets[sname];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+    const sheetResult={name:sname, status:'unknown', schema:null, errors:[], warnings:[], rowCount:0, skipped:0};
+
+    // 헤더행 탐색 (A열=일자/날짜인 행)
+    let hRow=-1;
+    for(let i=0;i<Math.min(raw.length,10);i++){
+      const first=String(raw[i]&&raw[i][0]||'').trim();
+      if(first==='일자'||first==='날짜'){hRow=i;break;}
+    }
+    if(hRow===-1){
+      sheetResult.status='skip';
+      sheetResult.errors.push('헤더행(일자 컬럼)을 찾을 수 없습니다 → 건너뜀');
+      result.sheets.push(sheetResult); return;
+    }
+
+    const headers=raw[hRow].map(h=>String(h||'').trim());
+    const schema=detectSchema(sname, headers);
+    if(!schema){
+      sheetResult.status='skip';
+      sheetResult.errors.push('헌금/지출/찬조 양식으로 인식되지 않습니다 → 건너뜀');
+      result.sheets.push(sheetResult); return;
+    }
+    sheetResult.schema=schema;
+
+    // 필수 헤더 체크
+    const missingReq=schema.requiredHeaders.filter(h=>!headers.includes(h));
+    if(missingReq.length>0){
+      sheetResult.status='error';
+      sheetResult.errors.push('필수 컬럼 누락: '+missingReq.join(', '));
+      result.sheets.push(sheetResult); return;
+    }
+
+    // 데이터 행 파싱
+    const dataRows=raw.slice(hRow+1).filter(r=>{
+      const v=r[0];
+      if(!v&&v!==0) return false;
+      if(v instanceof Date) return true;
+      return String(v).match(/\d{4}/);
+    });
+
+    if(dataRows.length===0){
+      sheetResult.status='warn';
+      sheetResult.warnings.push('데이터 행이 없습니다.');
+      result.sheets.push(sheetResult); return;
+    }
+
+    sheetResult.rowCount=dataRows.length;
+    anyValid=true;
+    sheetResult.status='ok';
+
+    // 실제 파싱
+    if(schema.type==='offering'){
+      dataRows.forEach((row,idx)=>{
+        const date=normalizeDate(row[0]);
+        const offType=String(row[1]||'').trim()||getOffTypes()[0];
+        const name=String(row[2]||'').trim();
+        const amount=parseN(String(row[3]||'0'));
+        const writer=String(row[4]||'').trim();
+        const onlineRaw=row[5];
+        const online=onlineRaw===true||onlineRaw==='TRUE'||onlineRaw==='true';
+        const etcDate=normalizeDate(row[6]);
+        const interestRaw=row[7];
+        const interest=(interestRaw===false||interestRaw===0||!interestRaw)?0:parseN(String(interestRaw));
+        const reason=String(row[8]||'').trim();
+        if(!date||!name||!amount){sheetResult.skipped++;return;}
+        let memo=reason||'';
+        if(interest>0) memo=(memo?memo+' / ':'')+'이자:'+fmtN(interest);
+        result.parsed.offering.push({
+          id:uid(),date,type:offType,name,amount,
+          online,writer,etcDate,interest,
+          memo,spon:false,sheet:writer,source:'excel'
+        });
+      });
+    }
+    else if(schema.type==='expense'){
+      dataRows.forEach((row,idx)=>{
+        const date=normalizeDate(row[0]);
+        const dept=String(row[1]||'').trim()||getDeptTypes()[0];
+        const amount=parseN(String(row[2]||'0'));
+        const requester=String(row[3]||'').trim();
+        const recip=String(row[4]||'').trim();
+        const item=String(row[5]||'').trim();
+        const acc=String(row[6]||'').trim();
+        // row[7] = 빈칸 (None)
+        const cashRaw=row[8];
+        const transfer=(cashRaw===true||cashRaw==='TRUE'||cashRaw==='true')?'현금':'이체';
+        const interestRaw=row[9];
+        const interest=(interestRaw===false||!interestRaw)?0:parseN(String(interestRaw));
+        const payDate=normalizeDate(row[10]);
+        if(!date||!item||!amount){sheetResult.skipped++;return;}
+        let memo='';
+        if(requester) memo='요청:'+requester;
+        if(interest>0) memo=(memo?memo+' ':'')+'이자:'+fmtN(interest);
+        if(payDate&&payDate!==date) memo=(memo?memo+' ':'')+'지급일:'+payDate;
+        result.parsed.expense.push({
+          id:uid(),date,dept,amount,recip,item,acc,
+          transfer,requester,payDate,interest,memo,source:'excel'
+        });
+        if(recip&&acc){const r=getRecipients();r[recip]=acc;ST.set('recipients',r);}
+      });
+    }
+    else if(schema.type==='sponsor'){
+      dataRows.forEach(row=>{
+        const date=normalizeDate(row[0]);
+        const sponType=String(row[1]||'').trim()||getSponTypes()[0];
+        const name=String(row[2]||'').trim();
+        const amount=parseN(String(row[3]||'0'));
+        const dept=String(row[4]||'').trim();
+        const memo=String(row[5]||'').trim();
+        if(!date||!name||!amount){sheetResult.skipped++;return;}
+        result.parsed.sponsor.push({id:uid(),date,type:sponType,name,amount,dept,reason:memo,memo,source:'excel'});
+      });
+    }
+
+    result.sheets.push(sheetResult);
+    result.totalRows+=dataRows.length;
+  });
+
+  if(anyValid) result.ok=true;
+  _parsedExcelData=result;
+  return result;
+}
+
+// ── 검증 결과 렌더링 ─────────────────────────────────────────
+function renderValidationResult(result){
+  const cardEl=impEl('imp-result-card');
+  const iconEl=impEl('imp-result-icon');
+  const titleEl=impEl('imp-result-title');
+  const subEl=impEl('imp-result-sub');
+  const sheetEl=impEl('imp-sheet-results');
+  const warnEl=impEl('imp-warnings');
+  const previewEl=impEl('imp-preview-table');
+  const confirmBtn=impEl('imp-confirm-btn');
+  const confirmIcon=impEl('imp-confirm-icon');
+  const confirmText=impEl('imp-confirm-text');
+  const confirmHint=impEl('imp-confirm-hint');
+
+  // ── 카드 배경색 ──────────────────────────────────────────
+  if(result.fatal||!result.ok){
+    cardEl.style.borderColor='#e74c3c';
+    cardEl.style.background='#fff5f5';
+    iconEl.textContent='❌';
+    titleEl.textContent='양식 오류 - 업로드 불가';
+    titleEl.style.color='#e74c3c';
+    subEl.textContent=result.fatalMsg||'파일 형식을 확인해 주세요.';
+    confirmBtn.disabled=true;
+    confirmBtn.style.background='#ccc';
+    confirmBtn.style.cursor='not-allowed';
+    confirmIcon.textContent='❌';
+    confirmText.textContent='업로드 불가';
+    confirmHint.textContent='오류를 확인 후 파일을 수정해 주세요.';
+  } else {
+    const offCnt=result.parsed.offering.length;
+    const expCnt=result.parsed.expense.length;
+    const sponCnt=result.parsed.sponsor.length;
+    const totalParsed=offCnt+expCnt+sponCnt;
+    cardEl.style.borderColor='#27ae60';
+    cardEl.style.background='#f4fdf7';
+    iconEl.textContent='✅';
+    titleEl.textContent='양식 확인 완료!';
+    titleEl.style.color='#1a6e3c';
+    subEl.textContent=result.fileName+' — 총 '+totalParsed+'건 업로드 가능';
+    // 확인 버튼 활성화
+    confirmBtn.disabled=false;
+    confirmBtn.style.background='var(--navy,#1a2456)';
+    confirmBtn.style.cursor='pointer';
+    confirmBtn.style.boxShadow='0 4px 14px rgba(26,36,86,.35)';
+    confirmBtn.style.transform='scale(1.02)';
+    confirmIcon.textContent='✅';
+    confirmText.textContent='확인 완료 — 업로드 진행';
+    confirmHint.textContent='버튼을 클릭하면 데이터가 추가됩니다.';
+    confirmHint.style.color='#27ae60';
+  }
+
+  // ── 시트별 결과 ──────────────────────────────────────────
+  const statusIcon={ok:'✅',warn:'⚠️',error:'❌',skip:'⏭️',unknown:'❓'};
+  const statusLabel={ok:'정상',warn:'경고',error:'오류',skip:'건너뜀',unknown:''};
+  const statusColor={ok:'#27ae60',warn:'#c8a84b',error:'#e74c3c',skip:'#888',unknown:'#888'};
+
+  sheetEl.innerHTML=result.sheets.map(s=>{
+    const parsedCnt = s.schema&&s.schema.type==='offering'? result.parsed.offering.length
+      : s.schema&&s.schema.type==='expense'? result.parsed.expense.length
+      : s.schema&&s.schema.type==='sponsor'? result.parsed.sponsor.length : 0;
+    const schemaLabel=s.schema?` (${s.schema.label})`:'';
+    const rowInfo=s.status==='ok'?` · ${s.rowCount}행 → ${parsedCnt}건 파싱`
+      :s.status==='warn'?` · 데이터 없음`:'';
+    const errHtml=(s.errors.length||s.warnings.length)?
+      '<div style="font-size:10px;color:'+statusColor[s.status]+';margin-top:2px">'+
+      [...s.errors,...s.warnings].map(e=>'• '+e).join('<br>')+'</div>':'';
+    return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:7px;background:#fff;border:1px solid #e8ecf0;margin-bottom:6px">'
+      +'<span style="font-size:16px;flex-shrink:0">'+statusIcon[s.status]+'</span>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:600;color:#1a2456">시트: "'+s.name+'"'+schemaLabel
+      +'<span style="font-weight:400;color:'+statusColor[s.status]+'">'+rowInfo+'</span></div>'+errHtml+'</div>'
+      +'<span style="font-size:11px;font-weight:700;color:'+statusColor[s.status]+'">'+statusLabel[s.status]+'</span></div>';
+  }).join('');
+
+  // ── 데이터 미리보기 (최근 5건) ──────────────────────────
+  let previewHtml='';
+  function previewTbl(title,rows,cols){
+    if(!rows||!rows.length) return '';
+    const hdrs=cols.map(h=>'<th style="padding:5px 8px;background:#eef2ff;border:1px solid #dde;font-size:11px">'+h+'</th>').join('');
+    const trs=[...rows].slice(-5).reverse().map(r=>'<tr>'+r.map(v=>'<td style="padding:4px 8px;border:1px solid #eee;font-size:11px">'+(v||'')+'</td>').join('')+'</tr>').join('');
+    return '<div style="font-size:12px;font-weight:700;color:#1a2456;margin-bottom:4px">'+title+'미리보기 (최근 5건)</div>'
+      +'<div style="overflow-x:auto;margin-bottom:10px"><table style="width:100%;border-collapse:collapse">'+
+      '<thead><tr>'+hdrs+'</tr></thead><tbody>'+trs+'</tbody></table></div>';
+  }
+  if(result.parsed&&result.parsed.offering.length)
+    previewHtml+=previewTbl('헌금 ',result.parsed.offering.map(r=>[r.date,r.type,r.name,fmtN(r.amount)+'원',r.online?'온라인':'']),['날짜','구분','성도성명','금액','온라인']);
+  if(result.parsed&&result.parsed.expense.length)
+    previewHtml+=previewTbl('지출 ',result.parsed.expense.map(r=>[r.date,r.dept,r.item,fmtN(r.amount)+'원',r.recip||'']),['날짜','부서','내용','금액','수취자']);
+  if(result.parsed&&result.parsed.sponsor.length)
+    previewHtml+=previewTbl('찬조 ',result.parsed.sponsor.map(r=>[r.date,r.type,r.name,fmtN(r.amount)+'원']),['날짜','구분','성도성명','금액']);
+
+  previewEl.innerHTML=previewHtml;
+  warnEl.innerHTML='';
+}
+
+// ── STEP 3: 확인 완료 버튼 클릭 → 실제 업로드 ──────────────
+window.confirmExcelUpload=function(){
+  if(!_parsedExcelData||!_parsedExcelData.ok){
+    alert('검증된 데이터가 없습니다.');return;
+  }
+  const {offering,expense,sponsor}=_parsedExcelData.parsed;
+  const total=offering.length+expense.length+sponsor.length;
+  if(!confirm('총 '+total+'건(헌금 '+offering.length+'건 / 지출 '+expense.length+'건 / 찬조 '+sponsor.length+'건)을 업로드 하시겠습니까?\n\n기존 데이터에 추가됩니다.')) return;
+
+  const btn=impEl('imp-confirm-btn');
+  if(btn){btn.disabled=true;btn.style.background='#ccc';btn.style.cursor='not-allowed';}
+  const iconEl=impEl('imp-confirm-icon'),txtEl=impEl('imp-confirm-text');
+  if(iconEl) iconEl.textContent='⏳';
+  if(txtEl) txtEl.textContent='업로드 중...';
+
+  if(offering.length){
+    const arr=getOfferings();
+    offering.forEach(r=>arr.push(r));
+    setOfferings(arr);
+  }
+  if(expense.length){
+    const arr=getExpenses();
+    expense.forEach(r=>arr.push(r));
+    setExpenses(arr);
+  }
+  if(sponsor.length){
+    const arr=getSponsors();
+    sponsor.forEach(r=>arr.push(r));
+    setSponsors(arr);
+  }
+
+  // 완료 화면
+  setTimeout(function(){
+    impHide('imp-step3');
+    const doneEl=impEl('imp-done');
+    if(doneEl){
+      doneEl.style.display='';
+      doneEl.innerHTML='<div style="background:#e8f8f0;padding:16px;border-radius:10px;border:2px solid #27ae60;text-align:center">'
+        +'<div style="font-size:32px;margin-bottom:8px">🎉</div>'
+        +'<div style="font-size:14px;font-weight:700;color:#1a6e3c;margin-bottom:4px">업로드 완료!</div>'
+        +'<div style="font-size:12px;color:#555">헌금 '+offering.length+'건 · 지출 '+expense.length+'건 · 찬조 '+sponsor.length+'건 추가됨</div>'
+        +'<div style="margin-top:12px;display:flex;gap:8px;justify-content:center">'
+        +'<button onclick="resetExcelUpload()" style="padding:8px 16px;border-radius:7px;font-size:12px;font-weight:600;font-family:inherit;border:none;background:var(--navy,#1a2456);color:#fff;cursor:pointer">📂 추가 파일 업로드</button>'
+        +'</div></div>';
+    }
+    _parsedExcelData=null;
+  },600);
+};
+
+// ── 양식 탭 전환 ─────────────────────────────────────────────
 window.switchFmtTab=function(tab){
   ['off','exp','spon'].forEach(t=>{
     const body=document.getElementById('fmt-body-'+t);
@@ -3473,6 +3725,7 @@ window.switchFmtTab=function(tab){
     }
   });
 };
+
 
 window.clearOffering=function(){if(!confirm('헌금 전체 데이터를 삭제하시겠습니까?')) return;ST.set('accountBook',[]);alert('삭제 완료');};
 window.clearExpense=function(){if(!confirm('지출 전체 데이터를 삭제하시겠습니까?')) return;ST.set('expenseBook',[]);alert('삭제 완료');};
