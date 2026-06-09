@@ -33,7 +33,7 @@ html,body{height:100%;font-family:var(--fn);font-size:14px;background:var(--g6);
   padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;
   box-shadow:0 2px 12px rgba(0,0,0,.25);flex-shrink:0;z-index:100}
 .hdr-brand{display:flex;align-items:center;gap:12px}
-.hdr-logo{width:40px;height:40px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--blue-l)}
+.hdr-logo{width:0;height:0;overflow:hidden;display:none}
 .hdr-logo span{font-size:8px;font-weight:800;color:var(--navy);letter-spacing:.3px;text-align:center;line-height:1.2}
 .hdr-title h1{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.3px}
 .hdr-title p{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px}
@@ -654,7 +654,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 
 <header class="hdr">
   <div class="hdr-brand">
-    <div class="hdr-logo"><span>SKPC</span></div>
+    <div class="hdr-logo"></div>
     <div class="hdr-title">
       <h1>서부광성교회 회계 시스템</h1>
       <p>Seobukwangseong Presbyterian Church — Financial Management</p>
@@ -679,9 +679,9 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   <!-- 2행: 탭 아이템 -->
   <div class="nav-items-row" id="navItemsRow">
     <!-- 주간업무 -->
-    <div class="nav-item nav-dropdown-wrap grp-weekly active" id="navDropInput">
-      <span onclick="toggleInputDropdown(event)">📋 헌금입력<span class="nav-arr">▾</span></span>
-      <div class="nav-dropdown" id="inputDropMenu">
+    <div class="nav-item nav-dropdown-wrap grp-weekly active" id="navDropInput" onclick="toggleInputDropdown(event)">
+      <span style="pointer-events:none;display:flex;align-items:center;gap:4px">📋 헌금입력<span class="nav-arr">▾</span></span>
+      <div class="nav-dropdown" id="inputDropMenu" onclick="event.stopPropagation()">
         <div class="nav-drop-item" onclick="selectInputSheet(1)">입력 1</div>
         <div class="nav-drop-item" onclick="selectInputSheet(2)">입력 2</div>
         <div class="nav-drop-item" onclick="selectInputSheet(3)">입력 3</div>
@@ -930,7 +930,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 <div id="tab-deptreport" class="tab-pane">
   <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
   <div style="background:#e3f2fd;border:1.5px solid #90caf9;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:#1565c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <span>📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력은 별도 URL을 사용하세요.</span>
+    <span>📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력/수정은 별도 페이지에서만 가능합니다. 재정 전체 내역은 부서보고서 전용 페이지에서 볼 수 없습니다.</span>
     <a href="skpc_dept_report.html" target="_blank" class="btn btn-blue btn-sm">🔗 부서보고서 입력 페이지 열기</a>
   </div>
   <div class="month-bar">
