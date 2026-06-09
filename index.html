@@ -1851,6 +1851,29 @@ function initExpenseTab(){
   const fd=document.getElementById('exp-fdate');const fdept=document.getElementById('exp-fdept');
   if(fd) fd.innerHTML='<option value="">전체</option>'+dates.map(d=>`<option>${d}</option>`).join('');
   if(fdept) fdept.innerHTML='<option value="">전체</option>'+depts.map(d=>`<option>${d}</option>`).join('');
+  // 엔터키로 지출 추가 (이미 등록된 경우 중복 방지)
+  const enterFields=['exp-date','exp-requester','exp-recipient','exp-account','exp-amount','exp-content','exp-memo'];
+  enterFields.forEach(function(id){
+    const el=document.getElementById(id);
+    if(el&&!el.dataset.enterBound){
+      el.dataset.enterBound='1';
+      el.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){
+          e.preventDefault();
+          // 마지막 필드(메모)면 바로 추가, 아니면 다음 필드로 포커스
+          const idx=enterFields.indexOf(id);
+          const nextId=enterFields[idx+1];
+          const nextEl=nextId&&document.getElementById(nextId);
+          if(!nextEl||id==='exp-memo'){
+            addExpense();
+          } else {
+            nextEl.focus();
+            if(nextEl.select) nextEl.select();
+          }
+        }
+      });
+    }
+  });
 }
 function updateRecipientDatalist(){
   const dl=document.getElementById('exp-recip-list');if(!dl) return;
@@ -1905,11 +1928,12 @@ window.doExpenseSearch=function(){
           ${getDeptTypes().map(d=>'<option value="'+d+'"'+(d===e.dept?' selected':'')+'>'+d+'</option>').join('')}
         </select>
       </td>
-      <td>${e.requester||'—'}</td><td>${e.recipient||'—'}</td>
-      <td style="font-size:11px;color:var(--g3)">${e.account||'—'}</td>
+      <td>${e.requester||'—'}</td>
+      <td>${e.recipient||e.recip||'—'}</td>
+      <td style="font-size:11px;color:var(--g3)">${e.account||e.acc||'—'}</td>
       <td class="nc" style="font-weight:700;color:var(--red)">${fmtN(e.amount)}</td>
-      <td>${e.content||'—'}</td>
-      <td><span class="badge b-gray">${e.paytype||'—'}</span></td>
+      <td>${e.content||e.item||'—'}</td>
+      <td>${(()=>{const pt=e.paytype||e.transfer||'';return pt==='현금지급'||pt==='현금'?'<span class="badge" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80">💵 현금지급</span>':pt==='송금지급'||pt==='이체'?'<span class="badge" style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9">🏦 송금지급</span>':pt?'<span class="badge b-gray">'+pt+'</span>':'<span style="color:#aaa">—</span>';})()}</td>
       <td><button class="btn btn-blue btn-xs" onclick="editExpRow('${e.id}')">수정</button></td>
       <td><button class="btn btn-red btn-xs" onclick="deleteExpense('${e.id}')">삭제</button></td>
     </tr>`).join('')||`<tr><td colspan="11" class="tbl-empty">데이터가 없습니다</td></tr>`;
@@ -1926,15 +1950,18 @@ window.editExpRow=function(id){
   const row=document.getElementById(`exp-row-${id}`);if(!row) return;
   const cells=row.cells;
   // Make inline editable
-  cells[7].innerHTML=`<input class="edit-cell" value="${e.content||''}" style="width:100px" id="ec-content-${id}">`;
+  const eCont=e.content||e.item||'';
+  const ePay=e.paytype||(e.transfer==='현금'?'현금지급':e.transfer==='이체'?'송금지급':e.transfer||'송금지급');
+  cells[7].innerHTML=`<input class="edit-cell" value="${eCont}" style="width:100px" id="ec-content-${id}">`;
   cells[6].innerHTML=`<input class="edit-cell num-in" value="${fmtN(e.amount)}" style="width:80px;text-align:right" id="ec-amt-${id}" oninput="fmtAmt(this)">`;
-  cells[8].innerHTML=`<select class="fsel" id="ec-pay-${id}" style="height:26px;font-size:11px"><option ${e.paytype==='현금지급'?'selected':''}>현금지급</option><option ${e.paytype==='송금지급'?'selected':''}>송금지급</option><option ${e.paytype==='이자'?'selected':''}>이자</option></select>`;
+  cells[8].innerHTML=`<select class="fsel" id="ec-pay-${id}" style="height:26px;font-size:11px"><option ${ePay==='현금지급'?'selected':''}>현금지급</option><option ${ePay==='송금지급'?'selected':''}>송금지급</option><option ${ePay==='이자'?'selected':''}>이자</option></select>`;
   cells[9].innerHTML=`<button class="btn btn-green btn-xs" onclick="saveExpRow('${id}')">저장</button>`;
 };
 window.saveExpRow=function(id){
   const exps=getExpenses();const idx=exps.findIndex(x=>x.id===id);if(idx<0) return;
   const amtEl=document.getElementById(`ec-amt-${id}`);
-  exps[idx].content=document.getElementById(`ec-content-${id}`)?.value||exps[idx].content;
+  const newContent=document.getElementById(`ec-content-${id}`)?.value;
+  if(newContent!==undefined){exps[idx].content=newContent;exps[idx].item=newContent;}
   exps[idx].amount=getRaw(amtEl)||exps[idx].amount;
   exps[idx].paytype=document.getElementById(`ec-pay-${id}`)?.value||exps[idx].paytype;
   setExpenses(exps);doExpenseSearch();
@@ -2931,7 +2958,7 @@ window.renderReceipt=function(){
   const byDeptOut={};expenses.forEach(e=>{byDeptOut[e.dept]=(byDeptOut[e.dept]||0)+e.amount;});
   const totInc=offerings.reduce((s,e)=>s+e.amount,0);
   const totOut=expenses.reduce((s,e)=>s+e.amount,0);
-  const cashOut=expenses.filter(e=>e.paytype==='현금지급').reduce((s,e)=>s+e.amount,0);
+  const cashOut=expenses.filter(e=>e.paytype==='현금지급'||e.transfer==='현금').reduce((s,e)=>s+e.amount,0);
   const remitOut=expenses.filter(e=>e.paytype==='송금지급').reduce((s,e)=>s+e.amount,0);
   // 통장입금 = 온라인입금 헌금 합계
   const bankInc=offerings.filter(e=>e.online==='온라인입금').reduce((s,e)=>s+e.amount,0);
@@ -3223,8 +3250,8 @@ window.dmLoadExpenses=function(){
   if(from) data=data.filter(e=>e.date>=from);
   if(to) data=data.filter(e=>e.date<=to);
   if(dept) data=data.filter(e=>e.dept===dept);
-  if(recip) data=data.filter(e=>e.recipient?.includes(recip));
-  if(pay) data=data.filter(e=>e.paytype===pay);
+  if(recip) data=data.filter(e=>(e.recipient||e.recip||'').includes(recip));
+  if(pay) data=data.filter(e=>(e.paytype||e.transfer||'')===(pay==='현금지급'?'현금지급':pay==='송금지급'?'송금지급':pay)||e.transfer===(pay==='현금지급'?'현금':pay==='송금지급'?'이체':pay));
   data.sort((a,b)=>b.date.localeCompare(a.date));
   const total=data.reduce((s,e)=>s+e.amount,0);
   const allDeptTypes=getDeptTypes();
@@ -3260,12 +3287,13 @@ window.dmLoadExpenses=function(){
         selDept.addEventListener('change',function(){dmUpdateExp(e.id,'dept',this.value);});
         t2.appendChild(selDept);tr.appendChild(t2);
         // 요청자, 수취자, 계좌
-        ['requester','recipient','account'].forEach(function(f,fi){
+        // 요청자/수취자/계좌 - 구버전(recip,acc) 호환
+        [{f:'requester',fb:null,w:'60px'},{f:'recipient',fb:'recip',w:'80px'},{f:'account',fb:'acc',w:'110px'}].forEach(function(fc,fi){
           const td=document.createElement('td');
-          const widths=['60px','80px','110px'];
+          const val=e[fc.f]||(fc.fb?e[fc.fb]:'');
           const families=[null,null,'var(--fnum)'];
           const colors=[null,null,'var(--g2)'];
-          const inp=mkInp(e[f],widths[fi],families[fi],colors[fi],f);
+          const inp=mkInp(val,fc.w,families[fi],colors[fi],fc.f);
           if(fi===2) inp.style.fontSize='10px';
           td.appendChild(inp);tr.appendChild(td);
         });
@@ -3278,12 +3306,13 @@ window.dmLoadExpenses=function(){
         t6.appendChild(iAmt);tr.appendChild(t6);
         // 내용
         const t7=document.createElement('td');
-        t7.appendChild(mkInp(e.content,'90px',null,null,'content'));tr.appendChild(t7);
+        t7.appendChild(mkInp(e.content||e.item,'90px',null,null,'content'));tr.appendChild(t7);
         // 지급방식
         const t8=document.createElement('td');
         const selPay=document.createElement('select');
         selPay.style.cssText='border:none;background:transparent;font-size:11px;width:100%';
-        ['송금지급','현금지급','이자'].forEach(function(v){const o=document.createElement('option');o.value=v;o.textContent=v;if(v===e.paytype)o.selected=true;selPay.appendChild(o);});
+        const curPay=e.paytype||(e.transfer==='현금'?'현금지급':e.transfer==='이체'?'송금지급':e.transfer||'송금지급');
+        ['송금지급','현금지급','이자'].forEach(function(v){const o=document.createElement('option');o.value=v;o.textContent=v;if(v===curPay)o.selected=true;selPay.appendChild(o);});
         selPay.addEventListener('change',function(){dmUpdateExp(e.id,'paytype',this.value);});
         t8.appendChild(selPay);tr.appendChild(t8);
         // 삭제
@@ -3537,8 +3566,12 @@ function buildExpenseSheet(){
     ['일자','부서','금액','요청자','수취자명','내용','입금계좌','','현금지급','이자및기타','지급일']
   ];
   arr.forEach(r=>{
-    const cashPay=(r.transfer==='현금');
-    rows.push([r.date||'',r.dept||'',Number(r.amount||0),r.requester||'',r.recip||'',r.item||'',r.acc||'','',cashPay,r.interest||0,r.payDate||'']);
+    const recipient=r.recipient||r.recip||'';
+    const account=r.account||r.acc||'';
+    const content=r.content||r.item||'';
+    const pt=r.paytype||r.transfer||'';
+    const cashPay=(pt==='현금지급'||pt==='현금');
+    rows.push([r.date||'',r.dept||'',Number(r.amount||0),r.requester||'',recipient,content,account,'',cashPay,r.interest||0,r.payDate||'']);
   });
   rows.push([]);
   rows.push(['합 계','',arr.reduce((s,r)=>s+Number(r.amount||0),0),'','','','','','','','']);
@@ -3860,9 +3893,12 @@ function validateAndParse(wb, fileName){
         if(requester) memo='요청:'+requester;
         if(interest>0) memo=(memo?memo+' ':'')+'이자:'+fmtN(interest);
         if(payDate&&payDate!==date) memo=(memo?memo+' ':'')+'지급일:'+payDate;
+        // TRUE=현금지급, FALSE=송금지급
+        const paytype=(cashRaw===true||cashRaw==='TRUE'||cashRaw==='true'||cashRaw==='1')?'현금지급':'송금지급';
         result.parsed.expense.push({
-          id:uid(),date,dept,amount,recip,item,acc,
-          transfer,requester,payDate,interest,memo,source:'excel'
+          id:uid(),date,dept,amount,
+          recipient:recip,account:acc,content:item,
+          paytype,requester,payDate,interest,memo,source:'excel'
         });
         if(recip&&acc){const r=getRecipients();r[recip]=acc;ST.set('recipients',r);}
       });
