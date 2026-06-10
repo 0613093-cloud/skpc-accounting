@@ -221,7 +221,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   background:rgba(255,255,255,.15);color:#fff;font-family:var(--fn);font-size:11px;width:80px}
 .dr-officers input::placeholder{color:rgba(255,255,255,.6)}
 .dr-body{padding:14px}
-.dr-row{display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;border-bottom:1px solid var(--g5)}
+.dr-row{align-items:center;display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;border-bottom:1px solid var(--g5)}
 .dr-row:first-child{background:var(--g6);font-size:11px;font-weight:800;color:var(--g2)}
 .dr-row .dc{padding:6px 8px;font-size:12px;border-right:1px solid var(--g5);font-family:var(--fnum);overflow:hidden}
 .dr-row .dc:last-child{border-right:none}
@@ -438,6 +438,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   }
 
   const MAIN_DOC  = doc(db, 'skpc', 'config');
+  const DEPT_DOC  = doc(db, 'skpc_dept', 'report_data'); // 부서보고서 전용 별도 DB
   const COL_OFF   = collection(db, 'skpc_offerings');
   const COL_EXP   = collection(db, 'skpc_expenses');
   const COL_SPON  = collection(db, 'skpc_sponsors');
@@ -447,14 +448,23 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     try {
       window._fbStatus && window._fbStatus('connecting');
 
-      const [snap, offSnap, expSnap, sponSnap] = await Promise.all([
+      const [snap, deptSnap, offSnap, expSnap, sponSnap] = await Promise.all([
         getDoc(MAIN_DOC),
+        getDoc(DEPT_DOC),
         getDocs(COL_OFF),
         getDocs(COL_EXP),
         getDocs(COL_SPON)
       ]);
 
-      // config 문서
+      // 부서보고서 전용 DB 복원 (DEPT_DOC)
+      if(deptSnap.exists()) {
+        const deptData = deptSnap.data();
+        Object.keys(deptData).forEach(function(k){
+          try{localStorage.setItem(k, JSON.stringify(deptData[k]));}catch(e){}
+        });
+      }
+
+      // config 문서 (MAIN_DOC)
       if(snap.exists()) {
         const data = snap.data();
         ['offeringTypes','deptTypes','sponsorTypes','recipients',
@@ -468,14 +478,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
             try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
           });
         }
-        // deptTopRows_, deptView_ 동적 키 복원
-        Object.keys(data).forEach(function(k){
-          if(k.startsWith('deptTopRows_')||k.startsWith('deptView_')||
-             k.startsWith('deptFootView_')||k.startsWith('deptYearView_')||
-             k.startsWith('deptSavedAt_')){
-            try{localStorage.setItem(k,JSON.stringify(data[k]));}catch(e){}
-          }
-        });
+        // 부서보고서 키는 DEPT_DOC에서 별도 복원됨 (위 deptSnap 처리)
       }
 
       // 헌금
@@ -563,7 +566,10 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   // ── 저장 함수들 ──
   window._fbSaveConfig = async function(key, value) {
     try {
-      await setDoc(MAIN_DOC, { [key]: value }, { merge: true });
+      const DPFX=['deptTopRows_','deptView_','deptFootView_','deptYearView_','deptSavedAt_','deptCustomRows_'];
+      const isDK=DPFX.some(function(p){return String(key).startsWith(p);})||(key==='deptOfficers');
+      const targetDoc=isDK?DEPT_DOC:MAIN_DOC;
+      await setDoc(targetDoc, { [key]: value }, { merge: true });
       window._fbStatus && window._fbStatus('saved');
     } catch(e) { console.error('[FB] config 저장 실패:', e.message); }
   };
@@ -1113,8 +1119,28 @@ window.renderDeptReport=function(){
   const yr=parseInt(ym.split('-')[0]);
   const mo=parseInt(ym.split('-')[1]);
   const expenses=getExpenses();
+  const ym_check=selEl.value;
+  const [yr_c,mo_c]=ym_check.split('-').map(Number);
+  const expenses_all=getExpenses();
+
+  // 당월 지출이 있는 부서 목록
+  const activeDepts=new Set(
+    expenses_all
+      .filter(function(e){ return e.date&&e.date.slice(0,7)===ym_check; })
+      .map(function(e){ return e.dept; })
+  );
+  // 교회예산(topRows)이 있는 부서도 포함
+  getDeptTypes().forEach(function(d){
+    const topKey='deptTopRows_'+ym_check+'_'+d;
+    const rows=ST.get(topKey,[]);
+    if(rows.length>0) activeDepts.add(d);
+  });
+
+  // 제외 부서 + 당월 데이터 없는 부서 필터
+  const EXCLUDE_DEPTS=['건축헌금','전도헌금','사회봉사'];
   const depts=getDeptTypes().filter(function(d){
-    return ['건축헌금','전도헌금','사회봉사','교육부찬조'].indexOf(d)===-1;
+    if(EXCLUDE_DEPTS.indexOf(d)!==-1) return false;
+    return activeDepts.has(d);
   });
   const moExp=expenses.filter(function(e){return monthOf(e.date)===ym;});
   const cumExp=expenses.filter(function(e){
@@ -1167,12 +1193,8 @@ window.renderDeptReport=function(){
     const customRows=ST.get(customKey,[]);
     const crT=customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
     // 커스텀 행 수입
-    const crIncCustom=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
-    // DB 행 view 수입 (보고서 전용, DB 영향 없음)
-    const incViewKey2='deptViewIncome_'+ym+'_'+dept;
-    const incViewData2=ST.get(incViewKey2,{});
-    const crIncDB=dMo.reduce(function(s,e){return s+(parseInt(incViewData2[e.id])||0);},0);
-    const crInc=crIncCustom+crIncDB;
+    // crInc: topRows 정의 이후에 계산 (아래 // <<CRINC>> 위치에서 처리)
+    let crInc=0; // placeholder - 실제 계산은 topRows 정의 후
     const moTall=moT+crT;const cuTall=cuT+crT;
 
     const card=document.createElement('div');card.className='dr-card';
@@ -1217,6 +1239,17 @@ window.renderDeptReport=function(){
     // 저장된 보고서 뷰 데이터 로드
     const viewKey='deptView_'+ym+'_'+dept;
     const viewData=ST.get(viewKey,{}); // {id: {income, amount, memo}}
+    // topRowKey를 renderEditableRow 앞에 정의 (클로저 접근용)
+    const topRowKey='deptTopRows_'+ym+'_'+dept;
+    const topRows=ST.get(topRowKey,[]);
+    // crInc 실제 계산 (topRows 정의 이후)
+    const crIncTop=topRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    const crIncCustom=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    const crIncDB=dMo.reduce(function(s,e){
+      const sv=(ST.get(viewKey,{})||{})[e.id]||{};
+      return s+(parseInt(sv.income)||0);
+    },0);
+    crInc=crIncTop+crIncCustom+crIncDB;
 
     // 행 렌더 헬퍼 (DB행/상단행/하단행 공통)
     // 공통 저장 함수
@@ -1297,11 +1330,14 @@ window.renderDeptReport=function(){
       iInc.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           const v=getRaw(this);
-          if(isDB||isBudget){saveViewField(rid,'income',v);}
-          else{
+          if(isDB){
+            // DB 행: viewKey에 저장 (원본 DB 변경 없음)
+            saveViewField(rid,'income',v);
+          } else {
+            // 상단행/교회예산: topRowKey에 저장
             const rows=ST.get(topRowKey,[]);
-            const idx=rows.findIndex(function(r){return r.id===rid;});
-            if(idx>=0){rows[idx].income=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
+            const tidx=rows.findIndex(function(r){return r.id===rid;});
+            if(tidx>=0){rows[tidx].income=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
           // 수정 시작 자동 감지
           if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
@@ -1321,11 +1357,12 @@ window.renderDeptReport=function(){
       iExp.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           const v=getRaw(this);
-          if(isDB||isBudget){saveViewField(rid,'amount',v);}
-          else{
+          if(isDB){
+            saveViewField(rid,'amount',v);
+          } else {
             const rows=ST.get(topRowKey,[]);
-            const idx=rows.findIndex(function(r){return r.id===rid;});
-            if(idx>=0){rows[idx].amount=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
+            const tidx=rows.findIndex(function(r){return r.id===rid;});
+            if(tidx>=0){rows[tidx].amount=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
           // 수정 시작 자동 감지
           if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
@@ -1349,7 +1386,7 @@ window.renderDeptReport=function(){
       iMemo.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           const v=this.value;
-          if(isDB||isBudget){saveViewField(rid,'memo',v);}
+          if(isDB){saveViewField(rid,'memo',v);}
           else{updateDeptTopRow(dept,ym,rid,'memo',v);}
         };
       })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
@@ -1384,9 +1421,6 @@ window.renderDeptReport=function(){
     ensureBudgetRow(dept,ym);
 
     var runBal=0;
-    const topRowKey='deptTopRows_'+ym+'_'+dept;
-    const topRows=ST.get(topRowKey,[]);
-
     // ── 상단 행들 (교회예산 포함) - 교회예산은 맨 위 고정 ──
     const budgetRows=topRows.filter(function(r){return r.isBudget;});
     const otherTopRows=topRows.filter(function(r){return !r.isBudget;});
@@ -2637,6 +2671,19 @@ function updateMonthBadge(selId,badgeId){
 
 // 부서 편집 상태
 const deptEditState={};
+window.saveDeptNow=function(dept,ym){
+  const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const k='deptSavedAt_'+dept+'_'+ym;
+  ST.set(k,now);
+  if(window._fbSaveConfig) window._fbSaveConfig(k,now);
+  renderDeptStatusBar(dept);
+  // 저장 완료 애니메이션
+  const bar=document.getElementById('deptBar_'+CSS.escape(dept));
+  if(bar){
+    bar.style.background='rgba(39,174,96,.3)';
+    setTimeout(function(){bar.style.background='rgba(255,255,255,.07)';},1500);
+  }
+};
 window.startDeptEdit=function(dept){
   deptEditState[dept]='editing';renderDeptStatusBar(dept);
 };
@@ -2651,24 +2698,16 @@ window.saveDeptEdit=function(dept,ym){
 function renderDeptStatusBar(dept){
   const bar=document.getElementById('deptBar_'+CSS.escape(dept));
   if(!bar)return;
-  const state=deptEditState[dept]||'idle';
   const ym=document.getElementById('dept-month')?.value||'';
   const savedAt=ST.get('deptSavedAt_'+dept+'_'+ym,'');
+  // 저장 버튼 + 마지막 저장시간 심플 표시
   const d=dept.replace(/"/g,'&quot;');
-  if(state==='editing'){
-    bar.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 12px;background:#fff3e0;border:2px solid #ff9800;border-radius:8px;margin-bottom:8px;flex-wrap:wrap';
-    bar.innerHTML='<button style="background:#ff9800;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:800;cursor:default;font-family:inherit;animation:editpulse 1s infinite">✏️ 수정 중...</button>'
-      +' <button onclick="saveDeptEdit(&quot;'+d+'&quot;,&quot;'+ym+'&quot;)" style="background:#1a3a6e;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">💾 수정완료</button>'
-      +(savedAt?'<span style="font-size:10px;color:#888;margin-left:4px">최종저장: '+savedAt+'</span>':'');
-  }else if(state==='saved'){
-    bar.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 12px;background:#e8f8f0;border:2px solid #27ae60;border-radius:8px;margin-bottom:8px;flex-wrap:wrap';
-    bar.innerHTML='<button style="background:#27ae60;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:default;font-family:inherit">✅ 저장완료</button>'
-      +(savedAt?'<span style="font-size:10px;color:#555;margin-left:4px">'+savedAt+'</span>':'');
-  }else{
-    bar.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 12px;background:#f8f9ff;border:1.5px solid #dde;border-radius:8px;margin-bottom:8px;flex-wrap:wrap';
-    bar.innerHTML='<button onclick="startDeptEdit(&quot;'+d+'&quot;)" style="background:#f0f4ff;color:#1a3a6e;border:1.5px solid #1a3a6e;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✏️ 수정 시작</button>'
-      +(savedAt?'<span style="font-size:10px;color:#666;margin-left:4px">최종저장: '+savedAt+'</span>':'');
-  }
+  bar.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(255,255,255,.07);border-radius:0 0 8px 8px;flex-wrap:wrap';
+  bar.innerHTML='<button onclick="saveDeptNow(&quot;'+d+'&quot;,&quot;'+ym+'&quot;)" '
+    +'style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);padding:4px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">💾 저장</button>'
+    +(savedAt
+      ?'<span style="font-size:11px;color:rgba(255,255,255,.8)">마지막 저장 시간 '+savedAt+'</span>'
+      :'<span style="font-size:11px;color:rgba(255,255,255,.5)">저장되지 않음</span>');
 }
 
 // 지출 삭제 (부서보고서 전용)
@@ -2686,8 +2725,28 @@ window.renderDeptReport=function(){
   const yr=parseInt(ym.split('-')[0]);
   const mo=parseInt(ym.split('-')[1]);
   const expenses=getExpenses();
+  const ym_check=selEl.value;
+  const [yr_c,mo_c]=ym_check.split('-').map(Number);
+  const expenses_all=getExpenses();
+
+  // 당월 지출이 있는 부서 목록
+  const activeDepts=new Set(
+    expenses_all
+      .filter(function(e){ return e.date&&e.date.slice(0,7)===ym_check; })
+      .map(function(e){ return e.dept; })
+  );
+  // 교회예산(topRows)이 있는 부서도 포함
+  getDeptTypes().forEach(function(d){
+    const topKey='deptTopRows_'+ym_check+'_'+d;
+    const rows=ST.get(topKey,[]);
+    if(rows.length>0) activeDepts.add(d);
+  });
+
+  // 제외 부서 + 당월 데이터 없는 부서 필터
+  const EXCLUDE_DEPTS=['건축헌금','전도헌금','사회봉사'];
   const depts=getDeptTypes().filter(function(d){
-    return ['건축헌금','전도헌금','사회봉사','교육부찬조'].indexOf(d)===-1;
+    if(EXCLUDE_DEPTS.indexOf(d)!==-1) return false;
+    return activeDepts.has(d);
   });
   const moExp=expenses.filter(function(e){return monthOf(e.date)===ym;});
   const cumExp=expenses.filter(function(e){
@@ -2740,12 +2799,8 @@ window.renderDeptReport=function(){
     const customRows=ST.get(customKey,[]);
     const crT=customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
     // 커스텀 행 수입
-    const crIncCustom=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
-    // DB 행 view 수입 (보고서 전용, DB 영향 없음)
-    const incViewKey2='deptViewIncome_'+ym+'_'+dept;
-    const incViewData2=ST.get(incViewKey2,{});
-    const crIncDB=dMo.reduce(function(s,e){return s+(parseInt(incViewData2[e.id])||0);},0);
-    const crInc=crIncCustom+crIncDB;
+    // crInc: topRows 정의 이후에 계산 (아래 // <<CRINC>> 위치에서 처리)
+    let crInc=0; // placeholder - 실제 계산은 topRows 정의 후
     const moTall=moT+crT;const cuTall=cuT+crT;
 
     const card=document.createElement('div');card.className='dr-card';
@@ -2790,6 +2845,17 @@ window.renderDeptReport=function(){
     // 저장된 보고서 뷰 데이터 로드
     const viewKey='deptView_'+ym+'_'+dept;
     const viewData=ST.get(viewKey,{}); // {id: {income, amount, memo}}
+    // topRowKey를 renderEditableRow 앞에 정의 (클로저 접근용)
+    const topRowKey='deptTopRows_'+ym+'_'+dept;
+    const topRows=ST.get(topRowKey,[]);
+    // crInc 실제 계산 (topRows 정의 이후)
+    const crIncTop=topRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    const crIncCustom=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    const crIncDB=dMo.reduce(function(s,e){
+      const sv=(ST.get(viewKey,{})||{})[e.id]||{};
+      return s+(parseInt(sv.income)||0);
+    },0);
+    crInc=crIncTop+crIncCustom+crIncDB;
 
     // 행 렌더 헬퍼 (DB행/상단행/하단행 공통)
     // 공통 저장 함수
@@ -2870,11 +2936,14 @@ window.renderDeptReport=function(){
       iInc.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           const v=getRaw(this);
-          if(isDB||isBudget){saveViewField(rid,'income',v);}
-          else{
+          if(isDB){
+            // DB 행: viewKey에 저장 (원본 DB 변경 없음)
+            saveViewField(rid,'income',v);
+          } else {
+            // 상단행/교회예산: topRowKey에 저장
             const rows=ST.get(topRowKey,[]);
-            const idx=rows.findIndex(function(r){return r.id===rid;});
-            if(idx>=0){rows[idx].income=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
+            const tidx=rows.findIndex(function(r){return r.id===rid;});
+            if(tidx>=0){rows[tidx].income=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
           // 수정 시작 자동 감지
           if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
@@ -2894,11 +2963,12 @@ window.renderDeptReport=function(){
       iExp.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           const v=getRaw(this);
-          if(isDB||isBudget){saveViewField(rid,'amount',v);}
-          else{
+          if(isDB){
+            saveViewField(rid,'amount',v);
+          } else {
             const rows=ST.get(topRowKey,[]);
-            const idx=rows.findIndex(function(r){return r.id===rid;});
-            if(idx>=0){rows[idx].amount=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
+            const tidx=rows.findIndex(function(r){return r.id===rid;});
+            if(tidx>=0){rows[tidx].amount=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
           // 수정 시작 자동 감지
           if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
@@ -2922,7 +2992,7 @@ window.renderDeptReport=function(){
       iMemo.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           const v=this.value;
-          if(isDB||isBudget){saveViewField(rid,'memo',v);}
+          if(isDB){saveViewField(rid,'memo',v);}
           else{updateDeptTopRow(dept,ym,rid,'memo',v);}
         };
       })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
@@ -2957,9 +3027,6 @@ window.renderDeptReport=function(){
     ensureBudgetRow(dept,ym);
 
     var runBal=0;
-    const topRowKey='deptTopRows_'+ym+'_'+dept;
-    const topRows=ST.get(topRowKey,[]);
-
     // ── 상단 행들 (교회예산 포함) - 교회예산은 맨 위 고정 ──
     const budgetRows=topRows.filter(function(r){return r.isBudget;});
     const otherTopRows=topRows.filter(function(r){return !r.isBudget;});
