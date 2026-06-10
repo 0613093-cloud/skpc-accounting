@@ -2809,6 +2809,27 @@ function renderMonthlyGeneral(ym){
   const cuExpT=cumExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
   const bal=carryBase+cuInc-cuExpT;
 
+  // ── 교육부찬조 전체 수입/지출 계산 ──────────────────────────
+  const eduSponInc_cu=cumOff.filter(e=>String(e.type||'').includes('교육부찬조'))
+    .reduce((s,e)=>s+Number(e.amount||0),0);
+  const eduSponInc_mo=moOff.filter(e=>String(e.type||'').includes('교육부찬조'))
+    .reduce((s,e)=>s+Number(e.amount||0),0);
+  const eduSponExp_cu=cumExp.filter(e=>String(e.dept||'').includes('교육부찬조'))
+    .reduce((s,e)=>s+Number(e.amount||0),0);
+  const eduSponExp_mo=moExp.filter(e=>String(e.dept||'').includes('교육부찬조'))
+    .reduce((s,e)=>s+Number(e.amount||0),0);
+  // 교육부찬조 예산
+  const eduSponBudget=parseN(budget['in_교육부찬조']||0)+
+    parseN(budget['in_교육부찬조(청년부)']||0)+parseN(budget['in_교육부찬조(중고등부)']||0)+
+    parseN(budget['in_교육부찬조(아동부)']||0)+parseN(budget['in_교육부찬조(유치부)']||0);
+  // 합계2 (일반회계 합계 + 교육부찬조)
+  const tot2BudIn=0; // 예산 없음 (표시만)
+  const tot2CuInc=cuIncTable+eduSponInc_cu;
+  const tot2MoInc=moIncTable+eduSponInc_mo;
+  const tot2CuExp=cuExpTable+eduSponExp_cu;
+  const tot2MoExp=moExpTable+eduSponExp_mo;
+  const tot2Pct=budTotOut?(Math.round((tot2CuExp/(budTotOut+eduSponBudget||1))*1000)/10)+'%':'—';
+
   const budTotIn=incTypes.reduce((s,t)=>s+(parseN(budget['in_'+t])||0),0);
   const budTotOut=outTypes.reduce((s,d)=>s+(parseN(budget['out_'+d])||0),0);
   const totalYrPct=budTotIn?(Math.round((cuIncTable/budTotIn)*1000)/10)+'%':'—';
@@ -2827,12 +2848,12 @@ function renderMonthlyGeneral(ym){
           <tr><td style="font-weight:700;width:130px">이 월 금</td><td class="nc">${fmtN(prevBal)}</td>
               <td style="font-weight:700;width:130px">수입 누계</td><td class="nc" style="font-weight:800;color:var(--blue)">${fmtN(cuIncTable)}</td></tr>
           <tr><td style="font-weight:700">${mo}월 수입</td><td class="nc" style="font-weight:800;color:var(--blue)">${fmtN(moIncTable)}</td>
-              <td style="font-weight:700">지출 누계</td><td class="nc" style="font-weight:800;color:var(--red)">${fmtN(cuExpTable)}</td></tr>
-          <tr><td style="font-weight:700">${mo}월 지출</td><td class="nc" style="font-weight:800;color:var(--red)">${fmtN(moExpTable)}</td>
+              <td style="font-weight:700">지출 누계</td><td class="nc" style="font-weight:800;color:var(--red)">${fmtN(tot2CuExp)}</td></tr>
+          <tr><td style="font-weight:700">${mo}월 지출</td><td class="nc" style="font-weight:800;color:var(--red)">${fmtN(tot2MoExp)}</td>
               <td style="font-weight:700;background:var(--blue-xp)">잔 액</td>
-              <td class="nc" style="font-weight:800;color:var(--blue);background:var(--blue-xp)">${fmtN(cuIncTable-cuExpTable)}</td></tr>
+              <td class="nc" style="font-weight:800;color:var(--blue);background:var(--blue-xp)">${fmtN(tot2CuInc-tot2CuExp)}</td></tr>
           <tr style="background:var(--gold-l)"><td style="font-weight:700">${mo}월 결산</td>
-              <td class="nc" style="font-weight:800;color:var(--gold)">${fmtN(moIncTable-moExpTable)}</td><td colspan="2"></td></tr>
+              <td class="nc" style="font-weight:800;color:var(--gold)">${fmtN(tot2MoInc-tot2MoExp)}</td><td colspan="2"></td></tr>
         </tbody>
       </table>
     </div>
@@ -2874,9 +2895,32 @@ function renderMonthlyGeneral(ym){
               <td class="nc"><span style="color:${pct>70?'var(--red)':pct>40?'var(--gold)':'var(--g3)'}">${bA?pct+'%':'—'}</span></td>
               <td></td></tr>`;}).join('')}
         </tbody>
-        <tfoot><tr><td>합계</td><td class="nc">${fmtN(budTotOut)}</td>
+        <tfoot>
+        <tr style="background:#f5f5f5;font-weight:800">
+          <td>합계</td>
+          <td class="nc">${fmtN(budTotOut)}</td>
           <td class="nc" style="font-weight:800;color:var(--red)">${fmtN(cuExpTable)}</td>
-          <td class="nc">${fmtN(moExpTable)}</td><td class="nc">${totalOutPct}</td><td></td></tr></tfoot>
+          <td class="nc">${fmtN(moExpTable)}</td>
+          <td class="nc">${totalOutPct}</td>
+          <td></td>
+        </tr>
+        <tr style="background:#fff8e1">
+          <td>교육부찬조 전체</td>
+          <td class="nc">${eduSponBudget?fmtN(eduSponBudget):'—'}</td>
+          <td class="nc" style="color:var(--red)">${eduSponExp_cu?fmtN(eduSponExp_cu):'—'}</td>
+          <td class="nc">${eduSponExp_mo?fmtN(eduSponExp_mo):'—'}</td>
+          <td class="nc"><span style="color:var(--g3)">${eduSponBudget?Math.round(eduSponExp_cu/eduSponBudget*1000)/10+'%':'—'}</span></td>
+          <td style="font-size:10px;color:var(--g2)">변동비</td>
+        </tr>
+        <tr style="background:#e8f0fe;font-weight:800;font-size:13px">
+          <td>합 계 2</td>
+          <td class="nc">${fmtN(budTotOut+(eduSponBudget||0))}</td>
+          <td class="nc" style="font-weight:800;color:var(--red)">${fmtN(tot2CuExp)}</td>
+          <td class="nc">${fmtN(tot2MoExp)}</td>
+          <td class="nc">${tot2Pct}</td>
+          <td></td>
+        </tr>
+      </tfoot>
       </table>
     </div>
   </div>`;
