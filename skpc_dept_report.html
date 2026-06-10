@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>서부광성교회 부서보고서 입력</title>
+<title>서부광성교회 부서보고서 (입력전용)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -221,16 +221,16 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   background:rgba(255,255,255,.15);color:#fff;font-family:var(--fn);font-size:11px;width:80px}
 .dr-officers input::placeholder{color:rgba(255,255,255,.6)}
 .dr-body{padding:14px}
-.dr-row{display:grid;grid-template-columns:90px 1fr 100px 100px 110px 110px;border-bottom:1px solid var(--g5)}
+.dr-row{display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;border-bottom:1px solid var(--g5)}
 .dr-row:first-child{background:var(--g6);font-size:11px;font-weight:800;color:var(--g2)}
 .dr-row .dc{padding:6px 8px;font-size:12px;border-right:1px solid var(--g5);font-family:var(--fnum);overflow:hidden}
 .dr-row .dc:last-child{border-right:none}
 .dr-row input{border:none;padding:5px 7px;font-size:12px;background:transparent;width:100%;height:30px;font-family:var(--fn)}
 .dr-row input:focus{outline:2px solid var(--blue);border-radius:3px;z-index:1}
-.dr-foot{background:var(--blue-pale);display:grid;grid-template-columns:90px 1fr 100px 100px 110px 110px;font-weight:800;color:var(--navy)}
+.dr-foot{background:var(--blue-pale);display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;font-weight:800;color:var(--navy)}
 .dr-foot .dc{padding:7px 8px;border-right:1px solid var(--blue-pale);font-family:var(--fnum);text-align:right;font-size:12px}
 .dr-foot .dc:first-child{text-align:center;font-family:var(--fn)}
-.dr-foot2{background:var(--navy);display:grid;grid-template-columns:90px 1fr 100px 100px 110px 110px;font-weight:800;color:#fff}
+.dr-foot2{background:var(--navy);display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;font-weight:800;color:#fff}
 .dr-foot2 .dc{padding:7px 8px;border-right:1px solid rgba(255,255,255,.15);font-family:var(--fnum);text-align:right;font-size:12px}
 .dr-foot2 .dc:first-child{text-align:center;font-family:var(--fn)}
 
@@ -384,7 +384,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   <div class="hdr-brand">
     
     <div class="hdr-title">
-      <h1>서부광성교회 부서보고서</h1>
+      <h1>서부광성교회 부서보고서 <span style="font-size:12px;font-weight:600;opacity:.8">(입력전용)</span></h1>
       <p>Seobukwangseong Presbyterian Church — Dept Report EDIT</p>
     </div>
   </div>
@@ -406,7 +406,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <select id="dept-month"></select>
     <span class="m-badge" id="dept-badge">-</span>
     <button class="btn btn-navy" onclick="renderDeptReport()">🔍 조회</button>
-    <button class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ 인쇄</button>
+    
   </div>
   <div id="deptreport-content"></div>
 </main>
@@ -470,7 +470,9 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
         }
         // deptTopRows_, deptView_ 동적 키 복원
         Object.keys(data).forEach(function(k){
-          if(k.startsWith('deptTopRows_')||k.startsWith('deptView_')){
+          if(k.startsWith('deptTopRows_')||k.startsWith('deptView_')||
+             k.startsWith('deptFootView_')||k.startsWith('deptYearView_')||
+             k.startsWith('deptSavedAt_')){
             try{localStorage.setItem(k,JSON.stringify(data[k]));}catch(e){}
           }
         });
@@ -1131,6 +1133,7 @@ window.renderDeptReport=function(){
   const ctrlLbl=document.createElement('div');
   ctrlLbl.style.cssText='font-size:12px;font-weight:800;color:var(--g2);margin-bottom:8px';
   ctrlLbl.textContent='부서 표시/숨기기 — 숨긴 부서는 인쇄에서도 제외됩니다';
+  ctrlBar.style.display='none'; // 입력전용 페이지에서는 숨김
   ctrlBar.appendChild(ctrlLbl);
   const ctrlBtns=document.createElement('div');
   ctrlBtns.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
@@ -1261,7 +1264,7 @@ window.renderDeptReport=function(){
       const d0=document.createElement('div');d0.className='dc';
       d0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
       const iDate=document.createElement('input');iDate.type='date';iDate.value=dateV;
-      iDate.style.cssText='width:110px;min-width:110px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center;cursor:pointer;padding-right:4px'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
+      iDate.style.cssText='width:130px;min-width:130px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center;cursor:pointer;padding-right:8px'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
       iDate.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           if(isDB||isBudget){saveViewField(rid,'date',this.value);}
@@ -1300,6 +1303,8 @@ window.renderDeptReport=function(){
             const idx=rows.findIndex(function(r){return r.id===rid;});
             if(idx>=0){rows[idx].income=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
+          // 수정 시작 자동 감지
+          if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
           renderDeptReport();
         };
       })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
@@ -1322,6 +1327,8 @@ window.renderDeptReport=function(){
             const idx=rows.findIndex(function(r){return r.id===rid;});
             if(idx>=0){rows[idx].amount=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
+          // 수정 시작 자동 감지
+          if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
           renderDeptReport();
         };
       })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
@@ -1349,7 +1356,20 @@ window.renderDeptReport=function(){
       iMemo.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iMemo.blur();}});
       d5.appendChild(iMemo);
       // 교회예산 행: × 없음 / 일반 상단행: × 표시
-      if(!rowInfo.isDB&&!rowInfo.isBudget){
+      if(rowInfo.isDB&&!rowInfo.isBudget){
+        // DB 행 삭제 버튼 (지출내역 직접 삭제)
+        const btnDel=document.createElement('button');
+        btnDel.className='no-print';btnDel.textContent='×';
+        btnDel.title='이 지출 내역 삭제';
+        btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
+        btnDel.addEventListener('click',(function(eid){return function(){
+          if(!confirm('이 지출 내역을 삭제하시겠습니까?')) return;
+          setExpenses(getExpenses().filter(function(e){return e.id!==eid;}));
+          renderDeptReport();
+        };})(rowInfo.id));
+        d5.appendChild(btnDel);
+      } else if(!rowInfo.isDB&&!rowInfo.isBudget){
+        // 상단 추가행 삭제 버튼
         const btnDel=document.createElement('button');
         btnDel.className='no-print';btnDel.textContent='×';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
@@ -1380,8 +1400,12 @@ window.renderDeptReport=function(){
       renderEditableRow({id:r.id,date:r.date,content:r.content,income:r.income||0,amount:r.amount||0,memo:r.memo||'',isDB:false,isBudget:false});
     });
 
-    // ── DB expense rows (날짜 내림차순) ──
-    const sortedDMo=[...dMo].sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    // ── DB expense rows (금액 내림차순, 같으면 날짜 내림차순) ──
+    const sortedDMo=[...dMo].sort(function(a,b){
+      const amtDiff=Number(b.amount||0)-Number(a.amount||0);
+      if(amtDiff!==0) return amtDiff;
+      return (b.date||'').localeCompare(a.date||'');
+    });
     sortedDMo.forEach(function(e){
       renderEditableRow({
         id:e.id,
@@ -1467,20 +1491,48 @@ window.renderDeptReport=function(){
     addBtnBottom.addEventListener('click',function(){addDeptRow(dept,ym);});
     body.appendChild(addBtnBottom);
 
-    // Footer 월계
-    const moBalColor=(crInc-moTall)>=0?'var(--blue)':(moTall>0?'var(--red)':'var(--g3)');
+    // Footer 월계 (편집 가능)
+    const footViewKey='deptFootView_'+ym+'_'+dept;
+    const footView=ST.get(footViewKey,{});
+    const moInc_saved=footView.moInc!==undefined?footView.moInc:crInc;
+    const moExp_saved=footView.moExp!==undefined?footView.moExp:moTall;
+    const moBalColor=(moInc_saved-moExp_saved)>=0?'var(--blue)':(moExp_saved>0?'var(--red)':'var(--g3)');
     const foot=document.createElement('div');foot.className='dr-foot';
-    [{txt:'월 계',style:'text-align:center;font-family:var(--fn)'},
-     {txt:'',style:'font-family:var(--fn)'},
-     {txt:crInc?fmtN(crInc):'—',style:'text-align:right'},
-     {txt:fmtN(moTall),style:'text-align:right'},
-     {txt:fmtN(crInc-moTall),style:'text-align:right;color:'+moBalColor},
-     {txt:'',style:''}
-    ].forEach(function(col){
-      const dc=document.createElement('div');dc.className='dc';
-      dc.style.cssText=col.style;dc.textContent=col.txt;
-      foot.appendChild(dc);
+    // 월계 라벨
+    const fdc0=document.createElement('div');fdc0.className='dc';fdc0.style.cssText='text-align:center;font-family:var(--fn)';fdc0.textContent='월 계';foot.appendChild(fdc0);
+    // 빈칸
+    const fdc1=document.createElement('div');fdc1.className='dc';foot.appendChild(fdc1);
+    // 수입 편집
+    const fdc2=document.createElement('div');fdc2.className='dc';fdc2.style.textAlign='right';
+    const fInc=document.createElement('input');fInc.value=moInc_saved?fmtN(moInc_saved):'—';
+    fInc.style.cssText='width:90px;border:none;border-bottom:1px dashed var(--blue-l);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)';
+    fInc.placeholder='수입';
+    fInc.addEventListener('input',function(){fmtAmt(this);});
+    fInc.addEventListener('change',function(){
+      var fv=ST.get(footViewKey,{});fv.moInc=getRaw(this);ST.set(footViewKey,fv);
+      if(window._fbSaveConfig)window._fbSaveConfig(footViewKey,fv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
     });
+    fdc2.appendChild(fInc);foot.appendChild(fdc2);
+    // 지출 편집
+    const fdc3=document.createElement('div');fdc3.className='dc';fdc3.style.textAlign='right';
+    const fExp=document.createElement('input');fExp.value=moExp_saved?fmtN(moExp_saved):'0';
+    fExp.style.cssText='width:90px;border:none;border-bottom:1px dashed #fca5a5;background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--red)';
+    fExp.addEventListener('input',function(){fmtAmt(this);});
+    fExp.addEventListener('change',function(){
+      var fv=ST.get(footViewKey,{});fv.moExp=getRaw(this);ST.set(footViewKey,fv);
+      if(window._fbSaveConfig)window._fbSaveConfig(footViewKey,fv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
+    });
+    fdc3.appendChild(fExp);foot.appendChild(fdc3);
+    // 잔액
+    const fdc4=document.createElement('div');fdc4.className='dc';
+    fdc4.style.cssText='text-align:right;font-weight:700;color:'+moBalColor;
+    fdc4.textContent=fmtN(moInc_saved-moExp_saved);foot.appendChild(fdc4);
+    // 비고
+    const fdc5=document.createElement('div');fdc5.className='dc';foot.appendChild(fdc5);
     body.appendChild(foot);
 
     // Footer 연누계 (해당 연도 1월~해당월 전체)
@@ -1506,19 +1558,45 @@ window.renderDeptReport=function(){
     const yearBal=yearIncTotal-yearExpTotal;
     const cuBalColor=yearBal>=0?'#7fffb8':'#ffb3b3';
     const foot2=document.createElement('div');foot2.className='dr-foot2';
-    const f2cols=[
-      {txt:'연누계',style:'text-align:center;font-family:var(--fn);color:#fff;font-size:11px',edit:false},
-      {txt:'',style:'font-family:var(--fn)',edit:false},
-      {txt:yearIncTotal?fmtN(yearIncTotal):'—',style:'text-align:right;color:#fff',edit:false},
-      {txt:fmtN(yearExpTotal),style:'text-align:right;color:#fff',edit:false},
-      {txt:fmtN(yearBal),style:'text-align:right;font-weight:800;color:'+cuBalColor,edit:false},
-      {txt:'',style:'color:#fff',edit:false}
-    ];
-    f2cols.forEach(function(col){
-      const dc=document.createElement('div');dc.className='dc';
-      dc.style.cssText=col.style;dc.textContent=col.txt;
-      foot2.appendChild(dc);
+    const yearViewKey='deptYearView_'+yr+'_'+dept;
+    const yearView=ST.get(yearViewKey,{});
+    const yInc=yearView.inc!==undefined?yearView.inc:yearIncTotal;
+    const yExp=yearView.exp!==undefined?yearView.exp:yearExpTotal;
+    const yBal=yInc-yExp;
+    const cuBalColor2=yBal>=0?'#7fffb8':'#ffb3b3';
+    // 연누계 라벨
+    const y0=document.createElement('div');y0.className='dc';y0.style.cssText='text-align:center;font-family:var(--fn);color:#fff;font-size:11px';y0.textContent='연누계';foot2.appendChild(y0);
+    const y1=document.createElement('div');y1.className='dc';foot2.appendChild(y1);
+    // 수입 편집
+    const y2=document.createElement('div');y2.className='dc';y2.style.textAlign='right';
+    const yiInc=document.createElement('input');yiInc.value=yInc?fmtN(yInc):'—';
+    yiInc.style.cssText='width:90px;border:none;border-bottom:1px dashed rgba(255,255,255,.4);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:#fff';
+    yiInc.addEventListener('input',function(){fmtAmt(this);});
+    yiInc.addEventListener('change',function(){
+      var yv=ST.get(yearViewKey,{});yv.inc=getRaw(this);ST.set(yearViewKey,yv);
+      if(window._fbSaveConfig)window._fbSaveConfig(yearViewKey,yv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
     });
+    y2.appendChild(yiInc);foot2.appendChild(y2);
+    // 지출 편집
+    const y3=document.createElement('div');y3.className='dc';y3.style.textAlign='right';
+    const yiExp=document.createElement('input');yiExp.value=fmtN(yExp);
+    yiExp.style.cssText='width:90px;border:none;border-bottom:1px dashed rgba(255,255,255,.4);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:#fff';
+    yiExp.addEventListener('input',function(){fmtAmt(this);});
+    yiExp.addEventListener('change',function(){
+      var yv=ST.get(yearViewKey,{});yv.exp=getRaw(this);ST.set(yearViewKey,yv);
+      if(window._fbSaveConfig)window._fbSaveConfig(yearViewKey,yv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
+    });
+    y3.appendChild(yiExp);foot2.appendChild(y3);
+    // 잔액
+    const y4=document.createElement('div');y4.className='dc';
+    y4.style.cssText='text-align:right;font-weight:800;color:'+cuBalColor2;
+    y4.textContent=fmtN(yBal);foot2.appendChild(y4);
+    // 비고
+    const y5=document.createElement('div');y5.className='dc';foot2.appendChild(y5);
     body.appendChild(foot2);
     card.appendChild(body);
     container.appendChild(card);
@@ -2576,20 +2654,20 @@ function renderDeptStatusBar(dept){
   const state=deptEditState[dept]||'idle';
   const ym=document.getElementById('dept-month')?.value||'';
   const savedAt=ST.get('deptSavedAt_'+dept+'_'+ym,'');
-  bar.className='dept-status-bar dept-'+state;
-  const deptEsc=dept.replace(/'/g,"\\'");
+  const d=dept.replace(/"/g,'&quot;');
   if(state==='editing'){
-    const d1=dept.replace(/"/g,'&quot;');
-  bar.innerHTML='<button class="btn-edit-start editing" onclick="startDeptEdit(&quot;'+d1+'&quot;)">✏️ 수정 중...</button>'
-    +' <button class="btn-save-done" onclick="saveDeptEdit(&quot;'+d1+'&quot;,&quot;'+ym+'&quot;)">💾 수정완료</button>'
-    +(savedAt?' <span style="font-size:10px;color:#888">최종저장: '+savedAt+'</span>':'');
+    bar.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 12px;background:#fff3e0;border:2px solid #ff9800;border-radius:8px;margin-bottom:8px;flex-wrap:wrap';
+    bar.innerHTML='<button style="background:#ff9800;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:800;cursor:default;font-family:inherit;animation:editpulse 1s infinite">✏️ 수정 중...</button>'
+      +' <button onclick="saveDeptEdit(&quot;'+d+'&quot;,&quot;'+ym+'&quot;)" style="background:#1a3a6e;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">💾 수정완료</button>'
+      +(savedAt?'<span style="font-size:10px;color:#888;margin-left:4px">최종저장: '+savedAt+'</span>':'');
   }else if(state==='saved'){
-    bar.innerHTML='<span style="font-size:12px;font-weight:700;color:#27ae60">✅ 저장완료</span>'
-      +(savedAt?'<span style="font-size:10px;color:#888">'+savedAt+'</span>':'');
+    bar.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 12px;background:#e8f8f0;border:2px solid #27ae60;border-radius:8px;margin-bottom:8px;flex-wrap:wrap';
+    bar.innerHTML='<button style="background:#27ae60;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:default;font-family:inherit">✅ 저장완료</button>'
+      +(savedAt?'<span style="font-size:10px;color:#555;margin-left:4px">'+savedAt+'</span>':'');
   }else{
-    const d2=dept.replace(/"/g,'&quot;');
-    bar.innerHTML='<button class="btn-edit-start" onclick="startDeptEdit(&quot;'+d2+'&quot;)">✏️ 수정 시작</button>'
-      +(savedAt?' <span style="font-size:10px;color:#666">최종저장: '+savedAt+'</span>':'');
+    bar.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 12px;background:#f8f9ff;border:1.5px solid #dde;border-radius:8px;margin-bottom:8px;flex-wrap:wrap';
+    bar.innerHTML='<button onclick="startDeptEdit(&quot;'+d+'&quot;)" style="background:#f0f4ff;color:#1a3a6e;border:1.5px solid #1a3a6e;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✏️ 수정 시작</button>'
+      +(savedAt?'<span style="font-size:10px;color:#666;margin-left:4px">최종저장: '+savedAt+'</span>':'');
   }
 }
 
@@ -2628,6 +2706,7 @@ window.renderDeptReport=function(){
   const ctrlLbl=document.createElement('div');
   ctrlLbl.style.cssText='font-size:12px;font-weight:800;color:var(--g2);margin-bottom:8px';
   ctrlLbl.textContent='부서 표시/숨기기 — 숨긴 부서는 인쇄에서도 제외됩니다';
+  ctrlBar.style.display='none'; // 입력전용 페이지에서는 숨김
   ctrlBar.appendChild(ctrlLbl);
   const ctrlBtns=document.createElement('div');
   ctrlBtns.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
@@ -2758,7 +2837,7 @@ window.renderDeptReport=function(){
       const d0=document.createElement('div');d0.className='dc';
       d0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
       const iDate=document.createElement('input');iDate.type='date';iDate.value=dateV;
-      iDate.style.cssText='width:110px;min-width:110px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center;cursor:pointer;padding-right:4px'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
+      iDate.style.cssText='width:130px;min-width:130px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center;cursor:pointer;padding-right:8px'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
       iDate.addEventListener('change',(function(rid,isDB,isBudget){
         return function(){
           if(isDB||isBudget){saveViewField(rid,'date',this.value);}
@@ -2797,6 +2876,8 @@ window.renderDeptReport=function(){
             const idx=rows.findIndex(function(r){return r.id===rid;});
             if(idx>=0){rows[idx].income=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
+          // 수정 시작 자동 감지
+          if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
           renderDeptReport();
         };
       })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
@@ -2819,6 +2900,8 @@ window.renderDeptReport=function(){
             const idx=rows.findIndex(function(r){return r.id===rid;});
             if(idx>=0){rows[idx].amount=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
           }
+          // 수정 시작 자동 감지
+          if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
           renderDeptReport();
         };
       })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
@@ -2846,7 +2929,20 @@ window.renderDeptReport=function(){
       iMemo.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iMemo.blur();}});
       d5.appendChild(iMemo);
       // 교회예산 행: × 없음 / 일반 상단행: × 표시
-      if(!rowInfo.isDB&&!rowInfo.isBudget){
+      if(rowInfo.isDB&&!rowInfo.isBudget){
+        // DB 행 삭제 버튼 (지출내역 직접 삭제)
+        const btnDel=document.createElement('button');
+        btnDel.className='no-print';btnDel.textContent='×';
+        btnDel.title='이 지출 내역 삭제';
+        btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
+        btnDel.addEventListener('click',(function(eid){return function(){
+          if(!confirm('이 지출 내역을 삭제하시겠습니까?')) return;
+          setExpenses(getExpenses().filter(function(e){return e.id!==eid;}));
+          renderDeptReport();
+        };})(rowInfo.id));
+        d5.appendChild(btnDel);
+      } else if(!rowInfo.isDB&&!rowInfo.isBudget){
+        // 상단 추가행 삭제 버튼
         const btnDel=document.createElement('button');
         btnDel.className='no-print';btnDel.textContent='×';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
@@ -2877,8 +2973,12 @@ window.renderDeptReport=function(){
       renderEditableRow({id:r.id,date:r.date,content:r.content,income:r.income||0,amount:r.amount||0,memo:r.memo||'',isDB:false,isBudget:false});
     });
 
-    // ── DB expense rows (날짜 내림차순) ──
-    const sortedDMo=[...dMo].sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    // ── DB expense rows (금액 내림차순, 같으면 날짜 내림차순) ──
+    const sortedDMo=[...dMo].sort(function(a,b){
+      const amtDiff=Number(b.amount||0)-Number(a.amount||0);
+      if(amtDiff!==0) return amtDiff;
+      return (b.date||'').localeCompare(a.date||'');
+    });
     sortedDMo.forEach(function(e){
       renderEditableRow({
         id:e.id,
@@ -2964,20 +3064,48 @@ window.renderDeptReport=function(){
     addBtnBottom.addEventListener('click',function(){addDeptRow(dept,ym);});
     body.appendChild(addBtnBottom);
 
-    // Footer 월계
-    const moBalColor=(crInc-moTall)>=0?'var(--blue)':(moTall>0?'var(--red)':'var(--g3)');
+    // Footer 월계 (편집 가능)
+    const footViewKey='deptFootView_'+ym+'_'+dept;
+    const footView=ST.get(footViewKey,{});
+    const moInc_saved=footView.moInc!==undefined?footView.moInc:crInc;
+    const moExp_saved=footView.moExp!==undefined?footView.moExp:moTall;
+    const moBalColor=(moInc_saved-moExp_saved)>=0?'var(--blue)':(moExp_saved>0?'var(--red)':'var(--g3)');
     const foot=document.createElement('div');foot.className='dr-foot';
-    [{txt:'월 계',style:'text-align:center;font-family:var(--fn)'},
-     {txt:'',style:'font-family:var(--fn)'},
-     {txt:crInc?fmtN(crInc):'—',style:'text-align:right'},
-     {txt:fmtN(moTall),style:'text-align:right'},
-     {txt:fmtN(crInc-moTall),style:'text-align:right;color:'+moBalColor},
-     {txt:'',style:''}
-    ].forEach(function(col){
-      const dc=document.createElement('div');dc.className='dc';
-      dc.style.cssText=col.style;dc.textContent=col.txt;
-      foot.appendChild(dc);
+    // 월계 라벨
+    const fdc0=document.createElement('div');fdc0.className='dc';fdc0.style.cssText='text-align:center;font-family:var(--fn)';fdc0.textContent='월 계';foot.appendChild(fdc0);
+    // 빈칸
+    const fdc1=document.createElement('div');fdc1.className='dc';foot.appendChild(fdc1);
+    // 수입 편집
+    const fdc2=document.createElement('div');fdc2.className='dc';fdc2.style.textAlign='right';
+    const fInc=document.createElement('input');fInc.value=moInc_saved?fmtN(moInc_saved):'—';
+    fInc.style.cssText='width:90px;border:none;border-bottom:1px dashed var(--blue-l);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)';
+    fInc.placeholder='수입';
+    fInc.addEventListener('input',function(){fmtAmt(this);});
+    fInc.addEventListener('change',function(){
+      var fv=ST.get(footViewKey,{});fv.moInc=getRaw(this);ST.set(footViewKey,fv);
+      if(window._fbSaveConfig)window._fbSaveConfig(footViewKey,fv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
     });
+    fdc2.appendChild(fInc);foot.appendChild(fdc2);
+    // 지출 편집
+    const fdc3=document.createElement('div');fdc3.className='dc';fdc3.style.textAlign='right';
+    const fExp=document.createElement('input');fExp.value=moExp_saved?fmtN(moExp_saved):'0';
+    fExp.style.cssText='width:90px;border:none;border-bottom:1px dashed #fca5a5;background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--red)';
+    fExp.addEventListener('input',function(){fmtAmt(this);});
+    fExp.addEventListener('change',function(){
+      var fv=ST.get(footViewKey,{});fv.moExp=getRaw(this);ST.set(footViewKey,fv);
+      if(window._fbSaveConfig)window._fbSaveConfig(footViewKey,fv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
+    });
+    fdc3.appendChild(fExp);foot.appendChild(fdc3);
+    // 잔액
+    const fdc4=document.createElement('div');fdc4.className='dc';
+    fdc4.style.cssText='text-align:right;font-weight:700;color:'+moBalColor;
+    fdc4.textContent=fmtN(moInc_saved-moExp_saved);foot.appendChild(fdc4);
+    // 비고
+    const fdc5=document.createElement('div');fdc5.className='dc';foot.appendChild(fdc5);
     body.appendChild(foot);
 
     // Footer 연누계 (해당 연도 1월~해당월 전체)
@@ -3003,19 +3131,45 @@ window.renderDeptReport=function(){
     const yearBal=yearIncTotal-yearExpTotal;
     const cuBalColor=yearBal>=0?'#7fffb8':'#ffb3b3';
     const foot2=document.createElement('div');foot2.className='dr-foot2';
-    const f2cols=[
-      {txt:'연누계',style:'text-align:center;font-family:var(--fn);color:#fff;font-size:11px',edit:false},
-      {txt:'',style:'font-family:var(--fn)',edit:false},
-      {txt:yearIncTotal?fmtN(yearIncTotal):'—',style:'text-align:right;color:#fff',edit:false},
-      {txt:fmtN(yearExpTotal),style:'text-align:right;color:#fff',edit:false},
-      {txt:fmtN(yearBal),style:'text-align:right;font-weight:800;color:'+cuBalColor,edit:false},
-      {txt:'',style:'color:#fff',edit:false}
-    ];
-    f2cols.forEach(function(col){
-      const dc=document.createElement('div');dc.className='dc';
-      dc.style.cssText=col.style;dc.textContent=col.txt;
-      foot2.appendChild(dc);
+    const yearViewKey='deptYearView_'+yr+'_'+dept;
+    const yearView=ST.get(yearViewKey,{});
+    const yInc=yearView.inc!==undefined?yearView.inc:yearIncTotal;
+    const yExp=yearView.exp!==undefined?yearView.exp:yearExpTotal;
+    const yBal=yInc-yExp;
+    const cuBalColor2=yBal>=0?'#7fffb8':'#ffb3b3';
+    // 연누계 라벨
+    const y0=document.createElement('div');y0.className='dc';y0.style.cssText='text-align:center;font-family:var(--fn);color:#fff;font-size:11px';y0.textContent='연누계';foot2.appendChild(y0);
+    const y1=document.createElement('div');y1.className='dc';foot2.appendChild(y1);
+    // 수입 편집
+    const y2=document.createElement('div');y2.className='dc';y2.style.textAlign='right';
+    const yiInc=document.createElement('input');yiInc.value=yInc?fmtN(yInc):'—';
+    yiInc.style.cssText='width:90px;border:none;border-bottom:1px dashed rgba(255,255,255,.4);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:#fff';
+    yiInc.addEventListener('input',function(){fmtAmt(this);});
+    yiInc.addEventListener('change',function(){
+      var yv=ST.get(yearViewKey,{});yv.inc=getRaw(this);ST.set(yearViewKey,yv);
+      if(window._fbSaveConfig)window._fbSaveConfig(yearViewKey,yv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
     });
+    y2.appendChild(yiInc);foot2.appendChild(y2);
+    // 지출 편집
+    const y3=document.createElement('div');y3.className='dc';y3.style.textAlign='right';
+    const yiExp=document.createElement('input');yiExp.value=fmtN(yExp);
+    yiExp.style.cssText='width:90px;border:none;border-bottom:1px dashed rgba(255,255,255,.4);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:#fff';
+    yiExp.addEventListener('input',function(){fmtAmt(this);});
+    yiExp.addEventListener('change',function(){
+      var yv=ST.get(yearViewKey,{});yv.exp=getRaw(this);ST.set(yearViewKey,yv);
+      if(window._fbSaveConfig)window._fbSaveConfig(yearViewKey,yv);
+      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
+      renderDeptReport();
+    });
+    y3.appendChild(yiExp);foot2.appendChild(y3);
+    // 잔액
+    const y4=document.createElement('div');y4.className='dc';
+    y4.style.cssText='text-align:right;font-weight:800;color:'+cuBalColor2;
+    y4.textContent=fmtN(yBal);foot2.appendChild(y4);
+    // 비고
+    const y5=document.createElement('div');y5.className='dc';foot2.appendChild(y5);
     body.appendChild(foot2);
     card.appendChild(body);
     container.appendChild(card);
