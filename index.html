@@ -424,18 +424,21 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 .nav-dropdown-wrap>span{display:flex;align-items:center;gap:4px;}
 .nav-arr{font-size:10px;opacity:.6;margin-left:1px;}
 .nav-dropdown{
-  display:none;position:absolute;top:100%;left:0;z-index:200;
+  display:none;position:absolute;top:0;left:100%;z-index:300;
   background:#fff;border:1.5px solid var(--navy,#1a2456);border-radius:8px;
-  box-shadow:0 6px 18px rgba(0,0,0,.18);min-width:110px;overflow:hidden;
-  margin-top:2px;
+  box-shadow:4px 4px 18px rgba(0,0,0,.22);overflow:hidden;
+  margin-left:2px;
+  flex-direction:row; /* 가로 배치 */
 }
-.nav-dropdown.open{display:block;}
+.nav-dropdown.open{display:flex;}
+/* open handled in .nav-dropdown */
 .nav-drop-item{
-  padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;
+  padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;
   color:var(--navy,#1a2456);white-space:nowrap;
-  border-bottom:1px solid #f0f2f8;
+  border-right:1px solid #e0e4f0;
+  border-bottom:none;
 }
-.nav-drop-item:last-child{border-bottom:none;}
+.nav-drop-item:last-child{border-right:none;}
 .nav-drop-item:hover{background:#f0f4ff;}
 .nav-drop-item.active{background:var(--navy,#1a2456);color:#fff;}
 </style>
@@ -931,7 +934,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
   <div style="background:#e3f2fd;border:1.5px solid #90caf9;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:#1565c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <span>📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력/수정은 별도 페이지에서만 가능합니다. 재정 전체 내역은 부서보고서 전용 페이지에서 볼 수 없습니다.</span>
-    <a href="skpc_dept_report.html" target="_blank" class="btn btn-blue btn-sm">🔗 부서보고서 입력 페이지 열기</a>
+    <a href="https://skpc-accounting.vercel.app/skpc_dept_report.html" target="_blank" class="btn btn-blue btn-sm">🔗 부서보고서 입력 페이지 열기</a>
   </div>
   <div class="month-bar">
     <label>보고 기준 월</label>
@@ -1759,11 +1762,20 @@ function onTabActivate(tab){
   if(tab==='weekly') initWeeklyTab();
   if(tab==='receipt'){
     const recDate=document.getElementById('rec-date');
-    if(recDate&&!recDate.value) recDate.value=getLastSunday();
-    else if(recDate&&recDate.value===TODAY) recDate.value=getLastSunday();
+    if(recDate) recDate.value=getLastSunday(); // 항상 가장 가까운 일요일
   }
   if(tab==='manage') renderManage();
-  if(tab==='online-off') initOnlineTab();
+  if(tab==='online-off'){
+    initOnlineTab();
+    const odEl=document.getElementById('online-fdate');
+    if(odEl){
+      // 가장 가까운 일요일을 기본 선택
+      const sun=getLastSunday();
+      for(let i=0;i<odEl.options.length;i++){
+        if(odEl.options[i].value===sun){odEl.selectedIndex=i;break;}
+      }
+    }
+  }
   if(tab==='finsearch'){const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
 }
 function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');}}
@@ -3605,7 +3617,7 @@ function populateTypeSelect(selId){
 window.initQueryTab=function(){
   populateTypeSelect('qry-type');
   const el=document.getElementById('qry-date');
-  if(el&&!el.value) el.value=getLastSunday();
+  if(el) el.value=getLastSunday(); // 항상 가장 가까운 일요일
 };
 window.doQuerySearch=function(){
   let books=getOfferings();
@@ -3655,7 +3667,7 @@ function initWeeklyTab(){
 window.initWeeklyTab=function(){
   populateTypeSelect('wky-type');
   const el=document.getElementById('wky-date');
-  if(el&&!el.value) el.value=getLastSunday();
+  if(el) el.value=getLastSunday(); // 항상 가장 가까운 일요일
 };
 window.doWeeklySearch=function(){
   let books=getOfferings();
