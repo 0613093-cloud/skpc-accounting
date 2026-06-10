@@ -472,6 +472,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   }
 
   const MAIN_DOC  = doc(db, 'skpc', 'config');
+  const DEPT_DOC  = doc(db, 'skpc_dept', 'report_data'); // 부서보고서 전용 별도 DB
   const COL_OFF   = collection(db, 'skpc_offerings');
   const COL_EXP   = collection(db, 'skpc_expenses');
   const COL_SPON  = collection(db, 'skpc_sponsors');
@@ -481,12 +482,21 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     try {
       window._fbStatus && window._fbStatus('connecting');
 
-      const [snap, offSnap, expSnap, sponSnap] = await Promise.all([
+      const [snap, deptSnap, offSnap, expSnap, sponSnap] = await Promise.all([
         getDoc(MAIN_DOC),
+        getDoc(DEPT_DOC),
         getDocs(COL_OFF),
         getDocs(COL_EXP),
         getDocs(COL_SPON)
       ]);
+
+      // 부서보고서 전용 DB 복원 (DEPT_DOC → localStorage)
+      if(deptSnap.exists()) {
+        const deptData = deptSnap.data();
+        Object.keys(deptData).forEach(function(k){
+          try{ localStorage.setItem(k, JSON.stringify(deptData[k])); }catch(e){}
+        });
+      }
 
       // config 문서
       if(snap.exists()) {
@@ -502,12 +512,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
             try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
           });
         }
-        // deptTopRows_, deptView_ 동적 키 복원
-        Object.keys(data).forEach(function(k){
-          if(k.startsWith('deptTopRows_')||k.startsWith('deptView_')){
-            try{localStorage.setItem(k,JSON.stringify(data[k]));}catch(e){}
-          }
-        });
+        // 부서보고서 키는 DEPT_DOC에서 별도 복원됨
       }
 
       // 헌금
