@@ -2862,12 +2862,14 @@ function renderMonthlyGeneral(ym){
       <table class="tbl">
         <thead><tr><th>항목</th><th class="nc">당년예산(A)</th><th class="nc">누계(B)</th><th class="nc">월계(C)</th><th class="nc">진도%(B/A)</th><th>비고</th></tr></thead>
         <tbody>
-          ${incTypes.map(t=>{const bA=parseN(budget['in_'+t])||0;const bB=byTypeInc[t]||0;const bC=byTypeMo[t]||0;const pct=bA?Math.round(bB/bA*1000)/10:0;
-            return `<tr><td>${t}</td><td class="nc">${bA?fmtN(bA):'—'}</td>
-              <td class="nc" style="font-weight:${bB?'700':'400'}">${bB?fmtN(bB):'—'}</td>
-              <td class="nc">${bC?fmtN(bC):'—'}</td>
-              <td class="nc"><span style="color:${pct>50?'var(--green)':pct>30?'var(--gold)':'var(--g3)'}">${bA?pct+'%':'—'}</span></td>
-              <td></td></tr>`;}).join('')}
+          ${incTypes.map(t=>{
+            const bA=parseN(budget['in_'+t])||0;const bB=byTypeInc[t]||0;const bC=byTypeMo[t]||0;
+            const pct=bA?Math.round(bB/bA*1000)/10:0;
+            return '<tr><td>'+t+'</td><td class="nc">'+(bA?fmtN(bA):'—')+'</td>'
+              +'<td class="nc" style="font-weight:'+(bB?'700':'400')+'">'+(bB?fmtN(bB):'—')+'</td>'
+              +'<td class="nc">'+(bC?fmtN(bC):'—')+'</td>'
+              +'<td class="nc"><span style="color:'+(pct>50?'var(--green)':pct>30?'var(--gold)':'var(--g3)')+'">'+( bA?pct+'%':'—')+'</span></td>'
+              +'<td></td></tr>';}).join('')}
         </tbody>
         <tfoot><tr><td>합계</td><td class="nc">${fmtN(budTotIn)}</td>
           <td class="nc" style="font-weight:800;color:var(--blue)">${fmtN(cuIncTable)}</td>
@@ -2885,15 +2887,20 @@ function renderMonthlyGeneral(ym){
         <tbody>
           ${outTypes.map(d=>{
             const bA=parseN(budget['out_'+d])||0;
-            // '건축대출금 상환(일반회계)' → DB '건축대출금 상환(일반회계)' 부서 데이터만 반영
             const bB=byDeptCu[d]||0;
             const bC=byDeptMo[d]||0;
             const pct=bA?Math.round(bB/bA*1000)/10:0;
-            return `<tr><td>${d}</td><td class="nc">${bA?fmtN(bA):'—'}</td>
-              <td class="nc" style="font-weight:${bB?'700':'400'}">${bB?fmtN(bB):'—'}</td>
-              <td class="nc">${bC?fmtN(bC):'—'}</td>
-              <td class="nc"><span style="color:${pct>70?'var(--red)':pct>40?'var(--gold)':'var(--g3)'}">${bA?pct+'%':'—'}</span></td>
-              <td></td></tr>`;}).join('')}
+            const bAstr=bA?fmtN(bA):'—';
+            const bBstr=bB?fmtN(bB):'—';
+            const bCstr=bC?fmtN(bC):'—';
+            const pctStr=bA?pct+'%':'—';
+            const pctColor=pct>70?'var(--red)':pct>40?'var(--gold)':'var(--g3)';
+            const wt=bB?'700':'400';
+            return '<tr><td>'+d+'</td><td class="nc">'+bAstr+'</td>'
+              +'<td class="nc" style="font-weight:'+wt+'">'+bBstr+'</td>'
+              +'<td class="nc">'+bCstr+'</td>'
+              +'<td class="nc"><span style="color:'+pctColor+'">'+pctStr+'</span></td>'
+              +'<td></td></tr>';}).join('')}
         </tbody>
         <tfoot>
         <tr style="background:#f5f5f5;font-weight:800">
@@ -3619,8 +3626,10 @@ function getTypeColorIdx(type){
 // 온라인입금 여부 판단 (중앙 헬퍼 - 모든 곳에서 사용)
 function isOnlinePayment(e){
   const v=e.online;
-  if(v==='현금입금'||v===false||v==='false'||v==='FALSE'||v==='0') return false;
-  return v===true||v==='TRUE'||v==='true'||v==='1'||v==='온라인입금'||String(v).toLowerCase()==='true';
+  if(!v||v===false||v===0||v==='false'||v==='FALSE'||v==='0'||v==='현금입금'||v==='현금') return false;
+  if(v===true||v==='TRUE'||v==='true'||v==='1') return true;
+  const vs=String(v).trim();
+  return vs==='온라인입금'||vs==='온라인'||vs.toLowerCase()==='true';
 }
 // 온라인 배지 (온라인만 표시, 현금은 빈칸)
 function getOnlineBadgeSmall(e){
@@ -4520,7 +4529,7 @@ function buildOfferingSheet(){
     ['일자','구분','성도성명','금액','작성자','온라인 송금여부','기타일자','이자및기타','기타사유']
   ];
   arr.forEach(r=>{
-    const online=r.online===true||r.online==='TRUE'||r.online==='true';
+    const online=isOnlinePayment(r);
     rows.push([r.date||'',r.type||'',r.name||'',Number(r.amount||0),r.sheet||r.writer||'',online,r.etcDate||'',r.interest||0,r.memo||r.reason||'']);
   });
   rows.push([]);
@@ -4828,11 +4837,14 @@ function validateAndParse(wb, fileName){
         const amount=parseN(String(row[3]||'0'));
         const writer=String(row[4]||'').trim();
         const onlineRaw=row[5];
-        const onlineStr=String(onlineRaw||'').trim();
+        const onlineStr=String(onlineRaw||'').trim().replace(/\s/g,'');
+        // F열: "온라인입금" 또는 "현금입금" 문자열, 또는 TRUE/FALSE
         const online=onlineRaw===true
           ||onlineRaw==='TRUE'||onlineRaw==='true'||onlineRaw==='1'
-          ||onlineStr==='온라인입금'||onlineStr==='온라인'
-          ||onlineStr.toLowerCase()==='true';
+          ||onlineStr==='온라인입금'||onlineStr==='온라인'||onlineStr==='온라인입금'
+          ||(onlineStr.toLowerCase()==='true');
+        // 저장값: "온라인입금" 또는 "현금입금" 문자열 유지 (isOnlinePayment에서 판별)
+        const onlineVal=online?'온라인입금':'현금입금';
         const etcDate=normalizeDate(row[6]);
         const interestRaw=row[7];
         const interest=(interestRaw===false||interestRaw===0||!interestRaw)?0:parseN(String(interestRaw));
@@ -4842,7 +4854,7 @@ function validateAndParse(wb, fileName){
         if(interest>0) memo=(memo?memo+' / ':'')+'이자:'+fmtN(interest);
         result.parsed.offering.push({
           id:uid(),date,type:offType,name,amount,
-          online,writer,etcDate,interest,
+          online:onlineVal,writer,etcDate,interest,
           memo,spon:false,sheet:writer,source:'excel'
         });
       });
@@ -5013,9 +5025,10 @@ window.confirmExcelUpload=function(){
     offering.forEach(r=>{
       // online 필드 boolean 정규화
       const ov=r.online;
-      const ovStr=String(ov||'').trim();
-        r.online=(ov===true||ov==='TRUE'||ov==='true'||ov==='1'
-          ||ovStr==='온라인입금'||ovStr==='온라인'||ovStr.toLowerCase()==='true');
+      const ovStr=String(ov||'').trim().replace(/\s/g,'');
+        const isOnl=ov===true||ov==='TRUE'||ov==='true'||ov==='1'
+          ||ovStr==='온라인입금'||ovStr==='온라인'||ovStr.toLowerCase()==='true';
+        r.online=isOnl?'온라인입금':'현금입금';
       arr.push(r);
     });
     setOfferings(arr);
