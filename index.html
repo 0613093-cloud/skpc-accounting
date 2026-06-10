@@ -845,13 +845,31 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 
 <!-- ===== 찬조내역 ===== -->
 <div id="tab-sponsor" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">🎁 찬조내역 세부 관리</div></div>
+  <div class="pg-hd"><div class="pg-title">🎁 찬조내역</div></div>
+
+  <!-- 조회 조건 -->
   <div class="search-panel">
-    <div class="panel-title">조회 조건 — 헌금정리 DB 기반</div>
-    <div class="g3 mb8">
-      <div class="fg"><div class="flbl">찬조 유형</div>
+    <div class="panel-title">조회 조건</div>
+    <div class="g4 mb8">
+      <div class="fg"><div class="flbl">찬조 구분</div>
+        <select class="fsel" id="spon-cat" onchange="onSponCatChange()">
+          <option value="">전체</option>
+          <option value="교육부찬조전체">교육부찬조 전체</option>
+          <option value="영상찬조">영상찬조</option>
+          <option value="야외예배찬조">야외예배찬조</option>
+          <option value="꽃꽂이찬조">꽃꽂이찬조</option>
+          <option value="기타찬조">기타찬조</option>
+        </select></div>
+      <div class="fg" id="spon-sub-wrap" style="display:none">
+        <div class="flbl">교육부찬조 세부</div>
         <select class="fsel" id="spon-ftype-q" onchange="toggleSponExtra()">
-          <option value="">전체</option></select></div>
+          <option value="교육부찬조전체">교육부찬조 전체</option>
+          <option value="교육부찬조">교육부찬조(미지정)</option>
+          <option value="교육부찬조(청년부)">교육부찬조(청년부)</option>
+          <option value="교육부찬조(중고등부)">교육부찬조(중고등부)</option>
+          <option value="교육부찬조(아동부)">교육부찬조(아동부)</option>
+          <option value="교육부찬조(유치부)">교육부찬조(유치부)</option>
+        </select></div>
       <div class="fg"><div class="flbl">기간 (시작)</div><input type="date" class="finp" id="spon-from"></div>
       <div class="fg"><div class="flbl">기간 (종료)</div><input type="date" class="finp" id="spon-to"></div>
     </div>
@@ -860,6 +878,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       <button class="btn btn-outline" onclick="resetSponSearch()">초기화</button>
     </div>
   </div>
+
+  <!-- 직접 입력 -->
   <div class="card">
     <div class="card-title" style="margin-bottom:10px">찬조 직접 입력</div>
     <div class="g3">
@@ -870,45 +890,79 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     </div>
     <div class="g3">
       <div class="fg"><div class="flbl">금액 (원)</div><input class="finp num-in" id="spon-amount" placeholder="0" oninput="fmtAmt(this)"></div>
-      <div class="fg"><div class="flbl">구분(부)</div><input class="finp" id="spon-dept" placeholder="청년부, 아동부 등"></div>
-      <div class="fg"><div class="flbl">기타사유/비고</div><input class="finp" id="spon-memo" placeholder="기타사유"></div>
+      <div class="fg"><div class="flbl">비고</div><input class="finp" id="spon-memo" placeholder="헌금내역 비고 구분자 입력"></div>
+      <div class="fg"></div>
     </div>
     <div class="flex gap8">
       <button class="btn btn-navy" onclick="addSponsor()">+ 직접 추가</button>
       <button class="btn btn-outline" onclick="clearSponForm()">초기화</button>
     </div>
   </div>
+
+  <!-- 결과 -->
   <div class="result-section" id="spon-result">
     <div class="g2 mb12" id="spon-stats-wrap"></div>
+
+    <!-- 찬조 목록 -->
     <div class="card">
       <div class="card-hd">
         <div class="card-title">찬조 목록</div>
         <div class="flex gap8 items-c">
           <span id="spon-count" class="badge b-gold"></span>
+          <span id="spon-total" style="font-family:var(--fnum);font-weight:700;color:var(--gold);font-size:14px"></span>
           <button class="btn btn-outline btn-sm no-print" onclick="printSection('spon-print-area')">🖨️ 인쇄</button>
         </div>
       </div>
       <div id="spon-print-area">
         <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>#</th><th>일자</th><th>유형</th><th>성도/기관</th><th class="nc">금액(원)</th><th>구분(부)</th><th>기타사유</th><th>출처</th><th class="no-print">삭제</th></tr></thead>
+          <thead><tr><th>#</th><th>일자</th><th>유형</th><th>성도/기관</th><th class="nc">금액(원)</th><th>비고(헌금구분자)</th><th>출처</th><th class="no-print">삭제</th></tr></thead>
           <tbody id="spon-tbody"></tbody>
-          <tfoot><tr><td colspan="4" style="text-align:center">합계</td><td class="nc" id="spon-total"></td><td colspan="4"></td></tr></tfoot>
+          <tfoot><tr><td colspan="4" style="text-align:center;font-weight:700">합계</td>
+            <td class="nc" id="spon-foot-total" style="font-weight:800"></td><td colspan="3"></td></tr></tfoot>
         </table></div>
       </div>
     </div>
-    <!-- 교육부찬조 전용 -->
+
+    <!-- 교육부찬조 전용 섹션 -->
     <div class="spon-extra" id="spon-edu-extra">
+      <!-- 부서별 배분 현황 -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:10px">부서별 배분 현황 (교육부찬조)</div>
+        <div class="card-title" style="margin-bottom:10px">📊 교육부찬조 부서별 배분 현황</div>
+        <div style="font-size:11px;color:var(--g2);margin-bottom:8px">
+          지정금액: 타입에 부서명 포함 (예: 교육부찬조(청년부)) / 배분금액: 미지정 찬조 1/4 균등 배분 / 찬조합계 = 지정 + 배분
+        </div>
         <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>부서</th><th class="nc">지정금액</th><th class="nc">배분금액</th><th class="nc">찬조합계</th><th class="nc">받아간금액</th><th>상태</th></tr></thead>
+          <thead><tr>
+            <th>부서</th>
+            <th class="nc">지정금액</th>
+            <th class="nc">배분금액</th>
+            <th class="nc">찬조합계</th>
+            <th class="nc">받아간금액</th>
+            <th>상태</th>
+          </tr></thead>
           <tbody id="spon-dist-tbody"></tbody>
+          <tfoot><tr>
+            <td style="font-weight:700">합계</td>
+            <td class="nc" id="spon-dist-tot-des"></td>
+            <td class="nc" id="spon-dist-tot-alloc"></td>
+            <td class="nc" id="spon-dist-tot-sum" style="font-weight:800;color:var(--blue)"></td>
+            <td class="nc" id="spon-dist-tot-recv"></td>
+            <td></td>
+          </tr></tfoot>
         </table></div>
       </div>
+
+      <!-- 입금내역 세부 -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:10px">미금(입입금내역 세부</div>
+        <div class="card-title" style="margin-bottom:10px">📋 입금내역 세부</div>
+        <div style="font-size:11px;color:var(--g2);margin-bottom:8px">
+          지출내역 중 부서=교육부찬조 기준 / 수취자: 최희지·김하준→청년부, 김미선→아동부, 김여진→유치부, 권순호→중고등부
+        </div>
         <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>입금일자</th><th>소속</th><th>내용</th><th class="nc">금액(원)</th><th>요청자</th><th>송금받은자</th></tr></thead>
+          <thead><tr>
+            <th>입금일자</th><th>소속</th><th>내용</th>
+            <th class="nc">금액(원)</th><th>요청자</th><th>송금받은자</th>
+          </tr></thead>
           <tbody id="spon-pay-tbody"></tbody>
         </table></div>
       </div>
@@ -1488,7 +1542,7 @@ const ST={
 // ===== DEFAULT DATA =====
 const DEF_OFF_TYPES=['십일조헌금','월정헌금','감사헌금','주일헌금','비전헌금','맥추감사헌금','헌신예배','교회학교','장학헌금','추수감사헌금','일천번제','선교헌금','부활절','성탄절','신년헌금','기타','건축헌금','전도헌금','지역봉사헌금'];
 const DEF_DEPT_TYPES=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','기타(예비비)','건축헌금','전도헌금','사회봉사'];
-const DEF_SPON_TYPES=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','기타찬조'];
+const DEF_SPON_TYPES=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','꽃꽂이찬조','기타찬조'];
 const DEF_WRITERS=['이광원','유치주','하태식','김종우'];
 function getWriters(){return ST.get('writers',DEF_WRITERS);}
 
@@ -2443,6 +2497,30 @@ window.deleteExpense=function(id){
 // ============================================================
 // SPONSOR TAB - DB from offerings
 // ============================================================
+
+// ── 찬조 구분 셀렉트 연동 ────────────────────────────────────
+window.onSponCatChange=function(){
+  const cat=document.getElementById('spon-cat')?.value||'';
+  const subWrap=document.getElementById('spon-sub-wrap');
+  const ftypeQ=document.getElementById('spon-ftype-q');
+  if(cat==='교육부찬조전체'){
+    if(subWrap) subWrap.style.display='';
+    if(ftypeQ) ftypeQ.value='교육부찬조전체';
+  } else {
+    if(subWrap) subWrap.style.display='none';
+    if(ftypeQ) ftypeQ.value=cat;
+  }
+  toggleSponExtra();
+};
+
+// toggleSponExtra 오버라이드
+window.toggleSponExtra=function(){
+  const q=(document.getElementById('spon-ftype-q')?.value||
+           document.getElementById('spon-cat')?.value||'');
+  const ex=document.getElementById('spon-edu-extra');
+  if(ex) ex.className='spon-extra'+(q.includes('교육부찬조')||q==='교육부찬조전체'?' show':'');
+};
+
 function initSponsorTab(){
   const today=new Date();
   const first=new Date(today.getFullYear(),today.getMonth(),1).toISOString().slice(0,10);
@@ -2459,45 +2537,74 @@ window.toggleSponExtra=function(){
   if(ex) ex.className='spon-extra'+(v.includes('교육부찬조')?' show':'');
 };
 window.doSponSearch=function(){
-  const typeFilter=document.getElementById('spon-ftype-q')?.value||'';
+  const cat=document.getElementById('spon-cat')?.value||'';
+  const subQ=document.getElementById('spon-ftype-q')?.value||'';
   const fromDate=document.getElementById('spon-from')?.value||'';
   const toDate=document.getElementById('spon-to')?.value||'';
-  // Pull from offering DB (찬조 related types) + direct sponsor DB
-  const offeringSpons=getOfferings().filter(e=>{
-    const isSpon=getSponTypes().some(t=>e.type===t||e.type.includes('찬조'))||e.spon;
-    const inRange=(!fromDate||e.date>=fromDate)&&(!toDate||e.date<=toDate);
-    const typeOk=!typeFilter||e.type===typeFilter||(e.spon&&e.spon===typeFilter);
-    return isSpon&&inRange&&typeOk;
-  }).map(e=>({...e,source:'헌금정리',type:e.spon||e.type}));
-  let directSpons=getSponsors().filter(e=>{
-    const inRange=(!fromDate||e.date>=fromDate)&&(!toDate||e.date<=toDate);
-    const typeOk=!typeFilter||e.type===typeFilter;
-    return inRange&&typeOk;
-  }).map(e=>({...e,source:'직접입력'}));
-  const combined=[...offeringSpons,...directSpons].sort((a,b)=>a.date>b.date?-1:1);
-  const total=combined.reduce((s,e)=>s+e.amount,0);
-  const tbody=document.getElementById('spon-tbody');
-  if(tbody) tbody.innerHTML=combined.map((e,i)=>`
-    <tr><td>${i+1}</td><td style="font-family:var(--fnum)">${e.date}</td>
-    <td><span class="badge b-gold">${e.type}</span></td>
-    <td>${e.name}</td>
-    <td class="nc" style="font-weight:700;color:var(--gold)">${fmtN(e.amount)}</td>
-    <td>${e.dept||'—'}</td><td>${e.memo||e.reason||'—'}</td>
-    <td><span class="badge ${e.source==='헌금정리'?'b-blue':'b-gray'}">${e.source}</span></td>
-    <td>${e.source==='직접입력'?`<button class="btn btn-red btn-xs" onclick="deleteSponsor('${e.id}')">삭제</button>`:'—'}</td>
-    </tr>`).join('')||`<tr><td colspan="9" class="tbl-empty">데이터가 없습니다</td></tr>`;
-  const tot=document.getElementById('spon-total');if(tot) tot.textContent=fmtN(total)+'원';
-  const cnt=document.getElementById('spon-count');if(cnt) cnt.textContent=`${combined.length}건`;
-  const sw=document.getElementById('spon-stats-wrap');
-  if(sw) sw.innerHTML=`
-    <div class="stat gold"><div class="stat-lbl">찬조 총액</div><div class="stat-val">${fmtN(total)}</div><div class="stat-sub">원</div></div>
-    <div class="stat navy"><div class="stat-lbl">총 건수</div><div class="stat-val">${combined.length}</div><div class="stat-sub">건</div></div>`;
-  toggleSponExtra();
-  const sv=document.getElementById('spon-ftype-q')?.value||'';
-  if(sv.includes('교육부찬조')||sv==='') {
-    // 교육부찬조 관련이면 분배 표 갱신
-    if(sv.includes('교육부찬조')) renderSponDistAndPay();
+
+  // 필터 결정: 교육부찬조전체는 includes('교육부찬조'), 그 외는 exact match
+  function typeMatch(type,memo){
+    const t=String(type||''); const m=String(memo||'');
+    // 교육부찬조전체
+    if(cat==='교육부찬조전체'||subQ==='교육부찬조전체') return t.includes('교육부찬조')||m.includes('교육부찬조');
+    // 세부 교육부찬조 선택
+    const eff=subQ||(cat!=='교육부찬조전체'?cat:'');
+    if(!eff) return true; // 전체
+    return t===eff||m.includes(eff);
   }
+
+  // 헌금정리 DB - 비고에 찬조 구분자 포함된 것
+  const offeringSpons=getOfferings().filter(function(e){
+    const memo=String(e.memo||'');
+    const type=String(e.type||'');
+    const isSpon=getSponTypes().some(function(t){return memo.includes(t)||type.includes('찬조');})
+                 ||e.spon;
+    if(!isSpon) return false;
+    const inRange=(!fromDate||e.date>=fromDate)&&(!toDate||e.date<=toDate);
+    if(!inRange) return false;
+    const entryType=e.spon||getSponTypes().find(function(t){return memo.includes(t);})||type;
+    return typeMatch(entryType,memo);
+  }).map(function(e){
+    const memo=String(e.memo||'');
+    const entryType=e.spon||getSponTypes().find(function(t){return memo.includes(t);})||e.type;
+    return {id:e.id,date:e.date,type:entryType,name:e.name||'',amount:e.amount||0,memo:e.memo||'',source:'헌금정리'};
+  });
+
+  // 직접입력 DB
+  const directSpons=getSponsors().filter(function(e){
+    const inRange=(!fromDate||e.date>=fromDate)&&(!toDate||e.date<=toDate);
+    return inRange&&typeMatch(e.type,e.memo||'');
+  }).map(function(e){return Object.assign({},e,{source:'직접입력'});});
+
+  const combined=[...offeringSpons,...directSpons].sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  const total=combined.reduce(function(s,e){return s+(e.amount||0);},0);
+
+  const tbody=document.getElementById('spon-tbody');
+  if(tbody) tbody.innerHTML=combined.map(function(e,i){
+    const delBtn=e.source==='직접입력'
+      ?('<button class="btn btn-red btn-xs" onclick="deleteSponsor('+JSON.stringify(e.id)+')">삭제</button>'):'—';
+    return '<tr>'
+      +'<td>'+(i+1)+'</td>'
+      +'<td style="font-family:var(--fnum)">'+e.date+'</td>'
+      +'<td><span class="badge b-gold">'+e.type+'</span></td>'
+      +'<td>'+(e.name||'—')+'</td>'
+      +'<td class="nc" style="font-weight:700;color:var(--gold)">'+fmtN(e.amount)+'</td>'
+      +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'—')+'</td>'
+      +'<td><span class="badge '+(e.source==='헌금정리'?'b-blue':'b-gray')+'">'+e.source+'</span></td>'
+      +'<td class="no-print">'+delBtn+'</td>'
+      +'</tr>';
+  }).join('')||'<tr><td colspan="8" class="tbl-empty">데이터가 없습니다</td></tr>';
+
+  const ft=document.getElementById('spon-foot-total');
+  if(ft) ft.textContent=fmtN(total)+'원 ('+combined.length+'건)';
+  const cnt=document.getElementById('spon-count');
+  if(cnt) cnt.textContent=combined.length+'건';
+  const sw=document.getElementById('spon-stats-wrap');
+  if(sw) sw.innerHTML='<div class="stat gold"><div class="stat-lbl">찬조 총액</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원</div></div>'
+    +'<div class="stat navy"><div class="stat-lbl">총 건수</div><div class="stat-val">'+combined.length+'</div><div class="stat-sub">건</div></div>';
+  toggleSponExtra();
+  const isEdu=cat.includes('교육부찬조')||subQ.includes('교육부찬조')||cat==='교육부찬조전체';
+  if(isEdu) renderSponDistAndPay();
   showResult('spon-result');
 };
 window.resetSponSearch=function(){
@@ -2718,10 +2825,10 @@ function renderMonthlyGeneral(ym){
       <table class="tbl">
         <tbody>
           <tr><td style="font-weight:700;width:130px">이 월 금</td><td class="nc">${fmtN(prevBal)}</td>
-              <td style="font-weight:700;width:130px">수입 누계</td><td class="nc">${fmtN(cuInc)}</td></tr>
-          <tr><td style="font-weight:700">${mo}월 수입</td><td class="nc">${fmtN(moInc)}</td>
-              <td style="font-weight:700">지출 누계</td><td class="nc">${fmtN(cuExpT)}</td></tr>
-          <tr><td style="font-weight:700">${mo}월 지출</td><td class="nc">${fmtN(moExpT)}</td>
+              <td style="font-weight:700;width:130px">수입 누계</td><td class="nc" style="font-weight:800;color:var(--blue)">${fmtN(cuIncTable)}</td></tr>
+          <tr><td style="font-weight:700">${mo}월 수입</td><td class="nc" style="font-weight:800;color:var(--blue)">${fmtN(moIncTable)}</td>
+              <td style="font-weight:700">지출 누계</td><td class="nc" style="font-weight:800;color:var(--red)">${fmtN(cuExpTable)}</td></tr>
+          <tr><td style="font-weight:700">${mo}월 지출</td><td class="nc" style="font-weight:800;color:var(--red)">${fmtN(moExpTable)}</td>
               <td style="font-weight:700;background:var(--blue-xp)">잔 액</td>
               <td class="nc" style="font-weight:800;color:var(--blue);background:var(--blue-xp)">${fmtN(bal)}</td></tr>
           <tr style="background:var(--gold-l)"><td style="font-weight:700">${mo}월 결산</td>
@@ -3468,7 +3575,14 @@ function getTypeColorIdx(type){
 // 온라인입금 여부 판단 (중앙 헬퍼 - 모든 곳에서 사용)
 function isOnlinePayment(e){
   const v=e.online;
+  if(v==='현금입금'||v===false||v==='false'||v==='FALSE'||v==='0') return false;
   return v===true||v==='TRUE'||v==='true'||v==='1'||v==='온라인입금'||String(v).toLowerCase()==='true';
+}
+// 온라인 배지 (온라인만 표시, 현금은 빈칸)
+function getOnlineBadgeSmall(e){
+  return isOnlinePayment(e)
+    ?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>'
+    :'';
 }
 function getOnlineBadge(e){
   const v=e.online;
