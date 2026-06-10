@@ -2805,538 +2805,206 @@ window.printMonthly=function(){
 window.renderDeptReport=function(){
   const selEl=document.getElementById('dept-month');
   if(!selEl||!selEl.options.length) return;
-  const ym=selEl.value;if(!ym) return;
+  const ym=selEl.value; if(!ym) return;
   updateMonthBadge('dept-month','dept-badge');
-  const yr=parseInt(ym.split('-')[0]);
-  const mo=parseInt(ym.split('-')[1]);
+  const [yr,mo]=ym.split('-').map(Number);
   const expenses=getExpenses();
-  const ym_check=selEl.value;
-  const [yr_c,mo_c]=ym_check.split('-').map(Number);
-  const expenses_all=getExpenses();
-
-  const depts=getDeptTypes().filter(function(d){
-    return ['건축헌금','전도헌금','사회봉사'].indexOf(d)===-1;
-  });
-  const moExp=expenses.filter(function(e){return monthOf(e.date)===ym;});
-  const cumExp=expenses.filter(function(e){
-    return e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=ym;
-  });
-  const budget=getBudget();
-  const officerData=ST.get('deptOfficers',{});
-  const hiddenDepts=ST.get('hiddenDepts_'+ym,[]); // 숨긴 부서 목록
+  const offerings=getOfferings();
   const container=document.getElementById('deptreport-content');
   container.innerHTML='';
 
-  // 숨기기 컨트롤 바
-  const ctrlBar=document.createElement('div');
-  ctrlBar.className='no-print';
-  ctrlBar.style.cssText='background:#fff;border:1px solid var(--g4);border-radius:var(--rl);padding:12px 16px;margin-bottom:14px;box-shadow:var(--sh)';
+  // 부서 선택 컨트롤 바
+  const allDepts=getDeptTypes().filter(function(d){
+    return ['건축헌금','전도헌금','사회봉사'].indexOf(d)===-1;
+  });
+  // 숨김 부서 목록 (localStorage 기반)
+  const hiddenKey='deptHidden_'+ym;
+  let hiddenDepts=ST.get(hiddenKey,[]);
+
+  const ctrlCard=document.createElement('div');
+  ctrlCard.className='card';
+  ctrlCard.style.marginBottom='12px';
   const ctrlLbl=document.createElement('div');
-  ctrlLbl.style.cssText='font-size:12px;font-weight:800;color:var(--g2);margin-bottom:8px';
+  ctrlLbl.style.cssText='font-size:12px;color:var(--g2);margin-bottom:8px;font-weight:600';
   ctrlLbl.textContent='부서 표시/숨기기 — 숨긴 부서는 인쇄에서도 제외됩니다';
-  ctrlBar.style.display='none'; // 입력전용 페이지에서는 숨김
-  ctrlBar.appendChild(ctrlLbl);
+  ctrlCard.appendChild(ctrlLbl);
   const ctrlBtns=document.createElement('div');
   ctrlBtns.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
-  depts.forEach(function(dept){
+  allDepts.forEach(function(dept){
     const hidden=hiddenDepts.indexOf(dept)!==-1;
     const btn=document.createElement('button');
-    btn.textContent=(hidden?'👁️ ':'✅ ')+dept;
-    btn.style.cssText='padding:4px 12px;border-radius:20px;border:1.5px solid '
-      +(hidden?'var(--g4)':'var(--blue)')
-      +';background:'+(hidden?'var(--g6)':'var(--blue-xp)')
-      +';color:'+(hidden?'var(--g3)':'var(--navy)')
-      +';font-size:11px;font-weight:700;cursor:pointer';
-    btn.addEventListener('click',(function(d){
-      return function(){toggleDeptVisibility(d,ym);};
-    })(dept));
+    btn.className='btn btn-sm';
+    btn.style.cssText='padding:4px 12px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid '+(hidden?'#ccc':'var(--navy)')+';background:'+(hidden?'#f5f5f5':'var(--navy)')+';color:'+(hidden?'#aaa':'#fff');
+    btn.textContent=(hidden?'':'✓ ')+dept;
+    btn.addEventListener('click',function(){
+      const idx2=hiddenDepts.indexOf(dept);
+      if(idx2!==-1) hiddenDepts.splice(idx2,1);
+      else hiddenDepts.push(dept);
+      ST.set(hiddenKey,hiddenDepts);
+      window.renderDeptReport();
+    });
     ctrlBtns.appendChild(btn);
   });
-  ctrlBar.appendChild(ctrlBtns);
-  container.appendChild(ctrlBar);
+  ctrlCard.appendChild(ctrlBtns);
+  container.appendChild(ctrlCard);
 
-  depts.forEach(function(dept){
-    const isHidden=hiddenDepts.indexOf(dept)!==-1;
-    if(isHidden) return; // 숨긴 부서 건너뜀
+  const visibleDepts=allDepts.filter(function(d){return hiddenDepts.indexOf(d)===-1;});
 
-    const dMo=moExp.filter(function(e){return e.dept===dept;});
-    const dCu=cumExp.filter(function(e){return e.dept===dept;});
-    const moT=dMo.reduce(function(s,e){return s+e.amount;},0);
-    const cuT=dCu.reduce(function(s,e){return s+e.amount;},0);
-    const officers=officerData[dept]||{head:'',deputy:'',acct:''};
-    const customKey='deptCustomRows_'+ym+'_'+dept;
-    const customRows=ST.get(customKey,[]);
-    const crT=customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
-    // 커스텀 행 수입
-    // crInc: topRows 정의 이후에 계산 (아래 // <<CRINC>> 위치에서 처리)
-    let crInc=0; // placeholder - 실제 계산은 topRows 정의 후
-    const moTall=moT+crT;const cuTall=cuT+crT;
+  visibleDepts.forEach(function(dept){
+    // 해당 월 지출 내역
+    const dMo=expenses.filter(function(e){return e.dept===dept&&monthOf(e.date)===ym;})
+      .sort(function(a,b){return Number(b.amount||0)-Number(a.amount||0);});
 
     const card=document.createElement('div');card.className='dr-card';
 
-    // Head
+    // 헤더
     const head=document.createElement('div');head.className='dr-head';
     const title=document.createElement('h3');title.textContent=dept;
     head.appendChild(title);
     const off=document.createElement('div');off.className='dr-officers';
-    [['부장','head','dr-head-'],['차장','deputy','dr-dep-'],['회계','acct','dr-acct-']].forEach(function(o){
-      const sp=document.createElement('span');sp.textContent=o[0]+': ';
-      const inp=document.createElement('input');
-      inp.placeholder='성함';inp.value=officers[o[1]]||'';
-      inp.id=o[2]+dept;inp.style.width='70px';
-      inp.addEventListener('change',function(){saveDeptOfficer(dept);});
-      sp.appendChild(inp);off.appendChild(sp);
+    const officers=ST.get('deptOfficers',{})[dept]||{};
+    [['부장',officers.head||''],['차장',officers.deputy||''],['회계',officers.acct||'']].forEach(function(o){
+      const sp=document.createElement('span');
+      sp.style.cssText='font-size:11px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:4px';
+      sp.innerHTML='<span style="opacity:.7">'+o[0]+':</span> <strong>'+( o[1]||'—')+'</strong>';
+      off.appendChild(sp);
     });
     head.appendChild(off);card.appendChild(head);
-    // 저장시간 표시 바 (입력전용: 저장버튼 포함)
-    const deptBarEl=document.createElement('div');
-    deptBarEl.id='deptBar_'+CSS.escape(dept);
-    deptBarEl.style.cssText='display:flex;align-items:center;gap:10px;padding:5px 14px;background:rgba(255,255,255,.07);flex-wrap:wrap;min-height:28px';
-    card.appendChild(deptBarEl);
-    setTimeout(function(){renderDeptStatusBar(dept);},0);
+
+    // 저장시간 표시
+    const savedAt=ST.get('deptSavedAt_'+dept+'_'+ym,'');
+    const stBar=document.createElement('div');
+    stBar.style.cssText='padding:5px 14px;background:rgba(200,220,255,.18);border-bottom:1px solid rgba(255,255,255,.12);font-size:11px;color:#fff;font-weight:600;display:flex;align-items:center;gap:6px;min-height:26px';
+    stBar.innerHTML=savedAt
+      ?'<span style="opacity:.7">💾</span> <span>마지막 저장: '+savedAt+'</span>'
+      :'<span style="opacity:.4;font-size:10px">저장 기록 없음</span>';
+    card.appendChild(stBar);
 
     const body=document.createElement('div');body.className='dr-body';
 
-    // Col header row
-    const hrow=document.createElement('div');hrow.className='dr-row';
+    // thead
+    const thead=document.createElement('div');thead.className='dr-thead';
     ['날짜','적요','수입','지출','잔액','비고'].forEach(function(h,i){
       const dc=document.createElement('div');dc.className='dc';
-      dc.style.fontFamily='var(--fn)';
-      if(i===0) dc.style.textAlign='center';
-      if(i>=2&&i<=4) dc.style.textAlign='right';
-      dc.textContent=h;
-      hrow.appendChild(dc);
+      dc.style.cssText='font-weight:700;font-size:11px'+(i>=2?';text-align:right':'');
+      dc.textContent=h;thead.appendChild(dc);
     });
-    body.appendChild(hrow);
+    body.appendChild(thead);
 
-    // ── 상단 행추가 버튼 ──
-    const addBtnTop=document.createElement('div');
-    addBtnTop.className='dr-add-btn no-print';
-    addBtnTop.style.marginBottom='4px';
-    addBtnTop.textContent='+ 상단에 행 추가';
-    addBtnTop.addEventListener('click',function(){addDeptRowTop(dept,ym);});
-    body.appendChild(addBtnTop);
-
-    // 저장된 보고서 뷰 데이터 로드
+    // 저장된 viewData 로드
     const viewKey='deptView_'+ym+'_'+dept;
-    const viewData=ST.get(viewKey,{}); // {id: {income, amount, memo}}
-    // topRowKey를 renderEditableRow 앞에 정의 (클로저 접근용)
+    const viewData=ST.get(viewKey,{});
     const topRowKey='deptTopRows_'+ym+'_'+dept;
     const topRows=ST.get(topRowKey,[]);
-    // crInc 실제 계산 (topRows 정의 이후)
+    const customRows=ST.get('deptCustomRows_'+ym+'_'+dept,[]);
+
+    // crInc 계산
     const crIncTop=topRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
     const crIncCustom=customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
     const crIncDB=dMo.reduce(function(s,e){
-      const sv=(ST.get(viewKey,{})||{})[e.id]||{};
-      return s+(parseInt(sv.income)||0);
+      const sv=(viewData[e.id]||{});return s+(parseInt(sv.income)||0);
     },0);
-    crInc=crIncTop+crIncCustom+crIncDB;
+    let crInc=crIncTop+crIncCustom+crIncDB;
 
-    // 행 렌더 헬퍼 (DB행/상단행/하단행 공통)
-    // 공통 저장 함수
-    function saveViewField(rid,field,val){
-      const vd=ST.get(viewKey,{});
-      if(!vd[rid]) vd[rid]={};
-      vd[rid][field]=val;
-      ST.set(viewKey,vd);
-      if(window._fbSaveConfig) window._fbSaveConfig(viewKey,vd);
-    }
+    let runBal=0;
 
-    function renderEditableRow(rowInfo){
-      // rowInfo: {id, date, content, income, amount, memo, isDB, dbObj, isBudget}
-      const savedView=viewData[rowInfo.id]||{};
-      const inc  = rowInfo.isDB ? (savedView.income  !== undefined ? savedView.income  : 0)
-                                : (parseInt(rowInfo.income)||0);
-      const exp  = rowInfo.isDB ? (savedView.amount  !== undefined ? savedView.amount  : Number(rowInfo.dbObj.amount||0))
-                                : (parseInt(rowInfo.amount)||0);
-      const memo = rowInfo.isDB ? (savedView.memo    !== undefined ? savedView.memo    : rowInfo.dbObj.memo||'')
-                                : (rowInfo.memo||'');
-      const dateV= rowInfo.isDB ? (savedView.date    !== undefined ? savedView.date    : rowInfo.date)
-                                : rowInfo.date;
-      const contV= rowInfo.isDB ? (savedView.content !== undefined ? savedView.content : rowInfo.content)
-                                : (rowInfo.content||'');
-
-      runBal = runBal + inc - exp;
-      const balColor = runBal>=0 ? 'var(--blue)' : 'var(--red)';
+    function addReadRow(date,content,inc,exp,memo,highlight){
+      runBal=runBal+inc-exp;
+      const balColor=runBal>=0?'var(--blue)':'var(--red)';
       const row=document.createElement('div');
       row.className='dr-row';
-      // 교회예산 행 강조
-      if(rowInfo.isBudget){
-        row.style.cssText='background:#eef4ff;border-bottom:2px solid var(--blue-l)';
-      }
-
-      // ── 엔터키로 다음 입력란으로 이동하는 헬퍼 ──
-      function addEnterNav(inputs){
-        inputs.forEach(function(inp,i){
-          inp.addEventListener('keydown',function(e){
-            if(e.key==='Enter'){e.preventDefault();const next=inputs[i+1];if(next)next.focus();else inp.blur();}
-          });
-        });
-      }
-
-      // ── 날짜 (모두 편집 가능) ──
-      const d0=document.createElement('div');d0.className='dc';
-      d0.style.cssText='text-align:center;font-size:11px;font-family:var(--fnum)';
-      const iDate=document.createElement('input');iDate.type='date';iDate.value=dateV;
-      iDate.style.cssText='width:130px;min-width:130px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center;cursor:pointer;padding-right:8px'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
-      iDate.addEventListener('change',(function(rid,isDB,isBudget){
-        return function(){
-          if(isDB||isBudget){saveViewField(rid,'date',this.value);}
-          else{updateDeptTopRow(dept,ym,rid,'date',this.value);}
-          // 화면 새로고침 없이 잔액만 갱신 (경량)
-        };
-      })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
-      d0.appendChild(iDate);row.appendChild(d0);
-
-      // ── 적요 (모두 편집 가능) ──
-      const d1=document.createElement('div');d1.className='dc';
-      const iCont=document.createElement('input');
-      iCont.value=contV;
-      iCont.placeholder=rowInfo.isBudget?'교회예산':'적요';
-      iCont.style.cssText='width:100%;border:none;background:transparent;font-size:12px;font-family:var(--fn)'+(rowInfo.isBudget?';font-weight:700;color:var(--navy)':'');
-      iCont.addEventListener('change',(function(rid,isDB,isBudget){
-        return function(){
-          if(isDB||isBudget){saveViewField(rid,'content',this.value);}
-          else{updateDeptTopRow(dept,ym,rid,'content',this.value);}
-        };
-      })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
-      d1.appendChild(iCont);row.appendChild(d1);
-
-      // ── 수입 ──
-      const d2=document.createElement('div');d2.className='dc';d2.style.textAlign='right';
-      const iInc=document.createElement('input');
-      iInc.value=inc?fmtN(inc):'';iInc.placeholder='0';
-      iInc.style.cssText='width:90px;border:none;border-bottom:1px dashed var(--blue-l);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)'+(rowInfo.isBudget?';font-weight:700':'');
-      iInc.addEventListener('input',function(){fmtAmt(this);});
-      iInc.addEventListener('change',(function(rid,isDB,isBudget){
-        return function(){
-          const v=getRaw(this);
-          if(isDB){
-            // DB 행: viewKey에 저장 (원본 DB 변경 없음)
-            saveViewField(rid,'income',v);
-          } else {
-            // 상단행/교회예산: topRowKey에 저장
-            const rows=ST.get(topRowKey,[]);
-            const tidx=rows.findIndex(function(r){return r.id===rid;});
-            if(tidx>=0){rows[tidx].income=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
-          }
-          // 수정 시작 자동 감지
-          if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
-          renderDeptReport();
-        };
-      })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
-      // 엔터키 → 다음 칸
-      iInc.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iExp.focus();}});
-      d2.appendChild(iInc);row.appendChild(d2);
-
-      // ── 지출 ──
-      const d3=document.createElement('div');d3.className='dc';d3.style.textAlign='right';
-      const iExp=document.createElement('input');
-      iExp.value=exp?fmtN(exp):'';iExp.placeholder='0';
-      iExp.style.cssText='width:90px;border:none;border-bottom:1px dashed #fca5a5;background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--red)';
-      iExp.addEventListener('input',function(){fmtAmt(this);});
-      iExp.addEventListener('change',(function(rid,isDB,isBudget){
-        return function(){
-          const v=getRaw(this);
-          if(isDB){
-            saveViewField(rid,'amount',v);
-          } else {
-            const rows=ST.get(topRowKey,[]);
-            const tidx=rows.findIndex(function(r){return r.id===rid;});
-            if(tidx>=0){rows[tidx].amount=v;ST.set(topRowKey,rows);if(window._fbSaveConfig)window._fbSaveConfig(topRowKey,rows);}
-          }
-          // 수정 시작 자동 감지
-          if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
-          renderDeptReport();
-        };
-      })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
-      // 엔터키 → 다음 칸
-      iExp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iMemo.focus();}});
-      d3.appendChild(iExp);row.appendChild(d3);
-
-      // ── 잔액 ──
-      const d4=document.createElement('div');d4.className='dc';
-      d4.style.cssText='text-align:right;font-weight:700;color:'+balColor;
-      d4.textContent=fmtN(runBal);row.appendChild(d4);
-
-      // ── 비고 + 삭제 ──
-      const d5=document.createElement('div');d5.className='dc';
-      d5.style.display='flex';d5.style.gap='4px';d5.style.alignItems='center';
-      const iMemo=document.createElement('input');iMemo.value=memo;iMemo.placeholder='비고';
-      iMemo.style.cssText='flex:1;border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;font-family:var(--fn);padding:2px 0';
-      iMemo.addEventListener('change',(function(rid,isDB,isBudget){
-        return function(){
-          const v=this.value;
-          if(isDB){saveViewField(rid,'memo',v);}
-          else{updateDeptTopRow(dept,ym,rid,'memo',v);}
-        };
-      })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
-      iMemo.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iMemo.blur();}});
-      d5.appendChild(iMemo);
-      // 교회예산 행: × 없음 / 일반 상단행: × 표시
-      if(rowInfo.isDB&&!rowInfo.isBudget){
-        // DB 행 삭제 버튼 (지출내역 직접 삭제)
-        const btnDel=document.createElement('button');
-        btnDel.className='no-print';btnDel.textContent='×';
-        btnDel.title='이 지출 내역 삭제';
-        btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
-        btnDel.addEventListener('click',(function(eid){return function(){
-          if(!confirm('이 지출 내역을 삭제하시겠습니까?')) return;
-          setExpenses(getExpenses().filter(function(e){return e.id!==eid;}));
-          renderDeptReport();
-        };})(rowInfo.id));
-        d5.appendChild(btnDel);
-      } else if(!rowInfo.isDB&&!rowInfo.isBudget){
-        // 상단 추가행 삭제 버튼
-        const btnDel=document.createElement('button');
-        btnDel.className='no-print';btnDel.textContent='×';
-        btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
-        btnDel.addEventListener('click',function(){deleteDeptTopRow(dept,ym,rowInfo.id);});
-        d5.appendChild(btnDel);
-      }
-      row.appendChild(d5);
+      if(highlight) row.style.background='#eef4ff';
+      const vals=[
+        {v:date,s:'font-size:11px;font-family:var(--fnum)'},
+        {v:content,s:'font-family:var(--fn)'},
+        {v:inc?fmtN(inc):'—',s:'text-align:right;color:var(--blue)'+(inc?';font-weight:700':'')},
+        {v:exp?fmtN(exp):'—',s:'text-align:right;color:var(--red)'+(exp?';font-weight:700':'')},
+        {v:fmtN(runBal),s:'text-align:right;font-weight:700;color:'+balColor},
+        {v:memo||'',s:'font-size:11px;font-family:var(--fn)'}
+      ];
+      vals.forEach(function(vv){
+        const dc=document.createElement('div');dc.className='dc';
+        dc.style.cssText=vv.s;dc.textContent=vv.v;row.appendChild(dc);
+      });
       body.appendChild(row);
     }
 
-    // ── 교회예산 행 자동 생성 ──
-    ensureBudgetRow(dept,ym);
-
-    var runBal=0;
-    // ── 상단 행들 (교회예산 포함) - 교회예산은 맨 위 고정 ──
-    const budgetRows=topRows.filter(function(r){return r.isBudget;});
-    const otherTopRows=topRows.filter(function(r){return !r.isBudget;});
-
-    // 교회예산 먼저
-    budgetRows.forEach(function(r){
-      renderEditableRow({id:r.id,date:r.date,content:r.content,income:r.income||0,amount:r.amount||0,memo:r.memo||'',isDB:false,isBudget:true});
-    });
-    // 나머지 상단 행
-    otherTopRows.forEach(function(r){
-      renderEditableRow({id:r.id,date:r.date,content:r.content,income:r.income||0,amount:r.amount||0,memo:r.memo||'',isDB:false,isBudget:false});
+    // 상단 행 (교회예산 포함)
+    topRows.forEach(function(r){
+      addReadRow(r.date,r.content,parseInt(r.income)||0,parseInt(r.amount)||0,r.memo||'',r.isBudget);
     });
 
-    // ── DB expense rows (금액 내림차순, 같으면 날짜 내림차순) ──
-    const sortedDMo=[...dMo].sort(function(a,b){
-      const amtDiff=Number(b.amount||0)-Number(a.amount||0);
-      if(amtDiff!==0) return amtDiff;
-      return (b.date||'').localeCompare(a.date||'');
-    });
-    sortedDMo.forEach(function(e){
-      renderEditableRow({
-        id:e.id,
-        date:e.date,
-        content:e.content||e.item||'',
-        isDB:true,
-        dbObj:e
-      });
+    // DB 지출 행 (저장된 viewData 값 우선)
+    dMo.forEach(function(e){
+      const sv=viewData[e.id]||{};
+      const inc=parseInt(sv.income)||0;
+      const exp=sv.amount!==undefined?parseInt(sv.amount):Number(e.amount||0);
+      const content=sv.content||e.content||e.item||'';
+      const memo=sv.memo||e.memo||e.requester||'';
+      addReadRow(e.date,content,inc,exp,memo,false);
     });
 
-    // Custom rows (하단 추가 행)
+    // 하단 커스텀 행
     customRows.forEach(function(r){
-      const rInc=parseInt(r.income)||0;
-      const rExp=parseInt(r.amount)||0;
-      runBal=runBal+rInc-rExp;
-      const showBal=(rInc>0||rExp>0)?fmtN(runBal):'';
-      const cBal=runBal>=0?'var(--blue)':'var(--red)';
-      const row=document.createElement('div');row.className='dr-row';
-
-      // Date
-      const d0=document.createElement('div');d0.className='dc';d0.style.textAlign='center';
-      const iDate=document.createElement('input');iDate.value=r.date;
-      iDate.style.cssText='width:86px;border:none;background:transparent;font-size:11px;font-family:var(--fnum);text-align:center';
-      iDate.addEventListener('change',function(){updateDeptRow(dept,ym,r.id,'date',this.value);});
-      d0.appendChild(iDate);row.appendChild(d0);
-
-      // Content
-      const d1=document.createElement('div');d1.className='dc';
-      const iCont=document.createElement('input');iCont.value=r.content||'';iCont.placeholder='적요';
-      iCont.style.cssText='width:100%;border:none;background:transparent;font-size:12px;font-family:var(--fn)';
-      iCont.addEventListener('change',function(){updateDeptRow(dept,ym,r.id,'content',this.value);});
-      d1.appendChild(iCont);row.appendChild(d1);
-
-      // Income
-      const d2=document.createElement('div');d2.className='dc';d2.style.textAlign='right';
-      const iInc=document.createElement('input');
-      iInc.value=r.income?fmtN(r.income):'';iInc.placeholder='0';
-      iInc.style.cssText='width:90px;border:none;background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)';
-      iInc.addEventListener('input',function(){fmtAmt(this);});
-      iInc.addEventListener('change',function(){updateDeptRow(dept,ym,r.id,'income',getRaw(this));renderDeptReport();});
-      iInc.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();const iE=row.querySelector('input[placeholder="0"][style*="fca5a5"]')||row.querySelectorAll('input')[3];if(iE)iE.focus();}});
-      d2.appendChild(iInc);row.appendChild(d2);
-
-      // Expense
-      const d3=document.createElement('div');d3.className='dc';d3.style.textAlign='right';
-      const iExp=document.createElement('input');
-      iExp.value=r.amount?fmtN(r.amount):'';iExp.placeholder='0';
-      iExp.style.cssText='width:90px;border:none;background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--red)';
-      iExp.addEventListener('input',function(){fmtAmt(this);});
-      iExp.addEventListener('change',function(){updateDeptRow(dept,ym,r.id,'amount',getRaw(this));renderDeptReport();});
-      iExp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();const iM=row.querySelector('input[placeholder="비고 입력"]');if(iM)iM.focus();}});
-      d3.appendChild(iExp);row.appendChild(d3);
-
-      // Balance
-      const d4=document.createElement('div');d4.className='dc';
-      d4.style.textAlign='right';d4.style.fontWeight='700';d4.style.color=cBal;
-      d4.textContent=showBal;row.appendChild(d4);
-
-      // Memo + delete
-      const d5=document.createElement('div');d5.className='dc';
-      d5.style.display='flex';d5.style.gap='4px';d5.style.alignItems='center';
-      const iMemo=document.createElement('input');iMemo.value=r.memo||'';iMemo.placeholder='비고 입력';
-      iMemo.style.cssText='flex:1;border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;font-family:var(--fn);padding:2px 0';
-      iMemo.addEventListener('change',function(){updateDeptRow(dept,ym,r.id,'memo',this.value);});
-      iMemo.addEventListener('blur',function(){updateDeptRow(dept,ym,r.id,'memo',this.value);});
-      const btnDel=document.createElement('button');
-      btnDel.className='no-print';
-      btnDel.textContent='×';
-      btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
-      btnDel.addEventListener('click',function(){deleteDeptRow(dept,ym,r.id);});
-      d5.appendChild(iMemo);d5.appendChild(btnDel);row.appendChild(d5);
-
-      body.appendChild(row);
+      addReadRow(r.date||'',r.content||'',parseInt(r.income)||0,parseInt(r.amount)||0,r.memo||'',false);
     });
 
-    // 하단 행추가 버튼
-    const spacer=document.createElement('div');
-    spacer.style.cssText='height:10px;border-bottom:1px solid var(--g5)';
-    body.appendChild(spacer);
-    const addBtnBottom=document.createElement('div');
-    addBtnBottom.className='dr-add-btn no-print';
-    addBtnBottom.textContent='+ 하단에 행 추가';
-    addBtnBottom.addEventListener('click',function(){addDeptRow(dept,ym);});
-    body.appendChild(addBtnBottom);
+    card.appendChild(body);
 
-    // Footer 월계 (편집 가능)
+    // 월계
     const footViewKey='deptFootView_'+ym+'_'+dept;
     const footView=ST.get(footViewKey,{});
-    const moInc_saved=footView.moInc!==undefined?footView.moInc:crInc;
-    const moExp_saved=footView.moExp!==undefined?footView.moExp:moTall;
-    const moBalColor=(moInc_saved-moExp_saved)>=0?'var(--blue)':(moExp_saved>0?'var(--red)':'var(--g3)');
+    const moAll=expenses.filter(function(e){return e.dept===dept&&monthOf(e.date)===ym;});
+    const moTallDB=moAll.reduce(function(s,e){
+      const sv=viewData[e.id]||{};
+      return s+(sv.amount!==undefined?parseInt(sv.amount):Number(e.amount||0));
+    },0);
+    const moTallTop=topRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+    const moTallCustom=customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+    const defaultMoExp=moTallDB+moTallTop+moTallCustom;
+    const moInc=footView.moInc!==undefined?footView.moInc:crInc;
+    const moExp=footView.moExp!==undefined?footView.moExp:defaultMoExp;
+    const moBal=moInc-moExp;
+    const moBalColor=moBal>=0?'var(--blue)':'var(--red)';
     const foot=document.createElement('div');foot.className='dr-foot';
-    // 월계 라벨
-    const fdc0=document.createElement('div');fdc0.className='dc';fdc0.style.cssText='text-align:center;font-family:var(--fn)';fdc0.textContent='월 계';foot.appendChild(fdc0);
-    // 빈칸
-    const fdc1=document.createElement('div');fdc1.className='dc';foot.appendChild(fdc1);
-    // 수입 편집
-    const fdc2=document.createElement('div');fdc2.className='dc';fdc2.style.textAlign='right';
-    const fInc=document.createElement('input');fInc.value=moInc_saved?fmtN(moInc_saved):'—';
-    fInc.style.cssText='width:90px;border:none;border-bottom:1px dashed var(--blue-l);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--blue)';
-    fInc.placeholder='수입';
-    fInc.addEventListener('input',function(){fmtAmt(this);});
-    fInc.addEventListener('change',function(){
-      var fv=ST.get(footViewKey,{});fv.moInc=getRaw(this);ST.set(footViewKey,fv);
-      if(window._fbSaveConfig)window._fbSaveConfig(footViewKey,fv);
-      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
-      renderDeptReport();
+    [{v:'월 계',s:'text-align:center'},{v:'',s:''},{v:moInc?fmtN(moInc):'—',s:'text-align:right'},{v:fmtN(moExp),s:'text-align:right'},{v:fmtN(moBal),s:'text-align:right;font-weight:800;color:'+moBalColor},{v:'',s:''}].forEach(function(col){
+      const dc=document.createElement('div');dc.className='dc';dc.style.cssText=col.s;dc.textContent=col.v;foot.appendChild(dc);
     });
-    fdc2.appendChild(fInc);foot.appendChild(fdc2);
-    // 지출 편집
-    const fdc3=document.createElement('div');fdc3.className='dc';fdc3.style.textAlign='right';
-    const fExp=document.createElement('input');fExp.value=moExp_saved?fmtN(moExp_saved):'0';
-    fExp.style.cssText='width:90px;border:none;border-bottom:1px dashed #fca5a5;background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:var(--red)';
-    fExp.addEventListener('input',function(){fmtAmt(this);});
-    fExp.addEventListener('change',function(){
-      var fv=ST.get(footViewKey,{});fv.moExp=getRaw(this);ST.set(footViewKey,fv);
-      if(window._fbSaveConfig)window._fbSaveConfig(footViewKey,fv);
-      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
-      renderDeptReport();
-    });
-    fdc3.appendChild(fExp);foot.appendChild(fdc3);
-    // 잔액
-    const fdc4=document.createElement('div');fdc4.className='dc';
-    fdc4.style.cssText='text-align:right;font-weight:700;color:'+moBalColor;
-    fdc4.textContent=fmtN(moInc_saved-moExp_saved);foot.appendChild(fdc4);
-    // 비고
-    const fdc5=document.createElement('div');fdc5.className='dc';foot.appendChild(fdc5);
-    body.appendChild(foot);
+    card.appendChild(foot);
 
-    // Footer 연누계 (해당 연도 1월~해당월 전체)
-    // 연누계 수입: 해당 연도 deptTopRows + deptCustomRows + viewData income 합산
-    var yearIncTotal=0;
-    var yearExpTotal=cuTall; // DB 지출 연누계 (기존 cuTall)
-    // 연도 내 모든 월 viewData 수입 합산
-    for(var mi=1;mi<=mo;mi++){
-      const mym=yr+'-'+(mi<10?'0':'')+mi;
-      const mViewKey='deptView_'+mym+'_'+dept;
-      const mViewData=ST.get(mViewKey,{});
-      // DB rows income
-      const mExp=expenses.filter(function(e){return e.dept===dept&&monthOf(e.date)===mym;});
-      mExp.forEach(function(e){yearIncTotal+=parseInt((mViewData[e.id]||{}).income)||0;});
-      // topRows income
-      const mTopRows=ST.get('deptTopRows_'+mym+'_'+dept,[]);
-      mTopRows.forEach(function(r){yearIncTotal+=parseInt(r.income)||0;});
-      // customRows income
-      const mCustomRows=ST.get('deptCustomRows_'+mym+'_'+dept,[]);
-      mCustomRows.forEach(function(r){yearIncTotal+=parseInt(r.income)||0;});
-    }
-    // 이번달 viewData 추가 (이미 위에서 포함됨)
-    const yearBal=yearIncTotal-yearExpTotal;
-    const cuBalColor=yearBal>=0?'#7fffb8':'#ffb3b3';
-    const foot2=document.createElement('div');foot2.className='dr-foot2';
+    // 연누계
     const yearViewKey='deptYearView_'+yr+'_'+dept;
     const yearView=ST.get(yearViewKey,{});
-    const yInc=yearView.inc!==undefined?yearView.inc:yearIncTotal;
-    const yExp=yearView.exp!==undefined?yearView.exp:yearExpTotal;
+    let yInc=0,yExp=0;
+    for(let mi=1;mi<=mo;mi++){
+      const mym2=yr+'-'+String(mi).padStart(2,'0');
+      const mExp2=expenses.filter(function(e){return e.dept===dept&&monthOf(e.date)===mym2;});
+      const mTop2=ST.get('deptTopRows_'+mym2+'_'+dept,[]);
+      const mCust2=ST.get('deptCustomRows_'+mym2+'_'+dept,[]);
+      const mView2=ST.get('deptView_'+mym2+'_'+dept,{});
+      const mFoot2=ST.get('deptFootView_'+mym2+'_'+dept,{});
+      const mTop2inc=mTop2.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+      const mCust2inc=mCust2.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+      const mDB2inc=mExp2.reduce(function(s,e){return s+(parseInt((mView2[e.id]||{}).income)||0);},0);
+      const calcInc=mTop2inc+mCust2inc+mDB2inc;
+      yInc+=(mFoot2.moInc!==undefined?mFoot2.moInc:calcInc);
+      const mDB2exp=mExp2.reduce(function(s,e){const sv=mView2[e.id]||{};return s+(sv.amount!==undefined?parseInt(sv.amount):Number(e.amount||0));},0);
+      const mTop2exp=mTop2.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+      const mCust2exp=mCust2.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+      yExp+=(mFoot2.moExp!==undefined?mFoot2.moExp:mDB2exp+mTop2exp+mCust2exp);
+    }
+    if(yearView.inc!==undefined) yInc=yearView.inc;
+    if(yearView.exp!==undefined) yExp=yearView.exp;
     const yBal=yInc-yExp;
-    const cuBalColor2=yBal>=0?'#7fffb8':'#ffb3b3';
-    // 연누계 라벨
-    const y0=document.createElement('div');y0.className='dc';y0.style.cssText='text-align:center;font-family:var(--fn);color:#fff;font-size:11px';y0.textContent='연누계';foot2.appendChild(y0);
-    const y1=document.createElement('div');y1.className='dc';foot2.appendChild(y1);
-    // 수입 편집
-    const y2=document.createElement('div');y2.className='dc';y2.style.textAlign='right';
-    const yiInc=document.createElement('input');yiInc.value=yInc?fmtN(yInc):'—';
-    yiInc.style.cssText='width:90px;border:none;border-bottom:1px dashed rgba(255,255,255,.4);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:#fff';
-    yiInc.addEventListener('input',function(){fmtAmt(this);});
-    yiInc.addEventListener('change',function(){
-      var yv=ST.get(yearViewKey,{});yv.inc=getRaw(this);ST.set(yearViewKey,yv);
-      if(window._fbSaveConfig)window._fbSaveConfig(yearViewKey,yv);
-      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
-      renderDeptReport();
+    const cuBalColor=yBal>=0?'#7fffb8':'#ffb3b3';
+    const foot2=document.createElement('div');foot2.className='dr-foot2';
+    [{v:'연누계',s:'text-align:center;color:#fff;font-size:11px'},{v:'',s:''},{v:yInc?fmtN(yInc):'—',s:'text-align:right;color:#fff'},{v:fmtN(yExp),s:'text-align:right;color:#fff'},{v:fmtN(yBal),s:'text-align:right;font-weight:800;color:'+cuBalColor},{v:'',s:'color:#fff'}].forEach(function(col){
+      const dc=document.createElement('div');dc.className='dc';dc.style.cssText=col.s;dc.textContent=col.v;foot2.appendChild(dc);
     });
-    y2.appendChild(yiInc);foot2.appendChild(y2);
-    // 지출 편집
-    const y3=document.createElement('div');y3.className='dc';y3.style.textAlign='right';
-    const yiExp=document.createElement('input');yiExp.value=fmtN(yExp);
-    yiExp.style.cssText='width:90px;border:none;border-bottom:1px dashed rgba(255,255,255,.4);background:transparent;font-size:12px;font-family:var(--fnum);text-align:right;color:#fff';
-    yiExp.addEventListener('input',function(){fmtAmt(this);});
-    yiExp.addEventListener('change',function(){
-      var yv=ST.get(yearViewKey,{});yv.exp=getRaw(this);ST.set(yearViewKey,yv);
-      if(window._fbSaveConfig)window._fbSaveConfig(yearViewKey,yv);
-      if(deptEditState[dept]!=='editing') window.startDeptEdit(dept);
-      renderDeptReport();
-    });
-    y3.appendChild(yiExp);foot2.appendChild(y3);
-    // 잔액
-    const y4=document.createElement('div');y4.className='dc';
-    y4.style.cssText='text-align:right;font-weight:800;color:'+cuBalColor2;
-    y4.textContent=fmtN(yBal);foot2.appendChild(y4);
-    // 비고
-    const y5=document.createElement('div');y5.className='dc';foot2.appendChild(y5);
-    body.appendChild(foot2);
-    card.appendChild(body);
+    card.appendChild(foot2);
     container.appendChild(card);
   });
 }
-
-// ── 상단 행 업데이트/삭제 (deptTopRows) ──────────────────────
-window.updateDeptTopRow=function(dept,ym,rowId,field,value){
-  const key='deptTopRows_'+ym+'_'+dept;
-  const rows=ST.get(key,[]);
-  const idx=rows.findIndex(function(r){return r.id===rowId;});
-  if(idx<0) return;
-  rows[idx][field]=value;
-  ST.set(key,rows);
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-};
-
-window.deleteDeptTopRow=function(dept,ym,rowId){
-  const key='deptTopRows_'+ym+'_'+dept;
-  const rows=ST.get(key,[]).filter(function(r){return r.id!==rowId;});
-  ST.set(key,rows);
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-  renderDeptReport();
-};
-
 window.toggleDeptVisibility=function(dept,ym){
   const key='hiddenDepts_'+ym;
   const hidden=ST.get(key,[]);

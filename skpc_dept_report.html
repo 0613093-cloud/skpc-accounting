@@ -2708,16 +2708,16 @@ window.saveDeptEdit=function(dept,ym){
 };
 function renderDeptStatusBar(dept){
   const bar=document.getElementById('deptBar_'+CSS.escape(dept));
-  if(!bar)return;
+  if(!bar) return;
   const ym=document.getElementById('dept-month')?.value||'';
   const savedAt=ST.get('deptSavedAt_'+dept+'_'+ym,'');
-  // 저장 버튼 + 마지막 저장시간 심플 표시
-  const d=dept.replace(/"/g,'&quot;');
-  bar.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(255,255,255,.07);border-radius:0 0 8px 8px;flex-wrap:wrap';
-  bar.innerHTML='<button onclick="saveDeptNow(&quot;'+d+'&quot;,&quot;'+ym+'&quot;)" '
-    +'style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);padding:4px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">💾 저장</button>'
+  const d2=dept.replace(/"/g,'&quot;');
+  bar.style.cssText='display:flex;align-items:center;gap:10px;padding:5px 14px;background:rgba(200,220,255,.18);border-bottom:1px solid rgba(255,255,255,.12);flex-wrap:wrap;min-height:26px';
+  bar.innerHTML=
+    '<button onclick="saveDeptNow(&quot;'+d2+'&quot;,&quot;'+ym+'&quot;)" '
+    +'style="background:#fff;color:var(--navy,#1a3a6e);border:none;padding:5px 16px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.2)">💾 저장</button>'
     +(savedAt
-      ?'<span style="font-size:11px;color:rgba(255,255,255,.8)">마지막 저장 시간 '+savedAt+'</span>'
+      ?'<span style="font-size:11px;color:rgba(255,255,255,.8)">마지막 저장: '+savedAt+'</span>'
       :'<span style="font-size:11px;color:rgba(255,255,255,.5)">저장되지 않음</span>');
 }
 
