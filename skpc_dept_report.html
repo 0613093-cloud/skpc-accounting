@@ -1129,19 +1129,24 @@ window.renderDeptReport=function(){
       .filter(function(e){ return e.date&&e.date.slice(0,7)===ym_check; })
       .map(function(e){ return e.dept; })
   );
-  // 교회예산(topRows)이 있는 부서도 포함
-  getDeptTypes().forEach(function(d){
+  // 제외 목록 (특별회계)
+  const EXCLUDE_DEPTS=['건축헌금','전도헌금','사회봉사'];
+  // 일반 부서 전체 (제외 목록 빼고) - 입력전용은 당월 지출 있는 부서만
+  const allNormalDepts=getDeptTypes().filter(function(d){
+    return EXCLUDE_DEPTS.indexOf(d)===-1;
+  });
+  // topRows/viewData가 있는 부서도 포함 (교회예산 입력된 경우)
+  allNormalDepts.forEach(function(d){
     const topKey='deptTopRows_'+ym_check+'_'+d;
     const rows=ST.get(topKey,[]);
-    if(rows.length>0) activeDepts.add(d);
+    // 교회예산 외 실제 입력 행이 있으면 포함
+    const hasData=rows.some(function(r){return !r.isBudget&&(r.income||r.amount);});
+    if(hasData) activeDepts.add(d);
+    // viewData에 수정값이 있으면 포함
+    const vd=ST.get('deptView_'+ym_check+'_'+d,{});
+    if(Object.keys(vd).length>0) activeDepts.add(d);
   });
-
-  // 제외 부서 + 당월 데이터 없는 부서 필터
-  const EXCLUDE_DEPTS=['건축헌금','전도헌금','사회봉사'];
-  const depts=getDeptTypes().filter(function(d){
-    if(EXCLUDE_DEPTS.indexOf(d)!==-1) return false;
-    return activeDepts.has(d);
-  });
+  const depts=allNormalDepts.filter(function(d){ return activeDepts.has(d); });
   const moExp=expenses.filter(function(e){return monthOf(e.date)===ym;});
   const cumExp=expenses.filter(function(e){
     return e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=ym;
@@ -1213,6 +1218,12 @@ window.renderDeptReport=function(){
       sp.appendChild(inp);off.appendChild(sp);
     });
     head.appendChild(off);card.appendChild(head);
+    // 저장시간 표시 바 (입력전용: 저장버튼 포함)
+    const deptBarEl=document.createElement('div');
+    deptBarEl.id='deptBar_'+CSS.escape(dept);
+    deptBarEl.style.cssText='display:flex;align-items:center;gap:10px;padding:5px 14px;background:rgba(255,255,255,.07);flex-wrap:wrap;min-height:28px';
+    card.appendChild(deptBarEl);
+    setTimeout(function(){renderDeptStatusBar(dept);},0);
 
     const body=document.createElement('div');body.className='dr-body';
 
@@ -2735,19 +2746,24 @@ window.renderDeptReport=function(){
       .filter(function(e){ return e.date&&e.date.slice(0,7)===ym_check; })
       .map(function(e){ return e.dept; })
   );
-  // 교회예산(topRows)이 있는 부서도 포함
-  getDeptTypes().forEach(function(d){
+  // 제외 목록 (특별회계)
+  const EXCLUDE_DEPTS=['건축헌금','전도헌금','사회봉사'];
+  // 일반 부서 전체 (제외 목록 빼고) - 입력전용은 당월 지출 있는 부서만
+  const allNormalDepts=getDeptTypes().filter(function(d){
+    return EXCLUDE_DEPTS.indexOf(d)===-1;
+  });
+  // topRows/viewData가 있는 부서도 포함 (교회예산 입력된 경우)
+  allNormalDepts.forEach(function(d){
     const topKey='deptTopRows_'+ym_check+'_'+d;
     const rows=ST.get(topKey,[]);
-    if(rows.length>0) activeDepts.add(d);
+    // 교회예산 외 실제 입력 행이 있으면 포함
+    const hasData=rows.some(function(r){return !r.isBudget&&(r.income||r.amount);});
+    if(hasData) activeDepts.add(d);
+    // viewData에 수정값이 있으면 포함
+    const vd=ST.get('deptView_'+ym_check+'_'+d,{});
+    if(Object.keys(vd).length>0) activeDepts.add(d);
   });
-
-  // 제외 부서 + 당월 데이터 없는 부서 필터
-  const EXCLUDE_DEPTS=['건축헌금','전도헌금','사회봉사'];
-  const depts=getDeptTypes().filter(function(d){
-    if(EXCLUDE_DEPTS.indexOf(d)!==-1) return false;
-    return activeDepts.has(d);
-  });
+  const depts=allNormalDepts.filter(function(d){ return activeDepts.has(d); });
   const moExp=expenses.filter(function(e){return monthOf(e.date)===ym;});
   const cumExp=expenses.filter(function(e){
     return e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=ym;
@@ -2819,6 +2835,12 @@ window.renderDeptReport=function(){
       sp.appendChild(inp);off.appendChild(sp);
     });
     head.appendChild(off);card.appendChild(head);
+    // 저장시간 표시 바 (입력전용: 저장버튼 포함)
+    const deptBarEl=document.createElement('div');
+    deptBarEl.id='deptBar_'+CSS.escape(dept);
+    deptBarEl.style.cssText='display:flex;align-items:center;gap:10px;padding:5px 14px;background:rgba(255,255,255,.07);flex-wrap:wrap;min-height:28px';
+    card.appendChild(deptBarEl);
+    setTimeout(function(){renderDeptStatusBar(dept);},0);
 
     const body=document.createElement('div');body.className='dr-body';
 
