@@ -519,6 +519,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       const offerings = [];
       offSnap.forEach(d => offerings.push(d.data()));
       offerings.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+      // online 필드 정규화 (Firebase에서 boolean으로 저장된 경우 포함)
+      offerings.forEach(e => { e.online = _normalizeOnline(e.online); });
       localStorage.setItem('accountBook', JSON.stringify(offerings));
 
       // 지출
@@ -1621,10 +1623,18 @@ const monthOf=(s)=>s?s.slice(0,7):'';
 const uid=()=>Date.now()+'_'+Math.random().toString(36).slice(2,7);
 
 const getOfferings=()=>ST.get('accountBook',[]);
+function _normalizeOnline(v){
+  if(!v||v===false||v===0||v==='false'||v==='FALSE'||v==='0'||v==='현금입금'||v==='현금') return '현금입금';
+  if(v===true||v==='TRUE'||v==='true'||v==='1') return '온라인입금';
+  const vs=String(v).trim().replace(/\s+/g,'');
+  if(vs==='온라인입금'||vs==='온라인'||vs.toLowerCase()==='true') return '온라인입금';
+  return '현금입금';
+}
 const setOfferings=function(v){
-  localStorage.setItem('accountBook',JSON.stringify(v));
-  // Firebase: 마지막 저장된 값으로 전체 동기화
-  if(window._fbSaveAll) window._fbSaveAll('accountBook',v);
+  // online 필드 정규화 - 항상 '온라인입금' or '현금입금' 문자열로 저장
+  const normalized=v.map(e=>Object.assign({},e,{online:_normalizeOnline(e.online)}));
+  localStorage.setItem('accountBook',JSON.stringify(normalized));
+  if(window._fbSaveAll) window._fbSaveAll('accountBook',normalized);
 };
 const getExpenses=()=>ST.get('expenseBook',[]);
 const setExpenses=function(v){
@@ -2731,7 +2741,17 @@ window.renderMonthly=function(){
   const ym=selEl.value;if(!ym) return;
   updateMonthBadge('monthly-month','monthly-badge');
   const rptType=document.getElementById('monthly-report-type')?.value||'general';
-  if(rptType==='general') renderMonthlyGeneral(ym);
+  if(rptType==='general'){
+    try{
+      renderMonthlyGeneral(ym);
+    }catch(err){
+      console.error('[월간보고 오류]',err);
+      const el=document.getElementById('monthly-content');
+      if(el) el.innerHTML='<div style="background:#fef3f2;border:2px solid #f87171;padding:14px;border-radius:8px;color:#b91c1c;font-size:12px">'
+        +'<strong>⚠️ 조회 오류:</strong> '+err.message
+        +'<br><small>콘솔(F12)에서 상세 확인 가능</small></div>';
+    }
+  }
   else if(rptType==='special_all') renderMonthlySpecialAll(ym);
   else renderMonthlySpecial(ym, rptType);
 };
@@ -3626,9 +3646,12 @@ function getTypeColorIdx(type){
 // 온라인입금 여부 판단 (중앙 헬퍼 - 모든 곳에서 사용)
 function isOnlinePayment(e){
   const v=e.online;
-  if(!v||v===false||v===0||v==='false'||v==='FALSE'||v==='0'||v==='현금입금'||v==='현금') return false;
+  // _normalizeOnline으로 정규화된 값 우선 처리
+  if(v==='온라인입금') return true;
+  if(v==='현금입금'||!v||v===false||v===0) return false;
+  // 미정규화 데이터 호환 처리
   if(v===true||v==='TRUE'||v==='true'||v==='1') return true;
-  const vs=String(v).trim();
+  const vs=String(v).trim().replace(/\s+/g,'');
   return vs==='온라인입금'||vs==='온라인'||vs.toLowerCase()==='true';
 }
 // 온라인 배지 (온라인만 표시, 현금은 빈칸)
@@ -5133,6 +5156,13 @@ window.printSection=function(areaId){
 // INIT
 // ============================================================
 function init(){
+  // 기존 DB의 online 필드 정규화 (boolean→문자열 마이그레이션)
+  try{
+    const offs=JSON.parse(localStorage.getItem('accountBook')||'[]');
+    let changed=false;
+    offs.forEach(function(e){const n=_normalizeOnline(e.online);if(e.online!==n){e.online=n;changed=true;}});
+    if(changed) localStorage.setItem('accountBook',JSON.stringify(offs));
+  }catch(e){console.warn('online 정규화 실패:',e);}
   try{
     buildInputSheet(1);buildInputSheet(2);buildInputSheet(3);
   }catch(e){
