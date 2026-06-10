@@ -221,7 +221,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 .dr-officers input{height:26px;padding:0 8px;border:1px solid rgba(255,255,255,.4);border-radius:4px;
   background:rgba(255,255,255,.15);color:#fff;font-family:var(--fn);font-size:11px;width:80px}
 .dr-officers input::placeholder{color:rgba(255,255,255,.6)}
-.dr-body{padding:14px}
+.dr-body{padding:4px 14px 14px}
 .dr-row{align-items:center;display:grid;grid-template-columns:90px 1fr 100px 100px 110px 110px;border-bottom:1px solid var(--g5)}
 .dr-row:first-child{background:var(--g6);font-size:11px;font-weight:800;color:var(--g2)}
 .dr-row .dc{padding:6px 8px;font-size:12px;border-right:1px solid var(--g5);font-family:var(--fnum);overflow:hidden}
@@ -932,8 +932,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 <!-- ===== 부서보고서 ===== -->
 <div id="tab-deptreport" class="tab-pane">
   <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
-  <div style="background:#e3f2fd;border:1.5px solid #90caf9;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:#1565c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <span>📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력/수정은 별도 페이지에서만 가능합니다. 재정 전체 내역은 부서보고서 전용 페이지에서 볼 수 없습니다.</span>
+  <div class="no-print" style="background:#e3f2fd;border:1.5px solid #90caf9;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:#1565c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span>📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력/수정은 별도 페이지에서만 가능합니다.</span>
     <a href="https://skpc-accounting.vercel.app/skpc_dept_report.html" target="_blank" class="btn btn-blue btn-sm">🔗 부서보고서 입력 페이지 열기</a>
   </div>
   <div class="month-bar">
@@ -2822,7 +2822,7 @@ window.renderDeptReport=function(){
   let hiddenDepts=ST.get(hiddenKey,[]);
 
   const ctrlCard=document.createElement('div');
-  ctrlCard.className='card';
+  ctrlCard.className='card no-print';
   ctrlCard.style.marginBottom='12px';
   const ctrlLbl=document.createElement('div');
   ctrlLbl.style.cssText='font-size:12px;color:var(--g2);margin-bottom:8px;font-weight:600';
@@ -2873,20 +2873,16 @@ window.renderDeptReport=function(){
 
     // 저장시간 표시
     const savedAt=ST.get('deptSavedAt_'+dept+'_'+ym,'');
-    const stBar=document.createElement('div');
-    stBar.style.cssText='padding:5px 14px;background:rgba(200,220,255,.18);border-bottom:1px solid rgba(255,255,255,.12);font-size:11px;color:#fff;font-weight:600;display:flex;align-items:center;gap:6px;min-height:26px';
-    stBar.innerHTML=savedAt
-      ?'<span style="opacity:.7">💾</span> <span>마지막 저장: '+savedAt+'</span>'
-      :'<span style="opacity:.4;font-size:10px">저장 기록 없음</span>';
-    card.appendChild(stBar);
+    // 저장시간은 표시하지 않음 (메인 읽기전용)
 
     const body=document.createElement('div');body.className='dr-body';
 
-    // thead
-    const thead=document.createElement('div');thead.className='dr-thead';
+    // thead - 입력화면과 동일한 스타일
+    const thead=document.createElement('div');
+    thead.style.cssText='display:grid;grid-template-columns:90px 1fr 100px 100px 110px 110px;padding:6px 0;border-bottom:2px solid var(--blue-l);background:#f0f4ff;border-radius:4px 4px 0 0;margin-bottom:2px';
     ['날짜','적요','수입','지출','잔액','비고'].forEach(function(h,i){
-      const dc=document.createElement('div');dc.className='dc';
-      dc.style.cssText='font-weight:700;font-size:11px'+(i>=2?';text-align:right':'');
+      const dc=document.createElement('div');
+      dc.style.cssText='padding:4px 8px;font-weight:700;font-size:11px;color:var(--navy)'+(i>=2?';text-align:right':'');
       dc.textContent=h;thead.appendChild(dc);
     });
     body.appendChild(thead);
@@ -2913,14 +2909,14 @@ window.renderDeptReport=function(){
       const balColor=runBal>=0?'var(--blue)':'var(--red)';
       const row=document.createElement('div');
       row.className='dr-row';
-      if(highlight) row.style.background='#eef4ff';
+      if(highlight) row.style.cssText='background:#eef4ff;font-weight:700;border-bottom:2px solid var(--blue-l)';
       const vals=[
-        {v:date,s:'font-size:11px;font-family:var(--fnum)'},
-        {v:content,s:'font-family:var(--fn)'},
-        {v:inc?fmtN(inc):'—',s:'text-align:right;color:var(--blue)'+(inc?';font-weight:700':'')},
-        {v:exp?fmtN(exp):'—',s:'text-align:right;color:var(--red)'+(exp?';font-weight:700':'')},
-        {v:fmtN(runBal),s:'text-align:right;font-weight:700;color:'+balColor},
-        {v:memo||'',s:'font-size:11px;font-family:var(--fn)'}
+        {v:date,   s:'padding:6px 8px;font-size:11px;font-family:var(--fnum)'},
+        {v:content,s:'padding:6px 8px;font-family:var(--fn);font-size:12px'},
+        {v:inc?fmtN(inc):'—',  s:'padding:6px 8px;text-align:right;font-size:12px;color:var(--blue)'+(inc?';font-weight:700':'')},
+        {v:exp?fmtN(exp):'—',  s:'padding:6px 8px;text-align:right;font-size:12px;color:var(--red)'+(exp?';font-weight:700':'')},
+        {v:fmtN(runBal),       s:'padding:6px 8px;text-align:right;font-size:12px;font-weight:700;color:'+balColor},
+        {v:memo||'',           s:'padding:6px 8px;font-size:11px;font-family:var(--fn);color:var(--g2)'}
       ];
       vals.forEach(function(vv){
         const dc=document.createElement('div');dc.className='dc';
