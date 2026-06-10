@@ -849,9 +849,9 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 <div id="tab-sponsor" class="tab-pane">
   <div class="pg-hd"><div class="pg-title">🎁 찬조내역</div></div>
 
-  <!-- 조회 조건 -->
-  <div class="search-panel">
-    <div class="panel-title">조회 조건</div>
+  <!-- 조회 조건 (인쇄 제외) -->
+  <div class="search-panel no-print">
+    <div class="panel-title">조회 조건 — 헌금정리 DB 비고 기반</div>
     <div class="g4 mb8">
       <div class="fg"><div class="flbl">찬조 구분</div>
         <select class="fsel" id="spon-cat" onchange="onSponCatChange()">
@@ -862,8 +862,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
           <option value="꽃꽂이찬조">꽃꽂이찬조</option>
           <option value="기타찬조">기타찬조</option>
         </select></div>
-      <div class="fg" id="spon-sub-wrap" style="display:none">
-        <div class="flbl">교육부찬조 세부</div>
+      <div class="fg" id="spon-sub-wrap" style="display:none"><div class="flbl">교육부찬조 세부</div>
         <select class="fsel" id="spon-ftype-q" onchange="toggleSponExtra()">
           <option value="교육부찬조전체">교육부찬조 전체</option>
           <option value="교육부찬조">교육부찬조(미지정)</option>
@@ -880,26 +879,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       <button class="btn btn-outline" onclick="resetSponSearch()">초기화</button>
     </div>
   </div>
-
-  <!-- 직접 입력 -->
-  <div class="card">
-    <div class="card-title" style="margin-bottom:10px">찬조 직접 입력</div>
-    <div class="g3">
-      <div class="fg"><div class="flbl">일자</div><input class="finp" id="spon-date" type="date"></div>
-      <div class="fg"><div class="flbl">찬조 유형</div>
-        <select class="fsel" id="spon-type-sel"><option value="">선택...</option></select></div>
-      <div class="fg"><div class="flbl">성도/기관명</div><input class="finp" id="spon-name" placeholder="이름"></div>
-    </div>
-    <div class="g3">
-      <div class="fg"><div class="flbl">금액 (원)</div><input class="finp num-in" id="spon-amount" placeholder="0" oninput="fmtAmt(this)"></div>
-      <div class="fg"><div class="flbl">비고</div><input class="finp" id="spon-memo" placeholder="헌금내역 비고 구분자 입력"></div>
-      <div class="fg"></div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="addSponsor()">+ 직접 추가</button>
-      <button class="btn btn-outline" onclick="clearSponForm()">초기화</button>
-    </div>
-  </div>
+  <!-- hidden select for initSponsorTab -->
+  <select id="spon-type-sel" style="display:none"></select>
 
   <!-- 결과 -->
   <div class="result-section" id="spon-result">
@@ -912,15 +893,22 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
         <div class="flex gap8 items-c">
           <span id="spon-count" class="badge b-gold"></span>
           <span id="spon-total" style="font-family:var(--fnum);font-weight:700;color:var(--gold);font-size:14px"></span>
-          <button class="btn btn-outline btn-sm no-print" onclick="printSection('spon-print-area')">🖨️ 인쇄</button>
+          <button class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ 인쇄</button>
         </div>
       </div>
       <div id="spon-print-area">
         <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>#</th><th>일자</th><th>유형</th><th>성도/기관</th><th class="nc">금액(원)</th><th>비고(헌금구분자)</th><th>출처</th><th class="no-print">삭제</th></tr></thead>
+          <thead><tr>
+            <th>#</th><th>일자</th><th>유형</th><th>성도/기관</th>
+            <th class="nc">금액(원)</th><th>비고(헌금구분자)</th><th>출처</th>
+            <th class="no-print">삭제</th>
+          </tr></thead>
           <tbody id="spon-tbody"></tbody>
-          <tfoot><tr><td colspan="4" style="text-align:center;font-weight:700">합계</td>
-            <td class="nc" id="spon-foot-total" style="font-weight:800"></td><td colspan="3"></td></tr></tfoot>
+          <tfoot><tr>
+            <td colspan="4" style="text-align:center;font-weight:700">합계</td>
+            <td class="nc" id="spon-foot-total" style="font-weight:800;color:var(--gold)"></td>
+            <td colspan="3"></td>
+          </tr></tfoot>
         </table></div>
       </div>
     </div>
@@ -929,26 +917,30 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <div class="spon-extra" id="spon-edu-extra">
       <!-- 부서별 배분 현황 -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:10px">📊 교육부찬조 부서별 배분 현황</div>
-        <div style="font-size:11px;color:var(--g2);margin-bottom:8px">
-          지정금액: 타입에 부서명 포함 (예: 교육부찬조(청년부)) / 배분금액: 미지정 찬조 1/4 균등 배분 / 찬조합계 = 지정 + 배분
+        <div class="card-hd">
+          <div class="card-title">📊 교육부찬조 부서별 배분 현황</div>
+        </div>
+        <div style="font-size:11px;color:var(--g2);padding:6px 14px 0;margin-bottom:6px">
+          <b>지정금액</b>: 타입에 부서명 포함(예: 교육부찬조(청년부)) &nbsp;|&nbsp;
+          <b>배분금액</b>: 미지정 찬조 4등분 균등 배분 &nbsp;|&nbsp;
+          <b>찬조합계</b> = 지정 + 배분
         </div>
         <div class="tbl-wrap"><table class="tbl">
           <thead><tr>
             <th>부서</th>
             <th class="nc">지정금액</th>
             <th class="nc">배분금액</th>
-            <th class="nc">찬조합계</th>
+            <th class="nc" style="font-weight:800">찬조합계</th>
             <th class="nc">받아간금액</th>
             <th>상태</th>
           </tr></thead>
           <tbody id="spon-dist-tbody"></tbody>
           <tfoot><tr>
             <td style="font-weight:700">합계</td>
-            <td class="nc" id="spon-dist-tot-des"></td>
-            <td class="nc" id="spon-dist-tot-alloc"></td>
+            <td class="nc" id="spon-dist-tot-des" style="font-weight:700"></td>
+            <td class="nc" id="spon-dist-tot-alloc" style="font-weight:700"></td>
             <td class="nc" id="spon-dist-tot-sum" style="font-weight:800;color:var(--blue)"></td>
-            <td class="nc" id="spon-dist-tot-recv"></td>
+            <td class="nc" id="spon-dist-tot-recv" style="font-weight:700"></td>
             <td></td>
           </tr></tfoot>
         </table></div>
@@ -956,9 +948,9 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 
       <!-- 입금내역 세부 -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:10px">📋 입금내역 세부</div>
-        <div style="font-size:11px;color:var(--g2);margin-bottom:8px">
-          지출내역 중 부서=교육부찬조 기준 / 수취자: 최희지·김하준→청년부, 김미선→아동부, 김여진→유치부, 권순호→중고등부
+        <div class="card-hd">
+          <div class="card-title">📋 입금내역 세부</div>
+          <div style="font-size:11px;color:var(--g2)">수취자: 최희지·김하준→청년부 / 김미선→아동부 / 김여진→유치부 / 권순호→중고등부</div>
         </div>
         <div class="tbl-wrap"><table class="tbl">
           <thead><tr>
@@ -966,6 +958,11 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
             <th class="nc">금액(원)</th><th>요청자</th><th>송금받은자</th>
           </tr></thead>
           <tbody id="spon-pay-tbody"></tbody>
+          <tfoot><tr>
+            <td colspan="3" style="text-align:center;font-weight:700">합계</td>
+            <td class="nc" id="spon-pay-total" style="font-weight:800;color:var(--red)"></td>
+            <td colspan="2"></td>
+          </tr></tfoot>
         </table></div>
       </div>
     </div>
@@ -975,7 +972,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 <!-- ===== 월간보고 ===== -->
 <div id="tab-monthly" class="tab-pane">
   <div class="pg-hd"><div class="pg-title">📈 월간 회계보고</div></div>
-  <div class="month-bar">
+  <div class="month-bar no-print">
     <label>보고 기준 월</label>
     <select id="monthly-month"></select>
     <span class="m-badge" id="monthly-badge">-</span>
@@ -2676,11 +2673,14 @@ function renderSponDistAndPay(){
   });
 
   // 1. 분배 현황 테이블
+  // 합계 초기화
+  let totDes=0,totAlloc=0,totSum=0,totRecv=0;
   const tb1=document.getElementById('spon-dist-tbody');
   if(tb1) tb1.innerHTML=depts.map(function(d){
     const total=(designated[d]||0)+(allocated[d]||0);
     const rec=received[d]||0;
     const diff=total-rec;
+    totDes+=(designated[d]||0);totAlloc+=(allocated[d]||0);totSum+=total;totRecv+=rec;
     return '<tr>'
       +'<td style="font-weight:700">'+d+'</td>'
       +'<td class="nc">'+fmtN(designated[d]||0)+'</td>'
@@ -2690,6 +2690,12 @@ function renderSponDistAndPay(){
       +'<td><span class="badge '+(diff===0?'b-green':diff>0?'b-navy':'b-red')+'">'+(diff===0?'✅ 완료':diff>0?'잔여 '+fmtN(diff):'초과 '+fmtN(-diff))+'</span></td>'
       +'</tr>';
   }).join('');
+  // 합계 footer 업데이트
+  ['spon-dist-tot-des','spon-dist-tot-alloc','spon-dist-tot-sum','spon-dist-tot-recv']
+    .forEach(function(id,i){
+      const el=document.getElementById(id);
+      if(el) el.textContent=fmtN([totDes,totAlloc,totSum,totRecv][i])+'원';
+    });
 
   // 2. 입금내역세부 테이블 (기존 입금내역세부)
   const tb2=document.getElementById('spon-pay-tbody');
@@ -2702,6 +2708,7 @@ function renderSponDistAndPay(){
     });
   });
   rows.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  const payTotal=rows.reduce(function(s,r){return s+(r.amount||0);},0);
   tb2.innerHTML=rows.length?rows.map(function(r){
     return '<tr>'
       +'<td style="font-family:var(--fnum)">'+r.date+'</td>'
@@ -2711,7 +2718,9 @@ function renderSponDistAndPay(){
       +'<td>'+r.requester+'</td>'
       +'<td>'+r.recipient+'</td>'
       +'</tr>';
-  }).join(''):`<tr><td colspan="6" class="tbl-empty">데이터가 없습니다</td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="tbl-empty">데이터가 없습니다</td></tr>';
+  const pt=document.getElementById('spon-pay-total');
+  if(pt) pt.textContent=fmtN(payTotal)+'원';
 }
 window.addSponsor=function(){
   const name=document.getElementById('spon-name')?.value.trim();
@@ -2899,8 +2908,7 @@ function renderMonthlyGeneral(ym){
   </div>
   <!-- PAGE 2: 지출 -->
   <div class="print-page-break">
-    <div class="rpt-hd" style="margin-top:10px"><h2>${yr}년 ${mo}월 일반 회계보고 (지출)</h2></div>
-    <div class="rpt-sub">(3) 지출</div>
+    <div class="rpt-sub" style="margin-top:10px">(3) 지출</div>
     <div class="card" style="padding:0;overflow:hidden">
       <table class="tbl">
         <thead><tr><th>항목</th><th class="nc">당년예산(A)</th><th class="nc">누계(B)</th><th class="nc">월계(C)</th><th class="nc">진도%(B/A)</th><th>비고</th></tr></thead>
@@ -2937,7 +2945,7 @@ function renderMonthlyGeneral(ym){
           <td class="nc" style="color:var(--red)">${eduSponExp_cu?fmtN(eduSponExp_cu):'—'}</td>
           <td class="nc">${eduSponExp_mo?fmtN(eduSponExp_mo):'—'}</td>
           <td class="nc"><span style="color:var(--g3)">${eduSponBudget?Math.round(eduSponExp_cu/eduSponBudget*1000)/10+'%':'—'}</span></td>
-          <td style="font-size:10px;color:var(--g2)">변동비</td>
+          <td style="font-size:10px;color:var(--g2)">변동비<br><span style="color:var(--blue);font-weight:600">↑ 수입누계: ${fmtN(eduSponInc_cu)}</span></td>
         </tr>
         <tr style="background:#e8f0fe;font-weight:800;font-size:13px">
           <td>합 계 2</td>
