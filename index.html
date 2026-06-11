@@ -1273,7 +1273,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <div class="sub-btn" onclick="switchMgr('writer-mgr',this)">작성자</div>
     <div class="sub-btn" onclick="switchMgr('data-mgr',this)">데이터</div>
   </div>
-  <div id="offering-mgr" class="card">
+  <div id="offering-mgr" class="card" style="display:block">
     <div class="card-title" style="margin-bottom:10px">헌금종류 관리</div>
     <div class="flex gap8 mb12"><input class="finp" id="new-off" placeholder="새 헌금종류" style="max-width:200px"><button class="btn btn-navy" onclick="addOfferingType()">+ 추가</button></div>
     <div id="off-type-list"></div>
@@ -1680,6 +1680,17 @@ const setSponsors=function(v){
   if(window._fbSaveAll) window._fbSaveAll('sponsorBook',v);
 };
 const getOffTypes=()=>ST.get('offeringTypes',DEF_OFF_TYPES);
+
+// ── 헌금 유형 색상 인덱스 ────────────────────────────────────
+function getTypeColorIdx(type){
+  const types=getOffTypes();
+  const idx=types.indexOf(type);
+  if(idx>=0) return idx%19;
+  // DEF 목록에서 탐색
+  const di=DEF_OFF_TYPES.indexOf(type);
+  return di>=0 ? di%19 : 0;
+}
+
 const getDeptTypes=()=>ST.get('deptTypes',DEF_DEPT_TYPES);
 const getSponTypes=()=>ST.get('sponsorTypes',DEF_SPON_TYPES);
 const getRecipients=()=>ST.get('recipients',DEF_RECIPIENTS);
@@ -3899,8 +3910,8 @@ window.renderReceipt=function(){
   const cashInc=totInc-bankInc;
   const cashOut=expenses.filter(function(e){return e.paytype==='현금지급'||e.transfer==='현금';}).reduce(function(s,e){return s+e.amount;},0);
   const remitOut=totOut-cashOut;
-  const genOff=DEF_OFF_TYPES.filter(function(t){return !['건축헌금','전도헌금','지역봉사헌금'].includes(t);});
-  const genDept=DEF_DEPT_TYPES.filter(function(d){return !['건축헌금','전도헌금','사회봉사'].includes(d);});
+  const genOff=getOffTypes().filter(function(t){return !['건축헌금','전도헌금','지역봉사헌금'].includes(t);});
+  const genDept=getDeptTypes().filter(function(d){return !['건축헌금','전도헌금','사회봉사'].includes(d);});
 
   function offRow(t){
     const tot=byTypeInc[t]||0,onl=byTypeBankInc[t]||0,cas=tot-onl;
