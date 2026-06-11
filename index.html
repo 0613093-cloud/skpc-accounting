@@ -3797,6 +3797,7 @@ window.doFinSearch=function(){
 
 // ── 데이터 관리 dmInitFilters ────────────────────────────────
 window.dmInitFilters=function(){
+  // 헌금 년월
   const ymSel=document.getElementById('dm-off-ym');
   if(ymSel&&ymSel.options.length<=1){
     const yms=[...new Set(getOfferings().map(function(e){return monthOf(e.date);}).filter(Boolean))].sort().reverse();
@@ -3804,6 +3805,22 @@ window.dmInitFilters=function(){
       const o=document.createElement('option');o.value=ym;
       const [y,m]=ym.split('-');o.textContent=y+'년 '+parseInt(m)+'월';
       ymSel.appendChild(o);
+    });
+  }
+  // 헌금구분 (헌금종류)
+  const typeSel=document.getElementById('dm-off-type');
+  if(typeSel&&typeSel.options.length<=1){
+    getOffTypes().forEach(function(t){
+      const o=document.createElement('option');o.value=t;o.textContent=t;
+      typeSel.appendChild(o);
+    });
+  }
+  // 지출 부서
+  const deptSel=document.getElementById('dm-exp-dept');
+  if(deptSel&&deptSel.options.length<=1){
+    getDeptTypes().forEach(function(d){
+      const o=document.createElement('option');o.value=d;o.textContent=d;
+      deptSel.appendChild(o);
     });
   }
   window.dmLoadOfferings&&dmLoadOfferings();
