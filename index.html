@@ -841,7 +841,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       <div class="fg"><div class="flbl">날짜 (수정 가능)</div><input type="date" class="finp" id="exp-date"></div>
       <div class="fg"><div class="flbl">요청자</div><input class="finp" id="exp-requester" placeholder="요청자명"></div>
       <div class="fg"><div class="flbl">수취자명</div>
-        <input class="finp" id="exp-recipient" placeholder="수취자명" oninput="lookupAccount()" list="exp-recip-list">
+        <input class="finp" id="exp-recipient" placeholder="수취자명" oninput="autoFillAccount()" oninput="lookupAccount()" list="exp-recip-list">
         <datalist id="exp-recip-list"></datalist></div>
     </div>
     <div class="g3">
@@ -1595,48 +1595,48 @@ const DEF_WRITERS=['이광원','유치주','하태식','김종우'];
 function getWriters(){return ST.get('writers',DEF_WRITERS);}
 
 // 수취자 계좌 DB (지출내역정리 PDF 기반)
-const DEF_RECIPIENTS={
-  '박혜숙':'농협 302-0285-454671',
-  '강혜미':'국민 459602-01-344633',
-  '허원':'농협 352-0552-0976-13',
-  '김재일':'우리 100-2840-757005',
-  '유치주':'농협 352-0607-6104-13',
-  '하태식':'농협 301-0230-5890-61',
-  '김종우':'국민 079-21-0904-123',
-  '이광원':'농협 302-1234-5678-01',
-  '윤진아':'국민 123-456-789012',
-  '김하준':'기업 234-567-890123',
-  '김미선':'농협 301-9876-5432-01',
-  '최희지':'신한 110-234-567890',
-  '윤태정':'하나 123-456789-01234',
-  '송양원':'우리 1002-345-678901',
-  '이혜진':'국민 456-789-012345',
-  '박기성':'농협 352-0123-4567-89',
-  '최정원':'신한 110-987-654321',
-  '김성수':'기업 012-34567-890',
-  '이명희':'농협 301-1234-5678-90',
-  '조광현':'국민 789-012-345678',
-  '서정희':'하나 456-789012-34567',
-  '박동수':'우리 1002-678-901234',
-  '김영숙':'농협 352-5678-9012-34',
-  '이재훈':'신한 110-345-678901',
-  '최성민':'기업 345-67890-123',
-  '정미라':'국민 012-345-678901',
-  '강동원':'농협 301-2345-6789-01',
-  '윤서연':'하나 789-012345-67890',
-  '박준호':'우리 1002-901-234567',
-  '이수진':'국민 234-567-890123',
-  '김태현':'농협 352-9012-3456-78',
-  '한지민':'신한 110-456-789012',
-  '오성진':'기업 456-78901-234',
-  '임채원':'농협 352-1111-2222-33',
-  '지영호':'국민 111-222-333444',
-  '류선경':'하나 222-333444-55555',
-  '민준혁':'우리 1002-111-222333',
-  '안소희':'농협 301-3333-4444-55',
-  '장혁준':'신한 110-567-890123',
-  '배수아':'국민 345-678-901234'
-};
+const DEF_RECIPIENTS=[
+  {name:'박혜숙',acct:'농협 302-0285-454671'},
+  {name:'강혜미',acct:'국민 459602-01-344633'},
+  {name:'허원',acct:'농협 352-0552-0976-13'},
+  {name:'김재일',acct:'우리 100-2840-757005'},
+  {name:'유치주',acct:'농협 352-0607-6104-13'},
+  {name:'하태식',acct:'농협 301-0230-5890-61'},
+  {name:'김종우',acct:'국민 079-21-0904-123'},
+  {name:'이광원',acct:'농협 302-1234-5678-01'},
+  {name:'윤진아',acct:'국민 123-456-789012'},
+  {name:'김하준',acct:'기업 234-567-890123'},
+  {name:'김미선',acct:'농협 301-9876-5432-01'},
+  {name:'최희지',acct:'신한 110-234-567890'},
+  {name:'윤태정',acct:'하나 123-456789-01234'},
+  {name:'송양원',acct:'우리 1002-345-678901'},
+  {name:'이혜진',acct:'국민 456-789-012345'},
+  {name:'박기성',acct:'농협 352-0123-4567-89'},
+  {name:'최정원',acct:'신한 110-987-654321'},
+  {name:'김성수',acct:'기업 012-34567-890'},
+  {name:'이명희',acct:'농협 301-1234-5678-90'},
+  {name:'조광현',acct:'국민 789-012-345678'},
+  {name:'서정희',acct:'하나 456-789012-34567'},
+  {name:'박동수',acct:'우리 1002-678-901234'},
+  {name:'김영숙',acct:'농협 352-5678-9012-34'},
+  {name:'이재훈',acct:'신한 110-345-678901'},
+  {name:'최성민',acct:'기업 345-67890-123'},
+  {name:'정미라',acct:'국민 012-345-678901'},
+  {name:'강동원',acct:'농협 301-2345-6789-01'},
+  {name:'윤서연',acct:'하나 789-012345-67890'},
+  {name:'박준호',acct:'우리 1002-901-234567'},
+  {name:'이수진',acct:'국민 234-567-890123'},
+  {name:'김태현',acct:'농협 352-9012-3456-78'},
+  {name:'한지민',acct:'신한 110-456-789012'},
+  {name:'오성진',acct:'기업 456-78901-234'},
+  {name:'임채원',acct:'농협 352-1111-2222-33'},
+  {name:'지영호',acct:'국민 111-222-333444'},
+  {name:'류선경',acct:'하나 222-333444-55555'},
+  {name:'민준혁',acct:'우리 1002-111-222333'},
+  {name:'안소희',acct:'농협 301-3333-4444-55'},
+  {name:'장혁준',acct:'신한 110-567-890123'},
+  {name:'배수아',acct:'국민 345-678-901234'}
+];
 
 // 연간예산 DB (월간_회계보고.pdf 기반 - 2026년)
 const DEF_BUDGET={
@@ -1723,7 +1723,22 @@ function getTypeColorIdx(type){
 
 const getDeptTypes=()=>ST.get('deptTypes',DEF_DEPT_TYPES);
 const getSponTypes=()=>ST.get('sponsorTypes',DEF_SPON_TYPES);
-const getRecipients=()=>ST.get('recipients',DEF_RECIPIENTS);
+const getRecipients=function(){
+  let r=ST.get('recipients',DEF_RECIPIENTS);
+  // 딕셔너리 형태({name:acct})를 배열로 변환
+  if(r&&!Array.isArray(r)){
+    r=Object.entries(r).map(function(e){return {name:e[0],acct:e[1]};});
+    ST.set('recipients',r);
+  }
+  return Array.isArray(r)?r:DEF_RECIPIENTS;
+};
+// 이름으로 계좌번호 조회
+function getAccountByName(name){
+  const r=getRecipients();
+  const found=r.find(function(x){return x.name===name;});
+  return found?found.acct||'':'';
+}
+
 const getBudget=()=>ST.get('annualBudget',DEF_BUDGET);
 
 window.fmtAmt=function(el){
@@ -2383,7 +2398,23 @@ window.lookupAccount=function(){
 window.saveAccountOnInput=function(){
   const n=document.getElementById('exp-recipient')?.value.trim();
   const a=document.getElementById('exp-account')?.value.trim();
-  if(n&&a){const r=getRecipients();r[n]=a;ST.set('recipients',r);updateRecipientDatalist();}
+  if(n&&a){
+    const r=getRecipients();
+    const ex=r.find(function(x){return x.name===n;});
+    if(ex){ex.acct=a;}else{r.push({name:n,acct:a});}
+    ST.set('recipients',r);
+    if(window._fbSaveConfig)window._fbSaveConfig('recipients',r);
+    updateRecipientDatalist();
+  }
+};
+
+// 수취자 이름으로 계좌 자동 채우기
+window.autoFillAccount=function(){
+  const n=document.getElementById('exp-recipient')?.value.trim();
+  if(!n) return;
+  const acct=getAccountByName(n);
+  const accEl=document.getElementById('exp-account');
+  if(accEl&&acct&&!accEl.value) accEl.value=acct;
 };
 window.addExpense=function(){
   const dept=ST.get('selDept',getDeptTypes()[0]);
@@ -2395,7 +2426,13 @@ window.addExpense=function(){
   const content=document.getElementById('exp-content')?.value.trim();
   const memo=document.getElementById('exp-memo')?.value.trim();
   if(!amount){alert('금액을 입력하세요.');return;}
-  if(recipient&&account){const r=getRecipients();r[recipient]=account;ST.set('recipients',r);}
+  if(recipient&&account){
+    const r=getRecipients();
+    const existing=r.find(function(x){return x.name===recipient;});
+    if(existing){existing.acct=account;}else{r.push({name:recipient,acct:account});}
+    ST.set('recipients',r);
+    if(window._fbSaveConfig)window._fbSaveConfig('recipients',r);
+  }
   const exps=getExpenses();
   const expDate=document.getElementById('exp-date')?.value||TODAY;
   exps.push({id:uid(),date:expDate,dept,requester,recipient,account,amount,paytype,content,memo});
@@ -3847,16 +3884,26 @@ function renderAccountList(){
   const recips=getRecipients();
   const el=document.getElementById('recip-list');
   if(!el) return;
-  el.innerHTML=recips.length
-    ? recips.map(function(r,i){
-        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border,#e2e8f0);border-radius:7px;margin-bottom:6px;background:#fafbff">'
-          +'<span style="flex:1;font-size:12px"><strong>'+r.name+'</strong>'
-          +(r.bank?' <span style="color:#888">'+r.bank+'</span>':'')
-          +(r.acct?' <span style="font-family:var(--fnum);color:#555">'+r.acct+'</span>':'')+'</span>'
-          +'<button class="btn btn-red btn-sm" onclick="removeRecipient('+i+')">삭제</button>'
-          +'</div>';
-      }).join('')
-    : '<div style="color:#aaa;padding:12px;text-align:center">계좌 없음</div>';
+  if(!recips.length){
+    el.innerHTML='<div style="color:#aaa;padding:12px;text-align:center">등록된 계좌가 없습니다</div>';
+    return;
+  }
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="background:#f0f4ff">'
+    +'<th style="padding:7px 10px;border:1px solid #dde;text-align:left">수취자명</th>'
+    +'<th style="padding:7px 10px;border:1px solid #dde;text-align:left">계좌번호 (은행 + 번호)</th>'
+    +'<th style="padding:7px 10px;border:1px solid #dde;width:50px" class="no-print">삭제</th>'
+    +'</tr></thead><tbody>'
+    +recips.map(function(r,i){
+      return '<tr>'
+        +'<td style="padding:6px 10px;border:1px solid #dde;font-weight:700">'+r.name+'</td>'
+        +'<td style="padding:6px 10px;border:1px solid #dde;font-family:var(--fnum,monospace)">'
+          +(r.acct||r.bank||'<span style="color:#aaa">미등록</span>')+'</td>'
+        +'<td style="padding:6px 10px;border:1px solid #dde;text-align:center" class="no-print">'
+          +'<button class="btn btn-red btn-xs" onclick="removeRecipient('+i+')">삭제</button></td>'
+        +'</tr>';
+    }).join('')
+    +'</tbody></table>';
 }
 
 function renderSponTypeList(){
@@ -4228,7 +4275,7 @@ window.dmLoadExpenses=function(){
       +makeCell(e.id, e.dept||'', 'dept', 'dept')
       +makeCell(e.id, e.requester||'', 'requester', 'text', '70px')
       +makeCell(e.id, e.recipient||e.recip||'', 'recipient', 'text', '70px')
-      +makeCell(e.id, account, 'account', 'text', '120px')
+      +makeCell(e.id, account||getAccountByName(e.recipient||e.recip||''), 'account', 'text', '120px')
       +makeCell(e.id, e.amount||0, 'amount', 'amount')
       +makeCell(e.id, e.content||e.item||'', 'content', 'text')
       +makeCell(e.id, e.paytype||'계좌이체', 'paytype', 'paytype')
