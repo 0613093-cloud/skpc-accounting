@@ -275,8 +275,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   .hdr,.nav,.nav-groups-row,.nav-items-row{display:none!important}
   .app{height:auto!important;overflow:visible!important}
   .content{overflow:visible!important;height:auto!important;padding:0!important}
-  .tab-pane{display:none!important}
-  .tab-pane.active{display:block!important}
+  .tab-pane{display:none!important;visibility:hidden!important}
+  .tab-pane.active{display:block!important;visibility:visible!important}
   
   @page{margin:8mm;size:A4 portrait}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10px}
@@ -967,7 +967,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
           <b>배분금액</b>: 미지정 찬조 4등분 균등 배분 &nbsp;|&nbsp;
           <b>찬조합계</b> = 지정 + 배분
         </div>
-        <div class="tbl-wrap"><table class="tbl">
+        <div class="tbl-wrap"><div id="spon-undesig-info" style="margin-bottom:8px;padding:6px 10px;background:#f0f6ff;border-radius:6px;border-left:3px solid var(--blue)"></div>
+      <table class="tbl">
           <thead><tr>
             <th>부서</th>
             <th class="nc">지정금액</th>
@@ -1331,11 +1332,11 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 
     <!-- 서브탭 카드형식 -->
     <div class="dm-card-grid mb12">
-      <div class="dm-tab-card active" id="dmcard-view" onclick="switchDataTab('dtab-view',this,'dmcard-view')">
+      <div class="dm-tab-card active" id="dmcard-view" onclick="switchDataTab('dtab-view',this,'dtab-view')">
         <div class="dm-card-icon">📋</div>
         <div><div class="dm-card-title">전체 내역 조회·수정</div><div class="dm-card-desc">헌금·지출·찬조 내역 확인 및 수정</div></div>
       </div>
-      <div class="dm-tab-card" id="dmcard-io" onclick="switchDataTab('dtab-io',this,'dmcard-io')">
+      <div class="dm-tab-card" id="dmcard-io" onclick="switchDataTab('dtab-io',this,'dtab-io')">
         <div class="dm-card-icon">💾</div>
         <div><div class="dm-card-title">내보내기·불러오기</div><div class="dm-card-desc">엑셀/JSON 파일 저장·복원</div></div>
       </div>
@@ -1641,9 +1642,19 @@ const DEF_BUDGET={
   'out_건축대출금상환':24000000,'out_대출금이자':63000000,'out_건축대출금상환적금':55600000
 };
 
-const TODAY=new Date().toISOString().slice(0,10);
-const CUR_YEAR=new Date().getFullYear();
-const CUR_MONTH=new Date().getMonth()+1;
+// ── KST(한국표준시) 날짜 헬퍼 ──────────────────────────────
+function nowKST(){
+  // UTC + 9시간 = KST
+  return new Date(Date.now() + 9 * 60 * 60 * 1000);
+}
+function todayKST(){
+  // KST 기준 오늘 날짜 'YYYY-MM-DD'
+  const d=nowKST();
+  return d.toISOString().slice(0,10);
+}
+const TODAY=todayKST();
+const CUR_YEAR=nowKST().getUTCFullYear();
+const CUR_MONTH=nowKST().getUTCMonth()+1;
 
 const fmtN=(n)=>Math.round(Number(n||0)).toLocaleString('ko-KR');
 const parseN=(s)=>parseInt((s+'').replace(/[^0-9-]/g,''))||0;
@@ -1680,6 +1691,16 @@ const setSponsors=function(v){
 const getOffTypes=()=>ST.get('offeringTypes',DEF_OFF_TYPES);
 
 // ── 헌금 유형 색상 인덱스 ────────────────────────────────────
+
+function isOnlinePayment(e){
+  const v=e.online;
+  if(v==='온라인입금') return true;
+  if(!v||v===false||v===0||v==='현금입금'||v==='현금') return false;
+  if(v===true||v==='TRUE'||v==='true'||v==='1') return true;
+  const vs=String(v).trim().replace(/\s+/g,'');
+  return vs==='온라인입금'||vs==='온라인'||vs.toLowerCase()==='true';
+}
+
 function getTypeColorIdx(type){
   const types=getOffTypes();
   const idx=types.indexOf(type);
@@ -1707,7 +1728,7 @@ function getRaw(el){
 }
 
 function updateHeaderDate(){
-  const now=new Date();
+  const now=nowKST();
   document.getElementById('hdrDate').textContent=now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 }
 updateHeaderDate();setInterval(updateHeaderDate,60000);
@@ -1768,8 +1789,12 @@ document.querySelectorAll('.nav-item').forEach(el=>{
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     el.classList.add('active');
     document.getElementById('inputDropMenu')?.classList.remove('open');
-    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-    const tp=document.getElementById('tab-'+tab);if(tp) tp.classList.add('active');
+    document.querySelectorAll('.tab-pane').forEach(p=>{
+      p.classList.remove('active');
+      p.style.display='none';
+    });
+    const tp=document.getElementById('tab-'+tab);
+    if(tp){tp.classList.add('active');tp.style.display='block';}
     updateActiveGroup(tab);
     onTabActivate(tab);
   });
@@ -1848,10 +1873,10 @@ window.selectInputSheet=function(num){
 
 // ── 가장 가까운 이전 일요일 계산 ────────────────────────────
 function getLastSunday(fromDate){
-  const d=fromDate?new Date(fromDate):new Date();
-  // 오늘이 일요일(0)이면 오늘, 아니면 직전 일요일
-  const day=d.getDay(); // 0=일, 1=월 ... 6=토
-  d.setDate(d.getDate()-day);
+  // KST 기준 가장 가까운 이전 일요일
+  const d=fromDate?new Date(fromDate):nowKST();
+  const day=d.getUTCDay(); // 0=일, KST 기준
+  d.setUTCDate(d.getUTCDate()-day);
   return d.toISOString().slice(0,10);
 }
 
@@ -1883,7 +1908,7 @@ function onTabActivate(tab){
     if(firstBtn) firstBtn.classList.add('on');
   }
   if(tab==='online-off') initOnlineTab();
-  if(tab==='finsearch'){const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
+  if(tab==='finsearch'){const today=nowKST();const first=new Date(today.getUTCFullYear(),today.getUTCMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
 }
 function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');el.style.display='block';}}
 
@@ -2145,10 +2170,10 @@ window.submitEntries=function(num){
   if(!st.entries||!st.entries.length){alert('입력 내역이 없습니다.');return;}
   if(!confirm(`시트 ${num}의 ${st.entries.length}건을 헌금정리에 전송하시겠습니까?`)) return;
   const book=getOfferings();
-  st.entries.forEach(e=>book.push({...e,submittedAt:new Date().toISOString()}));
+  st.entries.forEach(e=>book.push({...e,submittedAt:nowKST().toISOString()}));
   setOfferings(book);st.entries=[];ST.set(SK,st);renderEntryTable(num);
   const msg=document.getElementById(`s${num}-msg`);
-  if(msg){msg.innerHTML=`<div class="alert alert-success">✅ ${new Date().toLocaleTimeString('ko-KR')} — 전송 완료! 헌금정리에 저장되었습니다.</div>`;setTimeout(()=>msg.innerHTML='',4000);}
+  if(msg){msg.innerHTML=`<div class="alert alert-success">✅ ${nowKST().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul'})} — 전송 완료! 헌금정리에 저장되었습니다.</div>`;setTimeout(()=>msg.innerHTML='',4000);}
 };
 
 window.clearSheet=function(num){if(!confirm('시트 전체 초기화?')) return;const SK=`istate_${num}`;const st=ST.get(SK,{});st.entries=[];ST.set(SK,st);renderEntryTable(num);};
@@ -2462,8 +2487,8 @@ window.toggleSponExtra=function(){
 };
 
 function initSponsorTab(){
-  const today=new Date();
-  const first=new Date(today.getFullYear(),today.getMonth(),1).toISOString().slice(0,10);
+  const today=nowKST();
+  const first=new Date(today.getUTCFullYear(),today.getMonth(),1).toISOString().slice(0,10);
   const fd=document.getElementById('spon-from');const td=document.getElementById('spon-to');
   if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;
   const sfq=document.getElementById('spon-ftype-q');
@@ -2561,33 +2586,64 @@ function renderSponDistAndPay(){
   const sponTypes=getSponTypes();
   const allOfferings=getOfferings();
   const allExpenses=getExpenses();
+  const allSponsors=getSponsors();
 
-  // 헌금정리에서 교육부찬조 유형 찬조 수집 (비고로 구분)
-  const eduSponOfferings=allOfferings.filter(function(e){
-    return sponTypes.some(function(t){return e.type===t;})&&String(e.type).includes('교육부찬조');
+  // ── 교육부찬조 수집 ──────────────────────────────────────
+  // 방법1: 헌금내역의 type이 '교육부찬조*' 인 것
+  const offerByType=allOfferings.filter(function(e){
+    return String(e.type||'').includes('교육부찬조');
   });
-  // 직접입력 교육부찬조
-  const eduSponDirect=getSponsors().filter(function(e){return String(e.type).includes('교육부찬조');});
-  const allEduSpons=[...eduSponOfferings,...eduSponDirect];
 
-  // 지정금액: 타입이 '교육부찬조(XXX)' 형태인 경우 해당 부서로 지정
+  // 방법2: 헌금내역의 memo(비고)에 '교육부찬조*' 가 있는 것 (type은 일반헌금)
+  const offerByMemo=allOfferings.filter(function(e){
+    return !String(e.type||'').includes('교육부찬조')
+      && String(e.memo||'').includes('교육부찬조');
+  });
+
+  // 방법3: 찬조내역(sponsorBook)에서 교육부찬조
+  const sponsorEdu=allSponsors.filter(function(e){
+    return String(e.type||'').includes('교육부찬조');
+  });
+
+  // ── 지정/미지정 분류 ─────────────────────────────────────
+  // 지정: '교육부찬조(부서명)' → 해당 부서
+  // 미지정: '교육부찬조' (괄호 없음) → 4등분
   const designated={유치부:0,아동부:0,중고등부:0,청년부:0};
-  const undesignated=[]; // '교육부찬조(XXX)' 형태 아닌 것 (구분 없는 교육부찬조)
-  allEduSpons.forEach(function(e){
-    const m=String(e.type).match(/교육부찬조\(([^)]+)\)/);
-    if(m&&designated.hasOwnProperty(m[1])){
-      designated[m[1]]+=(e.amount||0);
-    } else {
-      undesignated.push(e);
+  const undesig=[];
+
+  function classify(e, typeStr, amtField){
+    const amt=Number(e[amtField]||e.amount||0);
+    if(!amt) return;
+    // 괄호 안 부서명 추출
+    const m=typeStr.match(/교육부찬조[（\(]([^）\)]+)[）\)]/);
+    if(m){
+      const dept=m[1].trim();
+      if(designated.hasOwnProperty(dept)){
+        designated[dept]+=amt;
+      } else {
+        undesig.push({amount:amt,src:e});
+      }
+    } else if(typeStr.includes('교육부찬조')){
+      // '교육부찬조' 단독 → 미지정
+      undesig.push({amount:amt,src:e});
     }
-  });
+  }
 
-  // 미지정 찬조: 1/4씩 배분 (배분금액)
-  const undTot=undesignated.reduce(function(s,e){return s+(e.amount||0);},0);
+  offerByType.forEach(function(e){ classify(e, String(e.type||''), 'amount'); });
+  offerByMemo.forEach(function(e){ classify(e, String(e.memo||''), 'amount'); });
+  sponsorEdu.forEach(function(e){ classify(e, String(e.type||''), 'amount'); });
+
+  // ── 미지정 → 4등분 배분 ──────────────────────────────────
+  const undTot=undesig.reduce(function(s,e){return s+e.amount;},0);
   const shareEach=Math.floor(undTot/4);
-  const allocated={유치부:shareEach,아동부:shareEach,중고등부:shareEach,청년부:undTot-(shareEach*3)};
+  const allocated={
+    유치부:shareEach,
+    아동부:shareEach,
+    중고등부:shareEach,
+    청년부:undTot-(shareEach*3)
+  };
 
-  // 받아간 금액: 지출내역 중 부서='교육부찬조' 이고 수취자로 부서 판별
+  // ── 받아간 금액: 지출에서 부서=교육부찬조 ────────────────
   const received={유치부:0,아동부:0,중고등부:0,청년부:0};
   const receivedItems={유치부:[],아동부:[],중고등부:[],청년부:[]};
   allExpenses.forEach(function(e){
@@ -2600,56 +2656,79 @@ function renderSponDistAndPay(){
     }
   });
 
-  // 1. 분배 현황 테이블
-  // 합계 초기화
+  // ── 테이블1: 부서별 배분현황 ─────────────────────────────
   let totDes=0,totAlloc=0,totSum=0,totRecv=0;
   const tb1=document.getElementById('spon-dist-tbody');
   if(tb1) tb1.innerHTML=depts.map(function(d){
     const total=(designated[d]||0)+(allocated[d]||0);
     const rec=received[d]||0;
     const diff=total-rec;
-    totDes+=(designated[d]||0);totAlloc+=(allocated[d]||0);totSum+=total;totRecv+=rec;
+    totDes+=(designated[d]||0);
+    totAlloc+=(allocated[d]||0);
+    totSum+=total;
+    totRecv+=rec;
     return '<tr>'
       +'<td style="font-weight:700">'+d+'</td>'
-      +'<td class="nc">'+fmtN(designated[d]||0)+'</td>'
-      +'<td class="nc">'+fmtN(allocated[d]||0)+'</td>'
+      +'<td class="nc">'+( designated[d]?('<strong>'+fmtN(designated[d])+'</strong>'):'—')+'</td>'
+      +'<td class="nc">'+( allocated[d]?fmtN(allocated[d]):'—')+'</td>'
       +'<td class="nc" style="font-weight:800">'+fmtN(total)+'</td>'
       +'<td class="nc">'+fmtN(rec)+'</td>'
-      +'<td><span class="badge '+(diff===0?'b-green':diff>0?'b-navy':'b-red')+'">'+(diff===0?'✅ 완료':diff>0?'잔여 '+fmtN(diff):'초과 '+fmtN(-diff))+'</span></td>'
+      +'<td><span class="badge '+(diff===0?'b-green':diff>0?'b-navy':'b-red')+'">'
+        +(diff===0?'✅ 완료':diff>0?'잔여 '+fmtN(diff):'초과 '+fmtN(-diff))
+      +'</span></td>'
       +'</tr>';
   }).join('');
-  // 합계 footer 업데이트
+
+  // 합계 footer
   ['spon-dist-tot-des','spon-dist-tot-alloc','spon-dist-tot-sum','spon-dist-tot-recv']
     .forEach(function(id,i){
       const el=document.getElementById(id);
       if(el) el.textContent=fmtN([totDes,totAlloc,totSum,totRecv][i])+'원';
     });
 
-  // 2. 입금내역세부 테이블 (기존 입금내역세부)
+  // ── 미지정 출처 요약 표시 ────────────────────────────────
+  const undBox=document.getElementById('spon-undesig-info');
+  if(undBox){
+    undBox.innerHTML=undTot
+      ? '<span style="color:var(--navy);font-size:11px">미지정 합계 <strong>'+fmtN(undTot)+'원</strong>'
+        +' → 4등분 각 <strong>'+fmtN(shareEach)+'원</strong> (청년부 '+fmtN(undTot-(shareEach*3))+'원)</span>'
+      : '<span style="color:#aaa;font-size:11px">미지정 찬조 없음</span>';
+  }
+
+  // ── 테이블2: 입금내역세부 ────────────────────────────────
   const tb2=document.getElementById('spon-pay-tbody');
   if(!tb2) return;
   const rows=[];
   depts.forEach(function(d){
     receivedItems[d].forEach(function(e){
-      rows.push({dept:d,date:e.date||'',content:e.content||e.item||'',amount:e.amount||0,
-        requester:e.requester||'',recipient:e.recipient||e.recip||''});
+      rows.push({
+        dept:d,
+        date:e.date||'',
+        content:e.content||e.item||'',
+        amount:e.amount||0,
+        requester:e.requester||'',
+        recipient:e.recipient||e.recip||''
+      });
     });
   });
   rows.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   const payTotal=rows.reduce(function(s,r){return s+(r.amount||0);},0);
-  tb2.innerHTML=rows.length?rows.map(function(r){
-    return '<tr>'
-      +'<td style="font-family:var(--fnum)">'+r.date+'</td>'
-      +'<td><span class="badge b-navy">'+r.dept+'</span></td>'
-      +'<td>'+r.content+'</td>'
-      +'<td class="nc" style="font-weight:700;color:var(--red)">'+fmtN(r.amount)+'</td>'
-      +'<td>'+r.requester+'</td>'
-      +'<td>'+r.recipient+'</td>'
-      +'</tr>';
-  }).join(''):'<tr><td colspan="6" class="tbl-empty">데이터가 없습니다</td></tr>';
+  tb2.innerHTML=rows.length
+    ? rows.map(function(r){
+        return '<tr>'
+          +'<td style="font-family:var(--fnum)">'+r.date+'</td>'
+          +'<td><span class="badge b-navy">'+r.dept+'</span></td>'
+          +'<td>'+r.content+'</td>'
+          +'<td class="nc" style="font-weight:700;color:var(--red)">'+fmtN(r.amount)+'</td>'
+          +'<td>'+r.requester+'</td>'
+          +'<td>'+r.recipient+'</td>'
+          +'</tr>';
+      }).join('')
+    : '<tr><td colspan="6" class="tbl-empty">데이터가 없습니다</td></tr>';
   const pt=document.getElementById('spon-pay-total');
   if(pt) pt.textContent=fmtN(payTotal)+'원';
 }
+
 window.addSponsor=function(){
   const name=document.getElementById('spon-name')?.value.trim();
   const amtEl=document.getElementById('spon-amount');const amount=getRaw(amtEl);
@@ -3165,12 +3244,17 @@ window.switchMgr=function(id,btn){
   if(id==='sponsor-mgr') renderSponTypeList();
   if(id==='budget-mgr') renderBudgetForm();
   if(id==='data-mgr'){
-    // 첫 번째 dm-card 표시 + 필터 초기화
-    const firstCard=document.getElementById('dmcard-view');
-    if(firstCard){
-      document.querySelectorAll('.dm-card').forEach(function(el){el.classList.add('hidden');});
-      firstCard.classList.remove('hidden');
-    }
+    // 내용 탭 중 첫 번째(dtab-view) 표시
+    ['dtab-view','dtab-io'].forEach(function(did){
+      const el=document.getElementById(did);
+      if(el) el.classList.add('hidden');
+    });
+    const firstTab=document.getElementById('dtab-view');
+    if(firstTab) firstTab.classList.remove('hidden');
+    // 버튼 active
+    document.querySelectorAll('.dm-tab-card').forEach(function(b){b.classList.remove('active');});
+    const firstBtn=document.getElementById('dmcard-view');
+    if(firstBtn) firstBtn.classList.add('active');
     dmInitFilters();
   }
 };
@@ -3872,14 +3956,14 @@ window.printMonthly=function(){
   const el=document.getElementById('monthly-content');
   if(!el||!el.innerHTML.trim()){alert('먼저 조회하세요.');return;}
   const w=window.open('','_blank','width=900,height=700');
-  w.document.write('<html><head><title>월간회계보고</title>'
+  w.document.write('\u003chtml>\u003chead><title>월간회계보고</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap" rel="stylesheet">'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;font-size:12px;padding:16px;color:#1e293b}'
+    +'\u003cstyle>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;font-size:12px;padding:16px;color:#1e293b}'
     +'.rpt-section-title{background:#1e3a5f!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'table{border-collapse:collapse;width:100%}th,td{border:1px solid #d1d5db;padding:6px 10px}'
     +'th{background:#1e3a5f!important;color:#fff!important;-webkit-print-color-adjust:exact}'
-    +'@media print{@page{margin:10mm}}</style>'
-    +'</head><body>'+el.innerHTML+'</body></html>');
+    +'@media print{@page{margin:10mm}}<\/style>'
+    +'<\/head>\u003cbody>'+el.innerHTML+'<\/body><\/html>');
   w.document.close();
   setTimeout(function(){w.print();},500);
 };
@@ -3992,10 +4076,13 @@ window.renderReceipt=function(){
 // ── 데이터 관리 탭 전환 ──────────────────────────────────────
 window.switchDataTab=function(tabId,btn,cardId){
   // 버튼 on/off
-  document.querySelectorAll('.dm-tab-btn').forEach(function(b){b.classList.remove('on');});
-  if(btn) btn.classList.add('on');
-  // 카드 전환
-  document.querySelectorAll('.dm-card').forEach(function(el){el.classList.add('hidden');});
+  document.querySelectorAll('.dm-tab-card').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  // 내용 탭 전환 (dtab-view, dtab-io)
+  ['dtab-view','dtab-io'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.classList.add('hidden');
+  });
   const card=document.getElementById(cardId);
   if(card) card.classList.remove('hidden');
   // 전체내역 탭이면 필터 초기화
@@ -4039,8 +4126,8 @@ window.dmLoadOfferings=function(){
 };
 
 window.dmResetOff=function(){
-  const today=new Date();
-  const first=new Date(today.getFullYear(),0,1).toISOString().slice(0,10);
+  const today=nowKST();
+  const first=new Date(today.getUTCFullYear(),0,1).toISOString().slice(0,10);
   const fd=document.getElementById('dm-off-from');const td=document.getElementById('dm-off-to');
   if(fd) fd.value=first;if(td) td.value=TODAY;
   const ts=document.getElementById('dm-off-type');if(ts) ts.selectedIndex=0;
@@ -4082,8 +4169,8 @@ window.dmLoadExpenses=function(){
 };
 
 window.dmResetExp=function(){
-  const today=new Date();
-  const first=new Date(today.getFullYear(),0,1).toISOString().slice(0,10);
+  const today=nowKST();
+  const first=new Date(today.getUTCFullYear(),0,1).toISOString().slice(0,10);
   const fd=document.getElementById('dm-exp-from');const td=document.getElementById('dm-exp-to');
   if(fd) fd.value=first;if(td) td.value=TODAY;
   const ds=document.getElementById('dm-exp-dept');if(ds) ds.selectedIndex=0;
@@ -4092,7 +4179,7 @@ window.dmResetExp=function(){
 
 // ── 재정현황 조회 ────────────────────────────────────────────
 window.renderFinSearch=function(){
-  const yr=new Date().getFullYear();
+  const yr=nowKST().getUTCFullYear();
   const off=getOfferings().filter(function(e){return e.date&&e.date.startsWith(yr);});
   const exp=getExpenses().filter(function(e){return e.date&&e.date.startsWith(yr);});
   const totInc=off.reduce(function(s,e){return s+(e.amount||0);},0);
@@ -4202,7 +4289,7 @@ window.exportData=function(){
     const k=localStorage.key(i);
     if(k&&k.startsWith('deptCustomRows_')){try{deptCustomRows[k]=JSON.parse(localStorage.getItem(k));}catch{}}
   }
-  const data={accountBook:getOfferings(),expenseBook:getExpenses(),sponsorBook:getSponsors(),recipients:getRecipients(),offeringTypes:getOffTypes(),deptTypes:getDeptTypes(),sponsorTypes:getSponTypes(),annualBudget:getBudget(),bankActual:ST.get('bankActual',{}),deptOfficers:ST.get('deptOfficers',{}),deptCustomRows,exportedAt:new Date().toISOString()};
+  const data={accountBook:getOfferings(),expenseBook:getExpenses(),sponsorBook:getSponsors(),recipients:getRecipients(),offeringTypes:getOffTypes(),deptTypes:getDeptTypes(),sponsorTypes:getSponTypes(),annualBudget:getBudget(),bankActual:ST.get('bankActual',{}),deptOfficers:ST.get('deptOfficers',{}),deptCustomRows,exportedAt:nowKST().toISOString()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SKPC_회계_${TODAY}.json`;a.click();
 };
@@ -4273,7 +4360,7 @@ function buildOfferingSheet(){
   const arr=getOfferings();
   const rows=[
     ['서부광성교회 헌금내역'],
-    ['내보내기: '+new Date().toLocaleString('ko-KR')+'  /  총 '+arr.length+'건'],
+    ['내보내기: '+nowKST().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+'  /  총 '+arr.length+'건'],
     [],
     ['일자','구분','성도성명','금액','작성자','온라인 송금여부','기타일자','이자및기타','기타사유']
   ];
@@ -4289,7 +4376,7 @@ function buildExpenseSheet(){
   const arr=getExpenses();
   const rows=[
     ['서부광성교회 지출내역'],
-    ['내보내기: '+new Date().toLocaleString('ko-KR')+'  /  총 '+arr.length+'건'],
+    ['내보내기: '+nowKST().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+'  /  총 '+arr.length+'건'],
     [],
     ['일자','부서','금액','요청자','수취자명','내용','입금계좌','','현금지급','이자및기타','지급일']
   ];
@@ -4309,7 +4396,7 @@ function buildSponsorSheet(){
   const arr=getSponsors();
   const rows=[
     ['서부광성교회 찬조내역'],
-    ['내보내기: '+new Date().toLocaleString('ko-KR')+'  /  총 '+arr.length+'건'],
+    ['내보내기: '+nowKST().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+'  /  총 '+arr.length+'건'],
     [],
     ['일자','구분','성도성명','금액','부서','비고']
   ];
@@ -4328,7 +4415,7 @@ function buildSummarySheet(){
   const byType={};offs.forEach(r=>{if(!byType[r.type])byType[r.type]=0;byType[r.type]+=Number(r.amount||0);});
   const byDept={};exps.forEach(r=>{if(!byDept[r.dept])byDept[r.dept]=0;byDept[r.dept]+=Number(r.amount||0);});
   return[
-    ['서부광성교회 회계 요약'],['내보내기: '+new Date().toLocaleString('ko-KR')],[],
+    ['서부광성교회 회계 요약'],['내보내기: '+nowKST().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})],[],
     ['구분','총 건수','총 금액','비고'],
     ['헌금 합계',offs.length,tOff,''],['지출 합계',exps.length,tExp,''],
     ['찬조 합계',spons.length,tSpon,''],['수지 차액(헌금+찬조-지출)','',tOff+tSpon-tExp,''],
@@ -4838,11 +4925,11 @@ window.printSection=function(areaId){
   };
   const title = '서부광성교회 — ' + (titleMap[areaId]||'출력');
   const printWin=window.open('','_blank','width=800,height=600');
-  printWin.document.write(`<!DOCTYPE html><html><head>
+  printWin.document.write(`\u003c!DOCTYPE html>\u003chtml>\u003chead>
     <meta charset="UTF-8">
     <title>${title}</title>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
-    <style>
+    \u003cstyle>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:'Nanum Gothic','Malgun Gothic',sans-serif;font-size:12px;padding:16px;color:#2c3e50}
       @page{margin:10mm;size:A4 portrait}
@@ -4861,14 +4948,14 @@ window.printSection=function(areaId){
       .b-gray{background:#e8eff6;color:#546e8a}
       tfoot td{background:#e8eff6;font-weight:800;font-family:'Arial','Helvetica Neue',sans-serif}
       .tbl-wrap{overflow:visible}
-    </style>
-  </head><body>`);
-  const now=new Date();
-  const dateStr=now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일';
+    <\/style>
+  <\/head>\u003cbody>`);
+  const now=nowKST();
+  const dateStr=now.getUTCFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일';
   printWin.document.write('<h2>'+title+'</h2>');
   printWin.document.write('<div class="print-date">출력일: '+dateStr+'</div>');
   printWin.document.write(area.innerHTML);
-  printWin.document.write('</body></html>');
+  printWin.document.write('<\/body><\/html>');
   printWin.document.close();
   printWin.focus();
   setTimeout(function(){printWin.print();printWin.close();},400);
@@ -4894,6 +4981,10 @@ function init(){
     initMonthSel('dept-month','dept-badge');
     initMonthSel('bank-month','bank-badge');
   }catch(e){console.error('initMonthSel error:',e);}
+  // 초기 탭 상태: input1만 표시, 나머지 모두 숨김
+  document.querySelectorAll('.tab-pane').forEach(function(p){
+    p.style.display=(p.classList.contains('active'))?'block':'none';
+  });
 }
 
 // Firebase가 준비되면 _appInit 호출 (Firebase SDK에서 호출)
