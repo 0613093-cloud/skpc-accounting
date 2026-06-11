@@ -40,9 +40,9 @@ html,body{height:100%;font-family:var(--fn);font-size:14px;background:var(--g6);
 .hdr-date{font-family:var(--fnum);font-size:12px;color:rgba(255,255,255,.7)}
 
 /* NAV */
-/* .nav base overridden by 2-row nav below */
+
 .nav::-webkit-scrollbar{height:8px}.nav::-webkit-scrollbar-track{background:var(--navy-d)}.nav::-webkit-scrollbar-thumb{background:var(--blue-l);border-radius:4px;border:1px solid var(--navy)}.nav::-webkit-scrollbar-thumb:hover{background:#fff}
-/* .nav-item overridden by 2-row nav */
+
 .nav-item:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.06)}
 .nav-item.active{color:#fff;border-bottom-color:var(--blue-l);background:rgba(74,144,196,.15)}
 
@@ -415,13 +415,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 .nav-item.grp-monthly { background:rgba(20,100,80,.18); }
 /* 관리 탭 */
 .nav-item.grp-manage  { background:rgba(80,40,120,.18); }
-.nav-item:hover{color:#fff;filter:brightness(1.15);}
-.nav-item.active{
-  color:#fff;
-  border-bottom-color:var(--gold,#c8a84b);
-  filter:brightness(1.25);
-  font-weight:700;
-}
+
 /* 그룹 구분선 */
 .nav-group-sep{
   width:2px;background:rgba(255,255,255,.2);
@@ -988,9 +982,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <select id="monthly-report-type" class="fsel" style="height:34px;font-size:12px;border-radius:6px;border:1px solid var(--border,#dde);padding:0 10px">
       <option value="general">일반회계</option>
       <option value="special_all">특별헌금 (통합)</option>
-      <option value="special_build">건축헌금 회계</option>
-      <option value="special_mission">전도헌금 회계</option>
-      <option value="special_local">지역봉사헌금 회계</option>
+      
     </select>
     <button class="btn btn-navy" onclick="renderMonthly()">🔍 조회</button>
     <button class="btn btn-outline btn-sm no-print" onclick="printMonthly()">🖨️ 인쇄</button>
@@ -1155,7 +1147,6 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <div class="card"><div id="receipt-content"></div></div>
   </div>
 </div>
-
 
 <!-- ===== 온라인 입금 확인 ===== -->
 <div id="tab-online-off" class="tab-pane">
@@ -1528,9 +1519,6 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 </main>
 </div>
 <script>
-// ============================================================
-// DATA LAYER
-// ============================================================
 const ST={
   get(k,d=null){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}},
   set(k,v){
@@ -1617,9 +1605,6 @@ const TODAY=new Date().toISOString().slice(0,10);
 const CUR_YEAR=new Date().getFullYear();
 const CUR_MONTH=new Date().getMonth()+1;
 
-// ============================================================
-// HELPERS
-// ============================================================
 const fmtN=(n)=>Math.round(Number(n||0)).toLocaleString('ko-KR');
 const parseN=(s)=>parseInt((s+'').replace(/[^0-9-]/g,''))||0;
 const dayKor=(s)=>['일','월','화','수','목','금','토'][new Date(s||TODAY).getDay()];
@@ -1658,9 +1643,6 @@ const getSponTypes=()=>ST.get('sponsorTypes',DEF_SPON_TYPES);
 const getRecipients=()=>ST.get('recipients',DEF_RECIPIENTS);
 const getBudget=()=>ST.get('annualBudget',DEF_BUDGET);
 
-// ============================================================
-// AMT FORMAT (천단위 쉼표 - display only, value raw)
-// ============================================================
 window.fmtAmt=function(el){
   const raw=el.value.replace(/[^0-9]/g,'');
   if(!raw){el.value='';return;}
@@ -1673,9 +1655,6 @@ function getRaw(el){
   return parseInt(r)||0;
 }
 
-// ============================================================
-// HEADER DATE
-// ============================================================
 function updateHeaderDate(){
   const now=new Date();
   document.getElementById('hdrDate').textContent=now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
@@ -1731,9 +1710,6 @@ window._fbLiveRefresh = function(key){
   }
 };
 
-// ============================================================
-// NAV
-// ============================================================
 document.querySelectorAll('.nav-item').forEach(el=>{
   el.addEventListener('click',()=>{
     const tab=el.dataset.tab;
@@ -1839,7 +1815,7 @@ function onTabActivate(tab){
   if(tab==='weekly') initWeeklyTab();
   if(tab==='receipt'){
     const recDate=document.getElementById('rec-date');
-    if(recDate) recDate.value=getLastSunday(); // 항상 가장 가까운 일요일
+    if(recDate) recDate.value=getLastSunday();
   }
   if(tab==='manage') renderManage();
   if(tab==='online-off'){
@@ -1857,9 +1833,6 @@ function onTabActivate(tab){
 }
 function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');}}
 
-// ============================================================
-// MONTH SELECTOR
-// ============================================================
 function initMonthSel(selId,badgeId){
   const sel=document.getElementById(selId);if(!sel||sel.options.length>0) return;
   for(let y=CUR_YEAR;y>=CUR_YEAR-2;y--){
@@ -1881,9 +1854,6 @@ function updateMonthBadge(selId,badgeId){
   const [yr,mo]=v.split('-');bdg.textContent=`${yr}년 ${parseInt(mo)}월`;
 }
 
-// ============================================================
-// INPUT SHEETS (1,2,3)
-// ============================================================
 // Offering type keywords for sponsor button
 const SPON_OFF_TYPES=['찬조','기타'];
 
@@ -2129,9 +2099,6 @@ window.submitEntries=function(num){
 
 window.clearSheet=function(num){if(!confirm('시트 전체 초기화?')) return;const SK=`istate_${num}`;const st=ST.get(SK,{});st.entries=[];ST.set(SK,st);renderEntryTable(num);};
 
-// ============================================================
-// OFFERING TAB
-// ============================================================
 function initOfferingTab(){
   const books=getOfferings();
   const dates=[...new Set(books.map(e=>e.date))].sort().reverse();
@@ -2276,6 +2243,48 @@ window.doOfferingSearch=function(){
 let _offEditBuffer={};
 let _offEditing=false;
 
+// ── 교육부찬조 입력 → 합계2 실시간 업데이트 ─────────────────────
+window.updateEduSponRow=function(){
+  function getRawVal(id){
+    const el=document.getElementById(id);
+    if(!el) return 0;
+    return parseInt((el.value||'0').replace(/,/g,''))||0;
+  }
+  function fmtCell(id,n){
+    const el=document.getElementById(id);
+    if(el) el.textContent=n?fmtN(n):'—';
+  }
+
+  // 일반회계 합계값 - 합계 행에서 읽기
+  const sum1BudEl=document.querySelector('#rpt-sum2-row')?.previousElementSibling?.previousElementSibling;
+  // 직접 계산: budTotOut은 재계산 불가 → data attribute로 저장
+  const sum2Row=document.getElementById('rpt-sum2-row');
+  if(!sum2Row) return;
+
+  const budBase=parseInt(sum2Row.dataset.budBase||sum2Row.getAttribute('data-bud-base')||'0');
+  const cuBase=parseInt(sum2Row.dataset.cuBase||sum2Row.getAttribute('data-cu-base')||'0');
+  const moBase=parseInt(sum2Row.dataset.moBase||sum2Row.getAttribute('data-mo-base')||'0');
+
+  const eduBud=getRawVal('edu-bud-inp');
+  const eduCu=getRawVal('edu-cu-inp');
+  const eduMo=getRawVal('edu-mo-inp');
+
+  const tot2Bud=budBase+eduBud;
+  const tot2Cu=cuBase+eduCu;
+  const tot2Mo=moBase+eduMo;
+  const pct=tot2Bud?Math.round(tot2Cu/tot2Bud*100)+'%':'—';
+  const eduPct=eduBud?Math.round(eduCu/eduBud*100)+'%':'—';
+
+  fmtCell('sum2-bud',tot2Bud);
+  fmtCell('sum2-cu',tot2Cu);
+  fmtCell('sum2-mo',tot2Mo);
+  const sp=document.getElementById('sum2-pct');if(sp) sp.textContent=pct;
+  const ep=document.getElementById('edu-pct-cell');if(ep) ep.textContent=eduPct;
+
+  // (1) 총계 카드 업데이트
+  updateMonthlySummaryCards(tot2Cu, tot2Mo);
+};
+
 window.updateOffering=function(id,field,val){
   // 버퍼에 변경사항 기록
   if(!_offEditBuffer[id]) _offEditBuffer[id]={};
@@ -2363,9 +2372,6 @@ window.deleteOffering=function(id){
   setOfferings(getOfferings().filter(e=>e.id!==id));doOfferingSearch();initOfferingTab();
 };
 
-// ============================================================
-// EXPENSE TAB
-// ============================================================
 function initExpenseTab(){
   const expDateEl=document.getElementById('exp-date');
   if(expDateEl&&!expDateEl.value) expDateEl.value=TODAY;
@@ -2458,7 +2464,7 @@ window.doExpenseSearch=function(){
     <tr id="exp-row-${e.id}">
       <td>${i+1}</td><td style="font-family:var(--fnum)">${e.date}</td>
       <td>
-        <select style="border:none;background:transparent;font-family:var(--fn);font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;padding:2px 4px;border-radius:4px" 
+        <select style="border:none;background:transparent;font-family:var(--fn);font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;padding:2px 4px;border-radius:4px"
           onchange="updateExpDept('${e.id}',this.value)">
           ${getDeptTypes().map(d=>'<option value="'+d+'"'+(d===e.dept?' selected':'')+'>'+d+'</option>').join('')}
         </select>
@@ -2510,10 +2516,6 @@ window.deleteExpense=function(id){
   if(!confirm('삭제?')) return;setExpenses(getExpenses().filter(e=>e.id!==id));doExpenseSearch();
 };
 
-// ============================================================
-// SPONSOR TAB - DB from offerings
-// ============================================================
-
 // ── 찬조 구분 셀렉트 연동 ────────────────────────────────────
 window.onSponCatChange=function(){
   const cat=document.getElementById('spon-cat')?.value||'';
@@ -2547,11 +2549,6 @@ function initSponsorTab(){
   if(sfq) sfq.innerHTML='<option value="">전체</option>'+getSponTypes().map(t=>`<option>${t}</option>`).join('');
   if(sts) sts.innerHTML='<option value="">선택...</option>'+getSponTypes().map(t=>`<option>${t}</option>`).join('');
 }
-window.toggleSponExtra=function(){
-  const v=document.getElementById('spon-ftype-q')?.value||'';
-  const ex=document.getElementById('spon-edu-extra');
-  if(ex) ex.className='spon-extra'+(v.includes('교육부찬조')?' show':'');
-};
 window.doSponSearch=function(){
   const cat=document.getElementById('spon-cat')?.value||'';
   const subQ=document.getElementById('spon-ftype-q')?.value||'';
@@ -2751,9 +2748,6 @@ window.deleteSponsor=function(id){
   if(!confirm('삭제?')) return;setSponsors(getSponsors().filter(e=>e.id!==id));doSponSearch();
 };
 
-// ============================================================
-// MONTHLY REPORT
-// ============================================================
 window.renderMonthly=function(){
   const selEl=document.getElementById('monthly-month');if(!selEl||!selEl.options.length) return;
   const ym=selEl.value;if(!ym) return;
@@ -2771,7 +2765,6 @@ window.renderMonthly=function(){
     }
   }
   else if(rptType==='special_all') renderMonthlySpecialAll(ym);
-  else renderMonthlySpecial(ym, rptType);
 };
 
 // ── 이월금 가져오기 ──────────────────────────────────────────
@@ -2857,8 +2850,8 @@ function renderMonthlyGeneral(ym){
   const eduSponExp_mo=moExp.filter(e=>String(e.dept||'').includes('교육부찬조'))
     .reduce((s,e)=>s+Number(e.amount||0),0);
   // 교육부찬조 예산
-  // 교육부찬조 당년예산: 찬조내역 전체(누계 수입) 사용
-  const eduSponBudget=eduSponInc_cu; // 찬조내역 누계 = 당년예산
+  // 교육부찬조 당년예산: 입력값 기준 (입력 전 기본값 0)
+  const eduSponBudget=0; // 사용자가 직접 입력
   // 합계2
   const tot2CuInc=cuIncTable+eduSponInc_cu;
   const tot2MoInc=moIncTable+eduSponInc_mo;
@@ -3019,20 +3012,32 @@ function renderMonthlyGeneral(ym){
           <td class="rpt-num">${totalOutPct}</td>
           <td></td>
         </tr>
-        <tr class="edu">
-          <td class="rpt-item" style="color:#92400e">교육부찬조 전체</td>
-          <td class="rpt-num" style="color:#b45309">${eduSponBudget?fmtN(eduSponBudget):'—'}</td>
-          <td class="rpt-num" style="color:#dc2626">${eduSponExp_cu?fmtN(eduSponExp_cu):'—'}</td>
-          <td class="rpt-num" style="color:#dc2626">${eduSponExp_mo?fmtN(eduSponExp_mo):'—'}</td>
-          <td class="rpt-num">${eduPct}</td>
+        <tr class="edu" id="rpt-edu-row">
+          <td class="rpt-item" style="color:#92400e;font-weight:700">교육부찬조 전체</td>
+          <td class="rpt-num">
+            <input id="edu-bud-inp" type="text" value="${eduSponBudget?fmtN(eduSponBudget):''}"
+              placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
+              style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#b45309;font-weight:700"></td>
+          <td class="rpt-num">
+            <input id="edu-cu-inp" type="text" value="${eduSponExp_cu?fmtN(eduSponExp_cu):''}"
+              placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
+              style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700"></td>
+          <td class="rpt-num">
+            <input id="edu-mo-inp" type="text" value="${eduSponExp_mo?fmtN(eduSponExp_mo):''}"
+              placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
+              style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700"></td>
+          <td class="rpt-num" id="edu-pct-cell">${eduPct}</td>
           <td class="rpt-note">변동비</td>
         </tr>
-        <tr class="sum2">
+        <tr class="sum2" id="rpt-sum2-row"
+          data-bud-base="${budTotOut}"
+          data-cu-base="${cuExpTable}"
+          data-mo-base="${moExpTable}">
           <td>합 계 2</td>
-          <td class="rpt-num">${fmtN(budTotOut+eduSponBudget)}</td>
-          <td class="rpt-num">${fmtN(tot2CuExp)}</td>
-          <td class="rpt-num">${fmtN(tot2MoExp)}</td>
-          <td class="rpt-num">${tot2Pct}</td>
+          <td class="rpt-num" id="sum2-bud">${fmtN(budTotOut+eduSponBudget)}</td>
+          <td class="rpt-num" id="sum2-cu">${fmtN(tot2CuExp)}</td>
+          <td class="rpt-num" id="sum2-mo">${fmtN(tot2MoExp)}</td>
+          <td class="rpt-num" id="sum2-pct">${tot2Pct}</td>
           <td></td>
         </tr>
       </tfoot>
@@ -3086,65 +3091,65 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
   const bal=prevBal+cuInc-cuExpT;
   const memo=getSpecialMemo(rptType,ym);
 
-  // 비고 인라인 편집 헬퍼 (id 기반)
   function memoCell(key){
-    const val=memo[key]||'';
-    return `<td><input value="${val}" placeholder="비고 입력" data-rpt="${rptType}" data-ym="${ym}" data-key="${key}"
-      style="border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;width:120px;font-family:var(--fn)"
-      onchange="setSpecialMemo('${rptType}','${ym}','${key}',this.value)"
-      onkeydown="if(event.key==='Enter')this.blur()"></td>`;
+    const val=(memo[key]||'').replace(/"/g,'&quot;');
+    const rt=rptType.replace(/"/g,'&quot;');
+    const ymq=ym.replace(/"/g,'&quot;');
+    const kq=key.replace(/"/g,'&quot;');
+    return '<td class="rpt-note"><input value="'+val+'" placeholder="비고"'
+      +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100px;font-family:var(--fn);color:#64748b"'
+      +' onchange="setSpecialMemo(&quot;'+rt+'&quot;,&quot;'+ymq+'&quot;,&quot;'+kq+'&quot;,this.value)"'
+      +' onkeydown="if(event.key===&quot;Enter&quot;)this.blur()"></td>';
   }
 
-  return `
-  <div class="rpt-hd" style="margin-top:${sectionNo>1?'24px':'0'}">
-    <h2 style="font-size:${sectionNo>1?'15px':'inherit'}">${sectionNo>1?sectionNo+') ':''}${conf.label} 회계보고</h2>
-  </div>
-  <div class="rpt-sub">(1) 총 계</div>
-  <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px">
-    <table class="tbl"><tbody>
-      <tr><td style="font-weight:700;width:130px">이 월 금</td><td class="nc">${fmtN(prevBal)}</td>
-          <td style="font-weight:700;width:130px">수입 누계</td><td class="nc">${fmtN(cuInc)}</td></tr>
-      <tr><td style="font-weight:700">${mo}월 수입</td><td class="nc">${fmtN(moInc)}</td>
-          <td style="font-weight:700">지출 누계</td><td class="nc">${fmtN(cuExpT)}</td></tr>
-      <tr><td style="font-weight:700">${mo}월 지출</td><td class="nc">${fmtN(moExpT)}</td>
-          <td style="font-weight:700;background:var(--blue-xp)">잔 액</td>
-          <td class="nc" style="font-weight:800;color:var(--blue);background:var(--blue-xp)">${fmtN(bal)}</td></tr>
-      <tr style="background:var(--gold-l)"><td style="font-weight:700">${mo}월 결산</td>
-          <td class="nc" style="font-weight:800;color:var(--gold)">${fmtN(moInc-moExpT)}</td><td colspan="2"></td></tr>
-    </tbody></table>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <div>
-      <div class="rpt-sub" style="margin-bottom:6px">(2) 수입</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <table class="tbl">
-          <thead><tr><th>항목</th><th class="nc">누계(B)</th><th class="nc">월계(C)</th><th>비고</th></tr></thead>
-          <tbody>
-            <tr><td>${conf.label}</td><td class="nc">${fmtN(cuInc)}</td><td class="nc">${moInc?fmtN(moInc):'—'}</td>${memoCell('inc_main')}</tr>
-            <tr><td>이자및기타</td><td class="nc">—</td><td class="nc">—</td>${memoCell('inc_interest')}</tr>
-          </tbody>
-          <tfoot><tr><td>합 계</td><td class="nc" style="font-weight:800">${fmtN(cuInc)}</td><td class="nc">${moInc?fmtN(moInc):'—'}</td><td></td></tr></tfoot>
-        </table>
-      </div>
-    </div>
-    <div>
-      <div class="rpt-sub" style="margin-bottom:6px">(3) 지출</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <table class="tbl">
-          <thead><tr><th>항목</th><th class="nc">누계(B)</th><th class="nc">월계(C)</th><th>비고</th></tr></thead>
-          <tbody>
-            ${conf.expTypes.map((t,ti)=>{
-              const bB=allExp.filter(e=>e.dept&&e.dept.includes(t)).reduce((s,e)=>s+Number(e.amount||0),0);
-              const bC=moExp.filter(e=>e.dept&&e.dept.includes(t)).reduce((s,e)=>s+Number(e.amount||0),0);
-              return `<tr><td>${t}</td><td class="nc">${bB?fmtN(bB):'—'}</td><td class="nc">${bC?fmtN(bC):'—'}</td>${memoCell('exp_'+ti)}</tr>`;
-            }).join('')}
-            <tr><td>기타</td><td class="nc">—</td><td class="nc">—</td>${memoCell('exp_etc')}</tr>
-          </tbody>
-          <tfoot><tr><td>합 계</td><td class="nc" style="font-weight:800">${fmtN(cuExpT)}</td><td class="nc">${moExpT?fmtN(moExpT):'—'}</td><td></td></tr></tfoot>
-        </table>
-      </div>
-    </div>
-  </div>`;
+  const expRows=conf.expTypes.map(function(t,ti){
+    const bB=allExp.filter(function(e){return e.dept&&e.dept.includes(t);}).reduce(function(s,e){return s+Number(e.amount||0);},0);
+    const bC=moExp.filter(function(e){return e.dept&&e.dept.includes(t);}).reduce(function(s,e){return s+Number(e.amount||0);},0);
+    return '<tr>'
+      +'<td class="rpt-item">'+t+'</td>'
+      +'<td class="rpt-num rpt-cu">'+(bB?'<strong>'+fmtN(bB)+'</strong>':'—')+'</td>'
+      +'<td class="rpt-num rpt-mo">'+(bC?fmtN(bC):'—')+'</td>'
+      +memoCell('exp_'+ti)
+      +'</tr>';
+  }).join('');
+
+  return '<div class="rpt-section" style="margin-top:'+(sectionNo>1?'28px':'0')+'">'
+    +'<div class="rpt-section-title">'+conf.label+' 회계보고'
+    +'<span class="badge">'+yr+'. '+String(mo).padStart(2,'0')+'</span></div>'
+    // 총계 카드
+    +'<div class="rpt-summary" style="grid-template-columns:repeat(4,1fr)">'
+    +'<div class="rpt-summary-item"><span class="lbl">이 월 금</span><span class="val" style="color:#64748b">'+fmtN(prevBal)+'원</span></div>'
+    +'<div class="rpt-summary-item hi"><span class="lbl">수입 누계</span><span class="val" style="color:#1d4ed8">'+fmtN(cuInc)+'원</span></div>'
+    +'<div class="rpt-summary-item hi"><span class="lbl">'+mo+'월 수입</span><span class="val" style="color:#1d4ed8">'+fmtN(moInc)+'원</span></div>'
+    +'<div class="rpt-summary-item red"><span class="lbl">지출 누계</span><span class="val" style="color:#dc2626">'+fmtN(cuExpT)+'원</span></div>'
+    +'<div class="rpt-summary-item red"><span class="lbl">'+mo+'월 지출</span><span class="val" style="color:#dc2626">'+fmtN(moExpT)+'원</span></div>'
+    +'<div class="rpt-summary-item navy"><span class="lbl">잔 액</span><span class="val" style="color:#2563eb">'+fmtN(bal)+'원</span></div>'
+    +'<div class="rpt-summary-item gold"><span class="lbl">'+mo+'월 결산</span><span class="val" style="color:#b45309">'+fmtN(moInc-moExpT)+'원</span></div>'
+    +'</div>'
+    // 수입/지출 2단
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">'
+    // 수입
+    +'<div>'
+    +'<div class="rpt-section-title" style="font-size:12px;border-radius:6px 6px 0 0;background:linear-gradient(90deg,#1e3a5f,#1d4ed8)">② 수 입</div>'
+    +'<table class="rpt-tbl">'
+    +'<thead><tr><th>항목</th><th>누계(B)</th><th>월계(C)</th><th>비고</th></tr></thead>'
+    +'<tbody>'
+    +'<tr><td class="rpt-item">'+conf.label+'</td><td class="rpt-num rpt-cu">'+fmtN(cuInc)+'</td><td class="rpt-num rpt-mo">'+(moInc?fmtN(moInc):'—')+'</td>'+memoCell('inc_main')+'</tr>'
+    +'<tr><td class="rpt-item">이자및기타</td><td class="rpt-num rpt-bud">—</td><td class="rpt-num">—</td>'+memoCell('inc_interest')+'</tr>'
+    +'</tbody>'
+    +'<tfoot><tr class="sum1"><td class="rpt-item">합 계</td><td class="rpt-num rpt-cu"><strong>'+fmtN(cuInc)+'</strong></td><td class="rpt-num rpt-mo">'+(moInc?fmtN(moInc):'—')+'</td><td></td></tr></tfoot>'
+    +'</table></div>'
+    // 지출
+    +'<div>'
+    +'<div class="rpt-section-title" style="font-size:12px;border-radius:6px 6px 0 0;background:linear-gradient(90deg,#7f1d1d,#dc2626)">③ 지 출</div>'
+    +'<table class="rpt-tbl">'
+    +'<thead><tr><th>항목</th><th>누계(B)</th><th>월계(C)</th><th>비고</th></tr></thead>'
+    +'<tbody>'+expRows
+    +'<tr><td class="rpt-item" style="color:#94a3b8">기타</td><td class="rpt-num">—</td><td class="rpt-num">—</td>'+memoCell('exp_etc')+'</tr>'
+    +'</tbody>'
+    +'<tfoot><tr class="sum1"><td class="rpt-item">합 계</td><td class="rpt-num" style="color:#dc2626"><strong>'+fmtN(cuExpT)+'</strong></td><td class="rpt-num" style="color:#dc2626">'+(moExpT?fmtN(moExpT):'—')+'</td><td></td></tr></tfoot>'
+    +'</table></div>'
+    +'</div></div>';
 }
 
 function renderMonthlySpecial(ym, rptType){
@@ -3152,8 +3157,16 @@ function renderMonthlySpecial(ym, rptType){
   const [yr,mo]=ym.split('-').map(Number);
   const el=document.getElementById('monthly-content');
   el.innerHTML=`
-  <div class="rpt-hd"><h2>${yr}년 ${mo}월 특별 회계보고</h2></div>
-  <div class="rpt-meta"><span>재정부장 유치주</span><span>재정부차장 —</span><span>회계 하태식</span></div>
+<style>
+.rpt-wrap,.rpt-section,.rpt-section-title,.rpt-summary,.rpt-summary-item,.rpt-tbl,
+.rpt-item,.rpt-num,.rpt-bud,.rpt-cu,.rpt-mo,.rpt-note,
+.sum1,.sum2,.edu{font-family:'Noto Sans KR',sans-serif;}
+</style>
+<div class="rpt-wrap">
+<div style="text-align:center;margin-bottom:18px">
+  <div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">${yr}년 ${mo}월 특별 회계보고</div>
+  <div style="font-size:11px;color:#94a3b8;margin-top:3px">서부광성교회 · Seobukwangseong Presbyterian Church</div>
+</div>
   ${buildSpecialSection(conf,rptType,ym,1)}`;
 }
 
@@ -3165,8 +3178,16 @@ function renderMonthlySpecialAll(ym){
     buildSpecialSection(conf,key,ym,i+1)
   ).join('<div style="border-top:2px solid var(--border,#dde);margin:20px 0"></div>');
   el.innerHTML=`
-  <div class="rpt-hd"><h2>${yr}년 ${mo}월 특별 회계보고</h2></div>
-  <div class="rpt-meta"><span>재정부장 유치주</span><span>재정부차장 —</span><span>회계 하태식</span></div>
+<style>
+.rpt-wrap,.rpt-section,.rpt-section-title,.rpt-summary,.rpt-summary-item,.rpt-tbl,
+.rpt-item,.rpt-num,.rpt-bud,.rpt-cu,.rpt-mo,.rpt-note,
+.sum1,.sum2,.edu{font-family:'Noto Sans KR',sans-serif;}
+</style>
+<div class="rpt-wrap">
+<div style="text-align:center;margin-bottom:18px">
+  <div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">${yr}년 ${mo}월 특별 회계보고</div>
+  <div style="font-size:11px;color:#94a3b8;margin-top:3px">서부광성교회 · Seobukwangseong Presbyterian Church</div>
+</div>
   ${sections}`;
 }
 
@@ -3175,10 +3196,6 @@ window.printMonthly=function(){
   window.print();
 };
 
-
-// ============================================================
-// DEPT REPORT
-// ============================================================
 window.renderDeptReport=function(){
   const selEl=document.getElementById('dept-month');
   if(!selEl||!selEl.options.length) return;
@@ -3419,9 +3436,6 @@ window.saveDeptOfficer=function(dept){
   ST.set('deptOfficers',data);
 };
 
-// ============================================================
-// DEPT REPORT ADD ROW
-// ============================================================
 window.addDeptRow=function(dept,ym){
   const key=`deptCustomRows_${ym}_${dept}`;
   const rows=ST.get(key,[]);
@@ -3445,9 +3459,6 @@ window.deleteDeptRow=function(dept,ym,id){
   const rows=ST.get(key,[]).filter(r=>r.id!==id);ST.set(key,rows);renderDeptReport();
 };
 
-// ============================================================
-// ONLINE OFFERING TAB
-// ============================================================
 function initOnlineTab(){
   const books=getOfferings();
   // isOnlinePayment 헬퍼로 전체 온라인입금 인식 (true/TRUE/'true'/온라인입금 모두)
@@ -3544,9 +3555,6 @@ window.resetOnlineSearch=function(){
   const res=document.getElementById('online-result');if(res) res.classList.remove('show');
 };
 
-// ============================================================
-// BANK BALANCE
-// ============================================================
 window.renderBankBalance=function(){
   const selEl=document.getElementById('bank-month');if(!selEl||!selEl.options.length) return;
   const ym=selEl.value;if(!ym) return;
@@ -3643,9 +3651,6 @@ window.saveBankActual=function(ym,key,val){
   const ba=ST.get('bankActual',{});ba[`${ym}_${key}`]=parseN(val);ST.set('bankActual',ba);renderBankBalance();
 };
 
-// ============================================================
-// FINANCE SEARCH
-// ============================================================
 window.renderFinSearch=function(){
   const from=document.getElementById('fin-from')?.value;const to=document.getElementById('fin-to')?.value;
   if(!from||!to){alert('검색 기간을 설정하세요.');return;}if(from>to){alert('시작일이 종료일보다 클 수 없습니다.');return;}
@@ -3716,13 +3721,6 @@ window.renderFinSearch=function(){
   showResult('fin-result');
 };
 
-// ============================================================
-// QUERY / WEEKLY
-// ============================================================
-function initQueryTab(){
-  const qd=document.getElementById('qry-date');
-  if(qd&&!qd.value) qd.value=TODAY;
-}
 // 헌금유형→파스텔 인덱스 매핑 (전역 공유)
 const _typeColorMap={};
 function getTypeColorIdx(type){
@@ -3764,7 +3762,7 @@ function populateTypeSelect(selId){
 window.initQueryTab=function(){
   populateTypeSelect('qry-type');
   const el=document.getElementById('qry-date');
-  if(el) el.value=getLastSunday(); // 항상 가장 가까운 일요일
+  if(el) el.value=getLastSunday();
 };
 window.doQuerySearch=function(){
   let books=getOfferings();
@@ -3807,14 +3805,10 @@ window.resetQuerySearch=function(){
   const res=document.getElementById('qry-result');if(res) res.classList.remove('show');
 };
 
-function initWeeklyTab(){
-  const wd=document.getElementById('wky-date');
-  if(wd&&!wd.value) wd.value=TODAY;
-}
 window.initWeeklyTab=function(){
   populateTypeSelect('wky-type');
   const el=document.getElementById('wky-date');
-  if(el) el.value=getLastSunday(); // 항상 가장 가까운 일요일
+  if(el) el.value=getLastSunday();
 };
 window.doWeeklySearch=function(){
   let books=getOfferings();
@@ -3853,9 +3847,6 @@ window.resetWeeklySearch=function(){
   const res=document.getElementById('wky-result');if(res) res.classList.remove('show');
 };
 
-// ============================================================
-// RECEIPT
-// ============================================================
 window.renderReceipt=function(){
   const dateVal=document.getElementById('rec-date')?.value||TODAY;
   const offerings=getOfferings().filter(e=>e.date===dateVal);
@@ -4056,9 +4047,6 @@ window.renderReceipt=function(){
   showResult('rec-result');
 };
 
-// ============================================================
-// MANAGE
-// ============================================================
 window.switchMgr=function(id,btn){
   document.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
   ['offering-mgr','dept-mgr','account-mgr','sponsor-mgr','budget-mgr','carryover-mgr','writer-mgr','data-mgr'].forEach(x=>{
@@ -4477,7 +4465,6 @@ window.saveCarryover=function(){
   alert('✅ 이월금이 저장되었습니다.\n월간 보고서에 자동 반영됩니다.');
 };
 
-
 // ── 작성자 관리 ──────────────────────────────────────────────
 function renderWriterMgr(){
   const el=document.getElementById('writer-list');if(!el)return;
@@ -4600,11 +4587,6 @@ window.doImport=function(ev){
   }catch{alert('파일 형식이 잘못되었습니다.');}};
   reader.readAsText(file);
 };
-
-
-// ============================================================
-// ★★★ EXCEL EXPORT / IMPORT (실제 양식 완전 대응) ★★★
-// ============================================================
 
 // spin 애니메이션 스타일 (한 번만 삽입)
 (function(){
@@ -5187,13 +5169,9 @@ window.switchFmtTab=function(tab){
   });
 };
 
-
 window.clearOffering=function(){if(!confirm('헌금 전체 데이터를 삭제하시겠습니까?')) return;ST.set('accountBook',[]);alert('삭제 완료');};
 window.clearExpense=function(){if(!confirm('지출 전체 데이터를 삭제하시겠습니까?')) return;ST.set('expenseBook',[]);alert('삭제 완료');};
 
-// ============================================================
-// PRINT SECTION (특정 영역만 인쇄)
-// ============================================================
 window.printSection=function(areaId){
   const area=document.getElementById(areaId);
   if(!area) return;
@@ -5241,9 +5219,6 @@ window.printSection=function(areaId){
   setTimeout(function(){printWin.print();printWin.close();},400);
 };
 
-// ============================================================
-// INIT
-// ============================================================
 function init(){
   // 기존 DB의 online 필드 정규화 (boolean→문자열 마이그레이션)
   try{
