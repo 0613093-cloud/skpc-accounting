@@ -1859,25 +1859,20 @@ function onTabActivate(tab){
     if(recDate) recDate.value=getLastSunday();
   }
   if(tab==='manage'){
-    document.querySelectorAll('.card[id$="-mgr"]').forEach(function(el){el.style.display='none';});
+    // 모든 mgr 카드 hidden 처리
+    document.querySelectorAll('.card[id$="-mgr"]').forEach(function(el){
+      el.classList.add('hidden');el.style.display='';
+    });
+    // 첫 번째 카드(헌금종류) 표시
     const firstMgr=document.getElementById('offering-mgr');
-    if(firstMgr) firstMgr.style.display='';
+    if(firstMgr){firstMgr.classList.remove('hidden');}
     renderOffTypeList();
-    // 첫번째 sub-btn on 표시
+    // sub-btn 첫 번째 on
+    document.querySelectorAll('.sub-btn').forEach(function(b){b.classList.remove('on');});
     const firstBtn=document.querySelector('.sub-btn');
-    if(firstBtn){document.querySelectorAll('.sub-btn').forEach(function(b){b.classList.remove('on');});firstBtn.classList.add('on');}
+    if(firstBtn) firstBtn.classList.add('on');
   }
-  if(tab==='online-off'){
-    initOnlineTab();
-    const odEl=document.getElementById('online-fdate');
-    if(odEl){
-      // 가장 가까운 일요일을 기본 선택
-      const sun=getLastSunday();
-      for(let i=0;i<odEl.options.length;i++){
-        if(odEl.options[i].value===sun){odEl.selectedIndex=i;break;}
-      }
-    }
-  }
+  if(tab==='online-off') initOnlineTab();
   if(tab==='finsearch'){const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
 }
 function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');}}
@@ -3091,7 +3086,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
   const [yr,mo]=ym.split('-').map(Number);
   const allOff=getOfferings().filter(function(e){return e.type===conf.offType;});
   const allExp=getExpenses().filter(function(e){
-    return conf.expTypes.some(function(t){return e.dept&&e.dept.includes(t);});
+    return conf.expTypes.some(function(t){
+      // 정확히 일치 또는 공백 포함 일치 (includes 방지: '건축대출금상환'이 '건축대출금상환적금'을 포함하지 않도록)
+      return e.dept&&(e.dept===t||e.dept.trim()===t.trim());
+    });
   });
   const moOff=allOff.filter(function(e){return monthOf(e.date)===ym;});
   const moExp=allExp.filter(function(e){return monthOf(e.date)===ym;});
@@ -3271,11 +3269,14 @@ window.saveSpecialCarry=function(coKey,val){
 
 // ── 관리탭 섹션 전환 ─────────────────────────────────────────
 window.switchMgr=function(id,btn){
+  // 모든 mgr 카드 숨기기 (hidden class 추가)
   document.querySelectorAll('.card[id$="-mgr"]').forEach(function(el){
-    el.style.display='none';
+    el.classList.add('hidden');
+    el.style.display='';
   });
+  // 선택된 카드 표시 (hidden class 제거)
   const target=document.getElementById(id);
-  if(target) target.style.display='';
+  if(target){target.classList.remove('hidden');target.style.display='';}
   document.querySelectorAll('.sub-btn').forEach(function(b){b.classList.remove('on');});
   if(btn) btn.classList.add('on');
   if(id==='carryover-mgr') renderCarryoverForm();
@@ -3485,6 +3486,329 @@ window.addWriterFromInput=function(num){
 
 // ── 관리탭 렌더 함수들 ──────────────────────────────────────
 
+
+// ── 헌금내역(누적헌금) 탭 ────────────────────────────────────
+window.initOfferingTab=function(){
+  const ymSel=document.getElementById('off-fym');
+  if(ymSel&&ymSel.options.length<=1){
+    const offs=getOfferings();
+    const yms=[...new Set(offs.map(e=>monthOf(e.date)).filter(Boolean))].sort().reverse();
+    yms.forEach(function(ym){
+      const o=document.createElement('option');o.value=ym;
+      const [y,m]=ym.split('-');o.textContent=y+'년 '+parseInt(m)+'월';
+      ymSel.appendChild(o);
+    });
+    // 디폴트: 가장 가까운 일요일의 년월
+    const sun=getLastSunday();
+    const sunYm=sun.slice(0,7);
+    for(let i=0;i<ymSel.options.length;i++){
+      if(ymSel.options[i].value===sunYm){ymSel.selectedIndex=i;break;}
+    }
+  }
+  const typeSel=document.getElementById('off-ftype');
+  if(typeSel&&typeSel.options.length<=1){
+    getOffTypes().forEach(function(t){
+      const o=document.createElement('option');o.value=t;o.textContent=t;typeSel.appendChild(o);
+    });
+  }
+  window.syncOffDateFilter&&syncOffDateFilter();
+};
+
+window.syncOffDateFilter=function(){
+  const ym=document.getElementById('off-fym')?.value||'';
+  const dateSel=document.getElementById('off-fdate');
+  if(!dateSel) return;
+  const offs=getOfferings();
+  const dates=[...new Set(offs.filter(function(e){return !ym||monthOf(e.date)===ym;})
+    .map(function(e){return e.date;}).filter(Boolean))].sort().reverse();
+  dateSel.innerHTML='<option value="">전체</option>';
+  dates.forEach(function(d){
+    const o=document.createElement('option');o.value=d;
+    const dt=new Date(d);o.textContent=d+' ('+['일','월','화','수','목','금','토'][dt.getDay()]+')';
+    dateSel.appendChild(o);
+  });
+  // 디폴트: 가장 가까운 일요일
+  const sun=getLastSunday();
+  if(!ym||monthOf(sun)===ym){
+    for(let i=0;i<dateSel.options.length;i++){
+      if(dateSel.options[i].value===sun){dateSel.selectedIndex=i;break;}
+    }
+  }
+};
+
+window.doOfferingSearch=function(){
+  const ym=document.getElementById('off-fym')?.value||'';
+  const dt=document.getElementById('off-fdate')?.value||'';
+  const type=document.getElementById('off-ftype')?.value||'';
+  const name=(document.getElementById('off-fname')?.value||'').trim();
+  let books=getOfferings();
+  if(ym) books=books.filter(function(e){return monthOf(e.date)===ym;});
+  if(dt) books=books.filter(function(e){return e.date===dt;});
+  if(type) books=books.filter(function(e){return e.type===type;});
+  if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
+  books=books.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  const total=books.reduce(function(s,e){return s+(e.amount||0);},0);
+  const tbody=document.getElementById('off-tbody');
+  if(tbody) tbody.innerHTML=books.map(function(e,i){
+    const typeColorIdx=getTypeColorIdx(e.type);
+    return '<tr class="off-color-'+typeColorIdx+'">'
+      +'<td>'+( i+1)+'</td>'
+      +'<td style="font-family:var(--fnum)">'+e.date+'</td>'
+      +'<td><span class="off-color-badge off-color-'+typeColorIdx+'">'+e.type+'</span></td>'
+      +'<td>'+( e.name||'')+'</td>'
+      +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
+      +'<td>'+(isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>':'')+'</td>'
+      +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
+      +'<td>'+(e.sheet||'')+'</td>'
+      +'<td class="no-print"><button class="btn btn-red btn-xs" onclick="deleteOffering(\''+e.id+'\')">삭제</button></td>'
+      +'</tr>';
+  }).join('')||'<tr><td colspan="9" class="tbl-empty">데이터가 없습니다</td></tr>';
+  const cnt=document.getElementById('off-count');if(cnt) cnt.textContent=books.length+'건';
+  const tot=document.getElementById('off-total');if(tot) tot.textContent=fmtN(total)+'원 ('+books.length+'건)';
+  const ft=document.getElementById('off-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
+  const sw=document.getElementById('off-stats');
+  if(sw){
+    const onlineTot=books.filter(isOnlinePayment).reduce(function(s,e){return s+(e.amount||0);},0);
+    const cashTot=total-onlineTot;
+    sw.innerHTML='<div class="stat navy"><div class="stat-lbl">전체</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원</div></div>'
+      +'<div class="stat blue"><div class="stat-lbl">온라인</div><div class="stat-val">'+fmtN(onlineTot)+'</div><div class="stat-sub">원</div></div>'
+      +'<div class="stat green"><div class="stat-lbl">현금</div><div class="stat-val">'+fmtN(cashTot)+'</div><div class="stat-sub">원</div></div>'
+      +'<div class="stat gold"><div class="stat-lbl">건수</div><div class="stat-val">'+books.length+'</div><div class="stat-sub">건</div></div>';
+  }
+  showResult('off-result');
+  const btn=document.getElementById('off-save-btn');if(btn) btn.style.display='none';
+  const hint=document.getElementById('off-edit-hint');if(hint) hint.style.display='none';
+  _offEditBuffer={};_offEditing=false;
+};
+
+window.resetOfferingSearch=function(){
+  ['off-fym','off-fdate','off-ftype'].forEach(function(id){
+    const el=document.getElementById(id);if(el) el.selectedIndex=0;
+  });
+  const fn=document.getElementById('off-fname');if(fn) fn.value='';
+};
+
+// ── 당일헌금내역(주보용) 탭 ──────────────────────────────────
+window.initQueryTab=function(){
+  const typeSel=document.getElementById('qry-type');
+  if(typeSel&&typeSel.options.length<=1){
+    getOffTypes().forEach(function(t){
+      const o=document.createElement('option');o.value=t;o.textContent=t;typeSel.appendChild(o);
+    });
+  }
+  const el=document.getElementById('qry-date');
+  if(el) el.value=getLastSunday();
+};
+
+window.doQuerySearch=function(){
+  const dt=document.getElementById('qry-date')?.value||TODAY;
+  const type=document.getElementById('qry-type')?.value||'';
+  const name=(document.getElementById('qry-name')?.value||'').trim();
+  let books=getOfferings().filter(function(e){return e.date===dt;});
+  if(type) books=books.filter(function(e){return e.type===type;});
+  if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
+  books=books.sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||( a.name||'').localeCompare(b.name||'');});
+  const total=books.reduce(function(s,e){return s+(e.amount||0);},0);
+  const tbody=document.getElementById('qry-tbody');
+  if(tbody) tbody.innerHTML=books.map(function(e,i){
+    const ci=getTypeColorIdx(e.type);
+    return '<tr class="off-color-'+ci+'">'
+      +'<td>'+(i+1)+'</td>'
+      +'<td style="font-family:var(--fnum)">'+weekOfYear(e.date)+'주차</td>'
+      +'<td style="font-family:var(--fnum)">'+fmtMD(e.date)+'('+dayKor(e.date)+')</td>'
+      +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
+      +'<td>'+( e.name||'')+'</td>'
+      +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
+      +'<td>'+(isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>':'')+'</td>'
+      +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
+      +'</tr>';
+  }).join('')||'<tr><td colspan="8" class="tbl-empty">해당 일자 데이터 없음</td></tr>';
+  const sw=document.getElementById('qry-stats-wrap');
+  if(sw){
+    sw.innerHTML='<div class="stat navy"><div class="stat-lbl">'+dt+'</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원 ('+books.length+'건)</div></div>';
+  }
+  const ft=document.getElementById('qry-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
+  showResult('qry-result');
+};
+
+window.resetQuerySearch=function(){
+  const el=document.getElementById('qry-date');if(el) el.value=getLastSunday();
+  const t=document.getElementById('qry-type');if(t) t.selectedIndex=0;
+  const n=document.getElementById('qry-name');if(n) n.value='';
+};
+
+// ── 주보용 헌금내역 탭 ──────────────────────────────────────
+window.initWeeklyTab=function(){
+  const typeSel=document.getElementById('wky-type');
+  if(typeSel&&typeSel.options.length<=1){
+    getOffTypes().forEach(function(t){
+      const o=document.createElement('option');o.value=t;o.textContent=t;typeSel.appendChild(o);
+    });
+  }
+  const el=document.getElementById('wky-date');
+  if(el) el.value=getLastSunday();
+};
+
+window.doWeeklySearch=function(){
+  const dt=document.getElementById('wky-date')?.value||TODAY;
+  const type=document.getElementById('wky-type')?.value||'';
+  const name=(document.getElementById('wky-name')?.value||'').trim();
+  const showOnline=document.getElementById('wky-online')?.value||'all';
+  let books=getOfferings().filter(function(e){return e.date===dt;});
+  if(type) books=books.filter(function(e){return e.type===type;});
+  if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
+  if(showOnline==='online') books=books.filter(isOnlinePayment);
+  else if(showOnline==='cash') books=books.filter(function(e){return !isOnlinePayment(e);});
+  books=books.sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||( a.name||'').localeCompare(b.name||'');});
+  const total=books.reduce(function(s,e){return s+(e.amount||0);},0);
+  const tbody=document.getElementById('wky-tbody');
+  if(tbody) tbody.innerHTML=books.map(function(e,i){
+    const ci=getTypeColorIdx(e.type);
+    return '<tr class="off-color-'+ci+'">'
+      +'<td>'+(i+1)+'</td>'
+      +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
+      +'<td>'+( e.name||'')+'</td>'
+      +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
+      +'<td>'+(isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>':'')+'</td>'
+      +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
+      +'</tr>';
+  }).join('')||'<tr><td colspan="6" class="tbl-empty">해당 일자 데이터 없음</td></tr>';
+  const sw=document.getElementById('wky-stats-wrap');
+  if(sw){
+    const onlineTot=books.filter(isOnlinePayment).reduce(function(s,e){return s+(e.amount||0);},0);
+    sw.innerHTML='<div class="stat navy"><div class="stat-lbl">합계</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원</div></div>'
+      +'<div class="stat blue"><div class="stat-lbl">온라인</div><div class="stat-val">'+fmtN(onlineTot)+'</div><div class="stat-sub">원</div></div>'
+      +'<div class="stat green"><div class="stat-lbl">현금</div><div class="stat-val">'+fmtN(total-onlineTot)+'</div><div class="stat-sub">원</div></div>'
+      +'<div class="stat gold"><div class="stat-lbl">건수</div><div class="stat-val">'+books.length+'</div><div class="stat-sub">건</div></div>';
+  }
+  const ft=document.getElementById('wky-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
+  showResult('wky-result');
+};
+
+window.resetWeeklySearch=function(){
+  const el=document.getElementById('wky-date');if(el) el.value=getLastSunday();
+  const t=document.getElementById('wky-type');if(t) t.selectedIndex=0;
+  const n=document.getElementById('wky-name');if(n) n.value='';
+  const o=document.getElementById('wky-online');if(o) o.selectedIndex=0;
+};
+
+// ── 온라인 입금내역 탭 ───────────────────────────────────────
+window.initOnlineTab=function(){
+  const dateSel=document.getElementById('online-fdate');
+  if(dateSel&&dateSel.options.length<=1){
+    const offs=getOfferings().filter(isOnlinePayment);
+    const dates=[...new Set(offs.map(function(e){return e.date;}).filter(Boolean))].sort().reverse();
+    dateSel.innerHTML='<option value="">전체</option>';
+    dates.forEach(function(d){
+      const o=document.createElement('option');o.value=d;
+      const dt=new Date(d);
+      o.textContent=d+' ('+['일','월','화','수','목','금','토'][dt.getDay()]+')';
+      dateSel.appendChild(o);
+    });
+    // 디폴트: 가장 가까운 일요일
+    const sun=getLastSunday();
+    for(let i=0;i<dateSel.options.length;i++){
+      if(dateSel.options[i].value===sun){dateSel.selectedIndex=i;break;}
+    }
+  }
+  const typeSel=document.getElementById('online-ftype');
+  if(typeSel&&typeSel.options.length<=1){
+    getOffTypes().forEach(function(t){
+      const o=document.createElement('option');o.value=t;o.textContent=t;typeSel.appendChild(o);
+    });
+  }
+};
+
+window.doOnlineSearch=function(){
+  const dt=document.getElementById('online-fdate')?.value||'';
+  const type=document.getElementById('online-ftype')?.value||'';
+  const name=(document.getElementById('online-fname')?.value||'').trim();
+  let books=getOfferings().filter(isOnlinePayment);
+  if(dt) books=books.filter(function(e){return e.date===dt;});
+  if(type) books=books.filter(function(e){return e.type===type;});
+  if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
+  books=books.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  const total=books.reduce(function(s,e){return s+(e.amount||0);},0);
+  // 십일조 / 비전 구분
+  const tijoTypes=['십일조헌금','십일조'];
+  const tijoBooks=books.filter(function(e){return tijoTypes.some(function(t){return e.type.includes(t);});});
+  const otherBooks=books.filter(function(e){return !tijoTypes.some(function(t){return e.type.includes(t);});});
+  const tijoTot=tijoBooks.reduce(function(s,e){return s+(e.amount||0);},0);
+  const otherTot=otherBooks.reduce(function(s,e){return s+(e.amount||0);},0);
+  const memberSet=new Set(books.map(function(e){return e.name;}));
+  // 통계 카드
+  const sw=document.getElementById('online-stats-wrap');
+  if(sw) sw.innerHTML='<div class="stat navy"><div class="stat-lbl">온라인합계</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원</div></div>'
+    +'<div class="stat blue"><div class="stat-lbl">십일조</div><div class="stat-val">'+fmtN(tijoTot)+'</div><div class="stat-sub">원</div></div>'
+    +'<div class="stat green"><div class="stat-lbl">비전헌금외</div><div class="stat-val">'+fmtN(otherTot)+'</div><div class="stat-sub">원</div></div>'
+    +'<div class="stat gold"><div class="stat-lbl">성도수</div><div class="stat-val">'+memberSet.size+'</div><div class="stat-sub">명</div></div>';
+  // 십일조 테이블
+  const tb1=document.getElementById('online-tijo-tbody');
+  if(tb1) tb1.innerHTML=tijoBooks.map(function(e,i){
+    return '<tr><td>'+(i+1)+'</td><td>'+e.date+'</td><td><span class="badge b-blue">'+e.type+'</span></td>'
+      +'<td>'+( e.name||'')+'</td><td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
+      +'<td style="font-size:11px">'+(e.memo||'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="6" class="tbl-empty">없음</td></tr>';
+  const tt=document.getElementById('online-tijo-total');if(tt) tt.textContent=fmtN(tijoTot)+'원 ('+tijoBooks.length+'건)';
+  // 비전헌금외 테이블
+  const tb2=document.getElementById('online-vision-tbody');
+  if(tb2) tb2.innerHTML=otherBooks.map(function(e,i){
+    const ci=getTypeColorIdx(e.type);
+    return '<tr class="off-color-'+ci+'"><td>'+(i+1)+'</td><td>'+e.date+'</td>'
+      +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
+      +'<td>'+( e.name||'')+'</td><td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
+      +'<td style="font-size:11px">'+(e.memo||'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="6" class="tbl-empty">없음</td></tr>';
+  const vt=document.getElementById('online-vision-total');if(vt) vt.textContent=fmtN(otherTot)+'원 ('+otherBooks.length+'건)';
+  const ct=document.getElementById('online-count');if(ct) ct.textContent=books.length+'건';
+  const ot=document.getElementById('online-total');if(ot) ot.textContent=fmtN(total)+'원';
+  const ft=document.getElementById('online-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
+  showResult('online-result');
+};
+
+window.resetOnlineSearch=function(){
+  const d=document.getElementById('online-fdate');if(d) d.selectedIndex=0;
+  const t=document.getElementById('online-ftype');if(t) t.selectedIndex=0;
+  const n=document.getElementById('online-fname');if(n) n.value='';
+};
+
+// ── 기간별 조회(finSearch) 탭 ───────────────────────────────
+window.doFinSearch=function(){
+  const fr=document.getElementById('fin-from')?.value||'';
+  const to=document.getElementById('fin-to')?.value||TODAY;
+  const type=document.getElementById('fin-type')?.value||'all';
+  const off=getOfferings().filter(function(e){return (!fr||e.date>=fr)&&e.date<=to;});
+  const exp=getExpenses().filter(function(e){return (!fr||e.date>=fr)&&e.date<=to;});
+  const totInc=off.reduce(function(s,e){return s+(e.amount||0);},0);
+  const totExp=exp.reduce(function(s,e){return s+(e.amount||0);},0);
+  const el=document.getElementById('fin-result');if(!el) return;
+  el.innerHTML='<div class="g2 mb12">'
+    +'<div class="stat navy"><div class="stat-lbl">수입합계</div><div class="stat-val">'+fmtN(totInc)+'</div><div class="stat-sub">원</div></div>'
+    +'<div class="stat red"><div class="stat-lbl">지출합계</div><div class="stat-val">'+fmtN(totExp)+'</div><div class="stat-sub">원</div></div>'
+    +'</div>'
+    +(type!=='expense'?'<div class="card mb8"><div class="card-title mb8">수입 내역</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>구분</th><th>성도명</th><th class="nc">금액</th><th>비고</th></tr></thead><tbody>'
+    +off.map(function(e){return '<tr><td>'+e.date+'</td><td>'+e.type+'</td><td>'+e.name+'</td><td class="nc">'+fmtN(e.amount)+'</td><td>'+( e.memo||'')+'</td></tr>';}).join('')
+    +'</tbody></table></div></div>':'')
+    +(type!=='offering'?'<div class="card"><div class="card-title mb8">지출 내역</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>부서</th><th>내용</th><th class="nc">금액</th><th>요청자</th></tr></thead><tbody>'
+    +exp.map(function(e){return '<tr><td>'+e.date+'</td><td>'+e.dept+'</td><td>'+( e.content||'')+'</td><td class="nc">'+fmtN(e.amount)+'</td><td>'+( e.requester||'')+'</td></tr>';}).join('')
+    +'</tbody></table></div></div>':'');
+  showResult('fin-result');
+};
+
+// ── 데이터 관리 dmInitFilters ────────────────────────────────
+window.dmInitFilters=function(){
+  const ymSel=document.getElementById('dm-off-ym');
+  if(ymSel&&ymSel.options.length<=1){
+    const yms=[...new Set(getOfferings().map(function(e){return monthOf(e.date);}).filter(Boolean))].sort().reverse();
+    yms.forEach(function(ym){
+      const o=document.createElement('option');o.value=ym;
+      const [y,m]=ym.split('-');o.textContent=y+'년 '+parseInt(m)+'월';
+      ymSel.appendChild(o);
+    });
+  }
+  window.dmLoadOfferings&&dmLoadOfferings();
+};
+
 function renderListMgr(containerId, items, removeFunc, labelFunc){
   const el=document.getElementById(containerId);
   if(!el) return;
@@ -3577,7 +3901,7 @@ window.removeOffType=function(i){
   renderOffTypeList();
 };
 window.addDeptType=function(){
-  const inp=document.getElementById('new-dept');
+  const inp=document.getElementById('new-dept-mgr');
   const v=(inp?.value||'').trim();
   if(!v){alert('부서명을 입력하세요');return;}
   const types=getDeptTypes();
@@ -3594,14 +3918,13 @@ window.removeDeptType=function(i){
 };
 window.addRecipient=function(){
   const name=(document.getElementById('new-recip-name')?.value||'').trim();
-  const bank=(document.getElementById('new-recip-bank')?.value||'').trim();
-  const acct=(document.getElementById('new-recip-acct')?.value||'').trim();
+  const acct=(document.getElementById('new-recip-acc')?.value||'').trim();
   if(!name){alert('이름을 입력하세요');return;}
   const recips=getRecipients();
-  recips.push({name,bank,acct});
+  recips.push({name,acct});
   ST.set('recipients',recips);
   if(window._fbSaveConfig)window._fbSaveConfig('recipients',recips);
-  ['new-recip-name','new-recip-bank','new-recip-acct'].forEach(function(id){
+  ['new-recip-name','new-recip-bank','new-recip-acc'].forEach(function(id){
     const el=document.getElementById(id);if(el)el.value='';
   });
   renderAccountList();
