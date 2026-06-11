@@ -275,7 +275,16 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   .hdr,.nav,.nav-groups-row,.nav-items-row{display:none!important}
   .app{height:auto!important;overflow:visible!important}
   .content{overflow:visible!important;height:auto!important;padding:0!important}
-  .tab-pane{display:none!important;visibility:hidden!important}
+  .dm-edit-inp,.dm-edit-exp{
+  border:1px solid #dde3ed;border-radius:4px;padding:3px 6px;
+  background:#f8faff;transition:border-color .15s;
+  font-family:inherit;
+}
+.dm-edit-inp:focus,.dm-edit-exp:focus{
+  outline:none;border-color:var(--blue);background:#fff;
+  box-shadow:0 0 0 2px rgba(74,144,196,.15);
+}
+.tab-pane{display:none!important;visibility:hidden!important}
   .tab-pane.active{display:block!important;visibility:visible!important}
   
   @page{margin:8mm;size:A4 portrait}
@@ -1379,6 +1388,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
               <th class="nc" style="width:100px">금액(원)</th>
               <th style="width:80px">입금방식</th>
               <th>비고</th>
+              <th style="width:60px" class="no-print">수정</th>
               <th style="width:50px" class="no-print">삭제</th>
             </tr></thead>
             <tbody id="dm-off-tbody"></tbody>
@@ -1422,12 +1432,13 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
               <th style="width:30px">#</th>
               <th style="width:90px">날짜</th>
               <th style="width:90px">부서</th>
-              <th style="width:70px">요청자</th>
-              <th>수취자</th>
+              <th style="width:80px">요청자</th>
+              <th style="width:80px">수취자</th>
               <th>계좌번호</th>
               <th class="nc" style="width:100px">금액(원)</th>
-              <th>내용</th>
+              <th>내용(비고)</th>
               <th style="width:70px">지급방식</th>
+              <th style="width:60px" class="no-print">수정</th>
               <th style="width:50px" class="no-print">삭제</th>
             </tr></thead>
             <tbody id="dm-exp-tbody"></tbody>
@@ -4105,25 +4116,62 @@ window.dmLoadOfferings=function(){
   else if(online==='cash') books=books.filter(function(e){return !isOnlinePayment(e);});
   books=books.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   const total=books.reduce(function(s,e){return s+(e.amount||0);},0);
+
+  function makeCell(id, val, type, width){
+    const w=width?'style="width:'+width+'"':'';
+    if(type==='date') return '<td '+w+'><input class="dm-edit-inp" data-id="'+id+'" data-field="date" type="date" value="'+val+'" style="width:100px;font-size:11px"></td>';
+    if(type==='type'){
+      const opts=getOffTypes().map(function(t){return '<option value="'+t+'"'+(t===val?' selected':'')+'>'+t+'</option>';}).join('');
+      return '<td><select class="dm-edit-inp" data-id="'+id+'" data-field="type" style="width:100px;font-size:11px">'+opts+'</select></td>';
+    }
+    if(type==='online'){
+      return '<td><select class="dm-edit-inp" data-id="'+id+'" data-field="online" style="width:70px;font-size:11px">'
+        +'<option value="현금입금"'+(val==='현금입금'||!val?' selected':'')+'>현금</option>'
+        +'<option value="온라인입금"'+(val==='온라인입금'?' selected':'')+'>온라인</option>'
+        +'</select></td>';
+    }
+    if(type==='amount') return '<td class="nc" '+w+'><input class="dm-edit-inp finp" data-id="'+id+'" data-field="amount" type="text" value="'+fmtN(val)+'" style="width:90px;text-align:right;font-size:11px" oninput="fmtAmt(this)"></td>';
+    return '<td><input class="dm-edit-inp" data-id="'+id+'" data-field="'+type+'" type="text" value="'+String(val||'').replace(/"/g,'&quot;')+'" style="width:100%;font-size:11px"></td>';
+  }
+
   const tbody=document.getElementById('dm-off-tbody');
   if(tbody) tbody.innerHTML=books.map(function(e,i){
-    return '<tr>'
-      +'<td>'+( i+1)+'</td>'
-      +'<td style="font-family:var(--fnum)">'+e.date+'</td>'
-      +'<td>'+e.type+'</td>'
-      +'<td>'+( e.name||'')+'</td>'
-      +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
-      +'<td>'+(isOnlinePayment(e)?'<span class="badge b-blue">온라인</span>':'현금')+'</td>'
-      +'<td style="font-size:11px">'+(e.memo||'')+'</td>'
-      +'<td class="no-print">'
-        +'<button class="btn btn-red btn-xs" onclick="deleteOffering('+JSON.stringify(e.id)+')">삭제</button>'
-      +'</td>'
+    return '<tr id="dm-off-row-'+e.id+'">'
+      +'<td>'+(i+1)+'</td>'
+      +makeCell(e.id, e.date||'', 'date')
+      +makeCell(e.id, e.type||'', 'type')
+      +makeCell(e.id, e.name||'', 'name')
+      +makeCell(e.id, e.amount||0, 'amount')
+      +makeCell(e.id, isOnlinePayment(e)?'온라인입금':'현금입금', 'online')
+      +makeCell(e.id, e.memo||'', 'memo')
+      +'<td class="no-print"><button class="btn btn-navy btn-xs" onclick="dmSaveOffering(\''+e.id+'\')">저장</button></td>'
+      +'<td class="no-print"><button class="btn btn-red btn-xs" onclick="deleteOffering('+JSON.stringify(e.id)+')">삭제</button></td>'
       +'</tr>';
-  }).join('')||'<tr><td colspan="8" class="tbl-empty">데이터 없음</td></tr>';
+  }).join('')||'<tr><td colspan="9" class="tbl-empty">데이터 없음</td></tr>';
   const ft=document.getElementById('dm-off-total');
   if(ft) ft.textContent=fmtN(total)+'원 ('+books.length+'건)';
   showResult('dm-off-result');
 };
+
+window.dmSaveOffering=function(id){
+  const row=document.getElementById('dm-off-row-'+id);
+  if(!row) return;
+  const inputs=row.querySelectorAll('.dm-edit-inp');
+  const changes={};
+  inputs.forEach(function(el){changes[el.dataset.field]=el.value;});
+  changes.amount=parseN(changes.amount||'0');
+  const books=getOfferings();
+  const idx=books.findIndex(function(e){return e.id===id;});
+  if(idx<0){alert('항목을 찾을 수 없습니다');return;}
+  Object.assign(books[idx],changes);
+  setOfferings(books);
+  if(window._fbSaveConfig) window._fbSaveAll&&window._fbSaveAll();
+  // 저장 피드백
+  const btn=row.querySelector('.btn-navy');
+  if(btn){const orig=btn.textContent;btn.textContent='✓ 저장됨';btn.style.background='#27ae60';
+    setTimeout(function(){btn.textContent=orig;btn.style.background='';},1500);}
+};
+
 
 window.dmResetOff=function(){
   const today=nowKST();
@@ -4145,28 +4193,71 @@ window.dmLoadExpenses=function(){
   if(from) books=books.filter(function(e){return e.date>=from;});
   if(to) books=books.filter(function(e){return e.date<=to;});
   if(dept) books=books.filter(function(e){return e.dept===dept;});
-  if(name) books=books.filter(function(e){return (e.content||e.item||'').includes(name)||(e.requester||'').includes(name);});
+  if(name) books=books.filter(function(e){
+    return (e.requester||'').includes(name)||(e.recipient||e.recip||'').includes(name)||(e.content||e.item||'').includes(name);
+  });
   books=books.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   const total=books.reduce(function(s,e){return s+(e.amount||0);},0);
+
+  function makeCell(id, val, fieldName, inputType, extra){
+    const v=String(val||'').replace(/"/g,'&quot;');
+    if(inputType==='date') return '<td><input class="dm-edit-exp" data-id="'+id+'" data-field="'+fieldName+'" type="date" value="'+val+'" style="width:100px;font-size:11px"></td>';
+    if(inputType==='dept'){
+      const opts=getDeptTypes().map(function(t){return '<option value="'+t+'"'+(t===val?' selected':'')+'>'+t+'</option>';}).join('');
+      return '<td><select class="dm-edit-exp" data-id="'+id+'" data-field="'+fieldName+'" style="width:90px;font-size:11px">'+opts+'</select></td>';
+    }
+    if(inputType==='paytype'){
+      return '<td><select class="dm-edit-exp" data-id="'+id+'" data-field="'+fieldName+'" style="width:65px;font-size:11px">'
+        +'<option value="계좌이체"'+(val==='계좌이체'?' selected':'')+'>계좌이체</option>'
+        +'<option value="현금지급"'+(val==='현금지급'?' selected':'')+'>현금지급</option>'
+        +'<option value="카드"'+(val==='카드'?' selected':'')+'>카드</option>'
+        +'</select></td>';
+    }
+    if(inputType==='amount') return '<td class="nc"><input class="dm-edit-exp finp" data-id="'+id+'" data-field="'+fieldName+'" type="text" value="'+fmtN(val)+'" style="width:90px;text-align:right;font-size:11px" oninput="fmtAmt(this)"></td>';
+    const wstyle=extra?'style="width:'+extra+';font-size:11px"':'style="width:100%;font-size:11px"';
+    return '<td><input class="dm-edit-exp" data-id="'+id+'" data-field="'+fieldName+'" type="text" value="'+v+'" '+wstyle+'></td>';
+  }
+
   const tbody=document.getElementById('dm-exp-tbody');
   if(tbody) tbody.innerHTML=books.map(function(e,i){
-    return '<tr>'
-      +'<td>'+( i+1)+'</td>'
-      +'<td style="font-family:var(--fnum)">'+e.date+'</td>'
-      +'<td>'+( e.dept||'')+'</td>'
-      +'<td>'+( e.content||e.item||'')+'</td>'
-      +'<td class="nc" style="font-weight:700;color:var(--red)">'+fmtN(e.amount)+'</td>'
-      +'<td>'+( e.requester||'')+'</td>'
-      +'<td>'+( e.recipient||e.recip||'')+'</td>'
-      +'<td class="no-print">'
-        +'<button class="btn btn-red btn-xs" onclick="deleteExpense('+JSON.stringify(e.id)+')">삭제</button>'
-      +'</td>'
+    const account=e.account||'';
+    const contentVal=(e.content||e.item||'')+(e.memo?(e.content||e.item?' / '+e.memo:e.memo):'');
+    return '<tr id="dm-exp-row-'+e.id+'">'
+      +'<td>'+(i+1)+'</td>'
+      +makeCell(e.id, e.date||'', 'date', 'date')
+      +makeCell(e.id, e.dept||'', 'dept', 'dept')
+      +makeCell(e.id, e.requester||'', 'requester', 'text', '70px')
+      +makeCell(e.id, e.recipient||e.recip||'', 'recipient', 'text', '70px')
+      +makeCell(e.id, account, 'account', 'text', '120px')
+      +makeCell(e.id, e.amount||0, 'amount', 'amount')
+      +makeCell(e.id, e.content||e.item||'', 'content', 'text')
+      +makeCell(e.id, e.paytype||'계좌이체', 'paytype', 'paytype')
+      +'<td class="no-print"><button class="btn btn-navy btn-xs" onclick="dmSaveExpense(\''+e.id+'\')">저장</button></td>'
+      +'<td class="no-print"><button class="btn btn-red btn-xs" onclick="deleteExpense('+JSON.stringify(e.id)+')">삭제</button></td>'
       +'</tr>';
-  }).join('')||'<tr><td colspan="8" class="tbl-empty">데이터 없음</td></tr>';
+  }).join('')||'<tr><td colspan="11" class="tbl-empty">데이터 없음</td></tr>';
   const ft=document.getElementById('dm-exp-total');
   if(ft) ft.textContent=fmtN(total)+'원 ('+books.length+'건)';
   showResult('dm-exp-result');
 };
+
+window.dmSaveExpense=function(id){
+  const row=document.getElementById('dm-exp-row-'+id);
+  if(!row) return;
+  const inputs=row.querySelectorAll('.dm-edit-exp');
+  const changes={};
+  inputs.forEach(function(el){changes[el.dataset.field]=el.value;});
+  changes.amount=parseN(changes.amount||'0');
+  const books=getExpenses();
+  const idx=books.findIndex(function(e){return e.id===id;});
+  if(idx<0){alert('항목을 찾을 수 없습니다');return;}
+  Object.assign(books[idx],changes);
+  setExpenses(books); // setExpenses 내부에서 Firebase 동기화 자동 처리
+  const btn=row.querySelector('.btn-navy');
+  if(btn){const orig=btn.textContent;btn.textContent='✓ 저장됨';btn.style.background='#27ae60';
+    setTimeout(function(){btn.textContent=orig;btn.style.background='';},1500);}
+};
+
 
 window.dmResetExp=function(){
   const today=nowKST();
