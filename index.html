@@ -279,7 +279,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   .content{overflow:visible!important;height:auto!important;padding:0!important}
   .tab-pane{display:none!important}
   .tab-pane.active{display:block!important}
-  .result-section{display:block!important}
+  
   @page{margin:8mm;size:A4 portrait}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10px}
   /* 입금전표 한 장 최적화 */
@@ -1046,6 +1046,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     <button class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ 인쇄</button>
   </div>
   <div id="deptreport-content"></div>
+  <div id="deptreport-result"></div>
 </div>
 
 <!-- ===== 통장잔액 ===== -->
@@ -1875,7 +1876,7 @@ function onTabActivate(tab){
   if(tab==='online-off') initOnlineTab();
   if(tab==='finsearch'){const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
 }
-function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');}}
+function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');el.style.display='block';}}
 
 function initMonthSel(selId,badgeId){
   const sel=document.getElementById(selId);if(!sel||sel.options.length>0) return;
@@ -3154,6 +3155,15 @@ window.switchMgr=function(id,btn){
   if(id==='account-mgr') renderAccountList();
   if(id==='sponsor-mgr') renderSponTypeList();
   if(id==='budget-mgr') renderBudgetForm();
+  if(id==='data-mgr'){
+    // 첫 번째 dm-card 표시 + 필터 초기화
+    const firstCard=document.getElementById('dmcard-view');
+    if(firstCard){
+      document.querySelectorAll('.dm-card').forEach(function(el){el.classList.add('hidden');});
+      firstCard.classList.remove('hidden');
+    }
+    dmInitFilters();
+  }
 };
 
 // ── 이월금 설정 폼 렌더링 ─────────────────────────────────────
@@ -3495,7 +3505,8 @@ window.doQuerySearch=function(){
   if(sw){
     sw.innerHTML='<div class="stat navy"><div class="stat-lbl">'+dt+'</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원 ('+books.length+'건)</div></div>';
   }
-  const ft=document.getElementById('qry-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
+  const badge=document.getElementById('qry-total-badge');
+  if(badge) badge.textContent=fmtN(total)+'원 ('+books.length+'건)';
   showResult('qry-result');
 };
 
@@ -3549,7 +3560,6 @@ window.doWeeklySearch=function(){
       +'<div class="stat green"><div class="stat-lbl">현금</div><div class="stat-val">'+fmtN(total-onlineTot)+'</div><div class="stat-sub">원</div></div>'
       +'<div class="stat gold"><div class="stat-lbl">건수</div><div class="stat-val">'+books.length+'</div><div class="stat-sub">건</div></div>';
   }
-  const ft=document.getElementById('wky-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
   showResult('wky-result');
 };
 
@@ -3631,6 +3641,17 @@ window.doOnlineSearch=function(){
   const ct=document.getElementById('online-count');if(ct) ct.textContent=books.length+'건';
   const ot=document.getElementById('online-total');if(ot) ot.textContent=fmtN(total)+'원';
   const ft=document.getElementById('online-foot-total');if(ft) ft.textContent=fmtN(total)+'원';
+  // 전체 목록 테이블
+  const tbAll=document.getElementById('online-tbody');
+  if(tbAll) tbAll.innerHTML=books.map(function(e,i){
+    const ci=getTypeColorIdx(e.type);
+    return '<tr class="off-color-'+ci+'"><td>'+(i+1)+'</td>'
+      +'<td>'+e.date+'</td>'
+      +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
+      +'<td>'+(e.name||'')+'</td>'
+      +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
+      +'<td style="font-size:11px">'+(e.memo||'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="6" class="tbl-empty">없음</td></tr>';
   showResult('online-result');
 };
 
@@ -4121,7 +4142,7 @@ window.renderBankBalance=function(){
 // ── 부서보고서 렌더링 ─────────────────────────────────────────
 window.renderDeptReport=function(){
   const ym=document.getElementById('dept-month')?.value||'';
-  const el=document.getElementById('dept-content');
+  const el=document.getElementById('deptreport-content');
   if(!el||!ym) return;
   const [yr,mo]=ym.split('-').map(Number);
   const EXCLUDE=['건축헌금','전도헌금','사회봉사'];
@@ -4154,7 +4175,7 @@ window.renderDeptReport=function(){
       +'</div>';
   });
   el.innerHTML=html||'<div class="tbl-empty" style="padding:30px;text-align:center">해당 월 지출 데이터가 없습니다</div>';
-  showResult('dept-result');
+  showResult('deptreport-result');
 };
 
 window.saveBudget=function(){
