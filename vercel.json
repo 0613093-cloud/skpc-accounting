@@ -1,12 +1,39 @@
 {
   "version": 2,
   "builds": [
-    { "src": "*.html", "use": "@vercel/static" }
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "/skpc_dept_report.html", "dest": "/skpc_dept_report.html" },
-    { "src": "/skpc_dept_report", "dest": "/skpc_dept_report.html" },
-    { "src": "/(.*\\.html)", "dest": "/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/monthly",
+      "dest": "/monthly.html"
+    },
+    {
+      "src": "/monthly.html",
+      "dest": "/monthly.html"
+    },
+    {
+      "src": "/weekly",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/skpc_dept_report.html",
+      "dest": "/skpc_dept_report.html"
+    },
+    {
+      "src": "/skpc_dept_report",
+      "dest": "/skpc_dept_report.html"
+    },
+    {
+      "src": "/(.*\\.html)",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }

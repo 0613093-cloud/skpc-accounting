@@ -741,7 +741,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   <div class="hdr-brand">
     <div class="hdr-logo"></div>
     <div class="hdr-title">
-      <h1>서부광성교회 회계 시스템</h1>
+      <h1>서부광성교회 📅 월간업무</h1>
       <p>Seobukwangseong Presbyterian Church — Financial Management</p>
     </div>
   </div>
@@ -756,777 +756,91 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 
 <nav class="nav" id="mainNav">
   <div class="nav-groups-row" id="navGroupsRow">
-    <div class="nav-group-pill active-group" id="grp-weekly" onclick="scrollToGroup('weekly')">주간업무</div>
-    <div class="nav-group-pill" id="grp-manage" onclick="scrollToGroup('manage')">관리</div>
-    <div class="nav-group-pill" style="background:#2563eb;color:#fff;cursor:pointer" onclick="window.open('skpc_monthly.html','_blank')">📅 월간업무 →</div>
+    <div class="nav-group-pill active-group" id="grp-monthly">📅 월간업무</div>
   </div>
   <div class="nav-items-row" id="navItemsRow">
-    <!-- 주간업무 -->
-    <div class="nav-group-label" data-group="weekly">주간</div>
-    <div class="nav-item" id="nav-input-drop" onclick="toggleInputDropdown()" style="position:relative">
-      <span id="inputDropLabel">🗒️ 헌금입력 ▾</span>
-      <div id="inputDropMenu" class="drop-menu">
-        <div class="drop-item" onclick="selectInputSheet(1)">시트 1</div>
-        <div class="drop-item" onclick="selectInputSheet(2)">시트 2</div>
-        <div class="drop-item" onclick="selectInputSheet(3)">시트 3</div>
-      </div>
-    </div>
-    <div class="nav-item" data-tab="receipt">🗒️ 입금전표</div>
-    <div class="nav-item" data-tab="query">당일헌금내역</div>
-    <div class="nav-item" data-tab="weekly">주보용 헌금내역</div>
-    <div class="nav-item" data-tab="online-off">온라인 입금내역</div>
-    <div class="nav-item" data-tab="offering">📊 누적헌금</div>
-    <div class="nav-item" data-tab="expense">💸 누적지출</div>
-    <div class="nav-item" data-tab="sponsor">찬조내역</div>
-    <!-- 관리 -->
-    <div class="nav-group-label" data-group="manage">관리</div>
-    <div class="nav-item" data-tab="manage">⚙️ 관리</div>
+    <div class="nav-item active" data-tab="monthly">📈 월간보고</div>
+    <div class="nav-item" data-tab="deptreport">🏢 부서보고서</div>
+    <div class="nav-item" data-tab="bankbal">🏦 통장잔액</div>
+    <div class="nav-item" data-tab="finsearch">🔍 기간별 조회</div>
   </div>
 </nav>
 
 <main class="main-wrap" id="mainWrap">
-<div id="tab-input1" class="tab-pane active"></div>
+<div id="tab-monthly" class="tab-pane active">
+  <div class="pg-hd"><div class="pg-title">📈 월간 회계보고</div></div>
+  <div class="month-bar no-print">
+    <label>보고 기준 월</label>
+    <select id="monthly-month"></select>
+    <span class="m-badge" id="monthly-badge">-</span>
+    <select id="monthly-report-type" class="fsel" style="height:34px;font-size:12px;border-radius:6px;border:1px solid var(--border,#dde);padding:0 10px">
+      <option value="general">일반회계</option>
+      <option value="special_all">특별헌금 (통합)</option>
+      
+    </select>
+    <button class="btn btn-navy" onclick="renderMonthly()">🔍 조회</button>
+    <button class="btn btn-outline btn-sm no-print" onclick="printMonthly()">🖨️ 인쇄</button>
+  </div>
+  <div id="monthly-content"></div>
+</div>
 
-<div id="tab-input2" class="tab-pane"></div>
+<!-- ===== 부서보고서 ===== -->
 
-<div id="tab-input3" class="tab-pane"></div>
+<div id="tab-deptreport" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
+  <div class="no-print" style="background:#e3f2fd;border:1.5px solid #90caf9;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:#1565c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span>📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력/수정은 별도 페이지에서만 가능합니다.</span>
+    <a href="https://skpc-accounting.vercel.app/skpc_dept_report.html" target="_blank" class="btn btn-blue btn-sm">🔗 부서보고서 입력 페이지 열기</a>
+  </div>
+  <div class="month-bar">
+    <label>보고 기준 월</label>
+    <select id="dept-month"></select>
+    <span class="m-badge" id="dept-badge">-</span>
+    <button class="btn btn-navy" onclick="renderDeptReport()">🔍 조회</button>
+    <button class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ 인쇄</button>
+  </div>
+  <div id="deptreport-content"></div>
+  <div id="deptreport-result"></div>
+</div>
 
-<!-- ===== 헌금정리 ===== -->
+<!-- ===== 통장잔액 ===== -->
 
-<div id="tab-offering" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">📊 헌금내역 정리</div></div>
-  <div class="g4 mb12" id="off-stats"></div>
+<div id="tab-bankbal" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">🏦 통장별 잔액 맞추기</div></div>
+  <div class="month-bar">
+    <label>기준 월</label>
+    <select id="bank-month"></select>
+    <span class="m-badge" id="bank-badge">-</span>
+    <button class="btn btn-navy" onclick="renderBankBalance()">🔍 조회</button>
+    <button class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ 인쇄</button>
+  </div>
+  <div id="bankbal-content"></div>
+</div>
+
+<!-- ===== 재정검색 ===== -->
+
+<div id="tab-finsearch" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">🔍 재정현황 검색</div></div>
   <div class="search-panel">
-    <div class="panel-title">검색 조건</div>
+    <div class="panel-title">검색 기간 설정</div>
     <div class="g3 mb8">
-      <div class="fg"><div class="flbl">년월</div>
-        <select class="fsel" id="off-fym" onchange="syncOffDateFilter()" style="font-weight:600">
-          <option value="">전체</option>
-        </select></div>
-      <div class="fg"><div class="flbl">날짜 (특정일)</div>
-        <select class="fsel" id="off-fdate"><option value="">전체</option></select></div>
-      <div class="fg"><div class="flbl">헌금구분</div>
-        <select class="fsel" id="off-ftype"><option value="">전체</option></select></div>
-    </div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">성도명</div>
-        <input class="finp" id="off-fname" placeholder="이름 입력..."></div>
-      <div class="fg"></div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="doOfferingSearch()">🔍 조회</button>
-      <button class="btn btn-outline" onclick="resetOfferingSearch()">초기화</button>
-    </div>
-  </div>
-  <div class="result-section" id="off-result">
-    <div class="card">
-      <div class="card-hd"><div class="card-title">헌금 내역</div>
-        <div class="flex gap8 items-c" style="flex-wrap:wrap">
-          <span style="font-size:11px;color:#27ae60;font-weight:600;background:#e8f8f0;padding:3px 10px;border-radius:12px;border:1px solid #a8dfc0">✏️ 셀 클릭 후 수정</span>
-          <button class="btn btn-navy btn-sm no-print" id="off-save-btn" onclick="saveOfferingEdits()" style="display:none;padding:4px 12px;font-size:11px">💾 수정 저장</button>
-          <span id="off-edit-hint" style="font-size:11px;color:#e67e22;display:none">● 수정됨 - 저장버튼을 눌러주세요</span>
-          <span id="off-count" class="badge b-navy"></span>
-          <span id="off-total" style="font-family:var(--fnum);font-weight:700;color:var(--blue);font-size:14px"></span></div>
-      </div>
-      <div class="tbl-wrap"><table class="tbl">
-        <thead><tr>
-  <th>#</th>
-  <th>날짜 ✏️</th>
-  <th>헌금구분 ✏️</th>
-  <th>성도명 ✏️</th>
-  <th class="nc">금액(원) ✏️</th>
-  <th>입금방식 ✏️</th>
-  <th>비고 ✏️</th>
-  <th>시트 ✏️</th>
-  <th class="no-print">삭제</th>
-</tr></thead>
-        <tbody id="off-tbody"></tbody>
-        <tfoot><tr><td colspan="4" style="text-align:center;font-weight:800">합계</td>
-          <td class="nc" id="off-foot-total"></td><td colspan="4"></td></tr></tfoot>
-      </table></div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 지출정리 ===== -->
-
-<div id="tab-expense" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">💸 지출내역 정리</div></div>
-  <div class="card">
-    <div class="card-title" style="margin-bottom:10px">부서 선택</div>
-    <div class="rpwrap" id="exp-deptRadio"></div>
-  </div>
-  <div class="card">
-    <div class="card-title" style="margin-bottom:12px">지출 내역 입력</div>
-    <div class="g3">
-      <div class="fg"><div class="flbl">날짜 (수정 가능)</div><input type="date" class="finp" id="exp-date"></div>
-      <div class="fg"><div class="flbl">요청자</div><input class="finp" id="exp-requester" placeholder="요청자명"></div>
-      <div class="fg"><div class="flbl">수취자명</div>
-        <input class="finp" id="exp-recipient" placeholder="수취자명" oninput="autoFillAccount()" oninput="lookupAccount()" list="exp-recip-list">
-        <datalist id="exp-recip-list"></datalist></div>
-    </div>
-    <div class="g3">
-      <div class="fg"><div class="flbl">계좌번호 (자동)</div><input class="finp" id="exp-account" placeholder="자동 조회" oninput="saveAccountOnInput()"></div>
-      <div class="fg"><div class="flbl">금액 (원)</div><input class="finp num-in" id="exp-amount" placeholder="0" oninput="fmtAmt(this)"></div>
-      <div class="fg"><div class="flbl">지급방식</div>
-        <select class="fsel" id="exp-paytype">
-          <option>현금지급</option><option selected>송금지급</option><option>이자</option>
-        </select></div>
-    </div>
-    <div class="g2">
-      <div class="fg"><div class="flbl">내용</div><input class="finp" id="exp-content" placeholder="지출 내용"></div>
-      <div class="fg"><div class="flbl">비고</div><input class="finp" id="exp-memo" placeholder="비고"></div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="addExpense()">+ 지출 추가</button>
-      <button class="btn btn-outline" onclick="clearExpForm()">초기화</button>
-    </div>
-  </div>
-  <div class="search-panel">
-    <div class="panel-title">검색 조건</div>
-    <div class="g3 mb8">
-      <div class="fg"><div class="flbl">년월</div>
-        <select class="fsel" id="exp-fym" onchange="syncExpDateFilter()" style="font-weight:600">
-          <option value="">전체</option>
-        </select></div>
-      <div class="fg"><div class="flbl">날짜 (특정일)</div>
-        <select class="fsel" id="exp-fdate"><option value="">전체</option></select></div>
-      <div class="fg"><div class="flbl">부서</div>
-        <select class="fsel" id="exp-fdept"><option value="">전체</option></select></div>
-    </div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">지급방식</div>
-        <select class="fsel" id="exp-fpay"><option value="">전체</option><option>현금지급</option><option>송금지급</option><option>이자</option></select></div>
-      <div class="fg"></div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="doExpenseSearch()">🔍 조회</button>
-      <button class="btn btn-outline" onclick="resetExpenseSearch()">초기화</button>
-    </div>
-  </div>
-  <div class="result-section" id="exp-result">
-    <div class="card">
-      <div class="card-hd"><div class="card-title">지출 내역 목록</div>
-        <span id="exp-total-label" style="font-family:var(--fnum);font-weight:700;color:var(--red);font-size:13px"></span></div>
-      <div class="tbl-wrap"><table class="tbl">
-        <thead><tr><th>#</th><th>날짜</th><th>부서</th><th>요청자</th><th>수취자</th><th>계좌번호</th><th class="nc">금액(원)</th><th>내용</th><th>지급방식</th><th class="no-print">수정</th><th class="no-print">삭제</th></tr></thead>
-        <tbody id="exp-tbody"></tbody>
-        <tfoot><tr><td colspan="6" style="text-align:center">합계</td><td class="nc" id="exp-grand-total"></td><td colspan="4"></td></tr></tfoot>
-      </table></div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 찬조내역 ===== -->
-
-<div id="tab-sponsor" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">🎁 찬조내역</div></div>
-
-  <!-- 조회 조건 (인쇄 제외) -->
-  <div class="search-panel no-print">
-    <div class="panel-title">조회 조건 — 헌금정리 DB 비고 기반</div>
-    <div class="g4 mb8">
-      <div class="fg"><div class="flbl">찬조 구분</div>
-        <select class="fsel" id="spon-cat" onchange="onSponCatChange()">
-          <option value="">전체</option>
-          <option value="교육부찬조전체">교육부찬조 전체</option>
-          <option value="영상찬조">영상찬조</option>
-          <option value="야외예배찬조">야외예배찬조</option>
-          <option value="꽃꽂이찬조">꽃꽂이찬조</option>
-          <option value="기타찬조">기타찬조</option>
-        </select></div>
-      <div class="fg" id="spon-sub-wrap" style="display:none"><div class="flbl">교육부찬조 세부</div>
-        <select class="fsel" id="spon-ftype-q" onchange="toggleSponExtra()">
-          <option value="교육부찬조전체">교육부찬조 전체</option>
-          <option value="교육부찬조">교육부찬조(미지정)</option>
-          <option value="교육부찬조(청년부)">교육부찬조(청년부)</option>
-          <option value="교육부찬조(중고등부)">교육부찬조(중고등부)</option>
-          <option value="교육부찬조(아동부)">교육부찬조(아동부)</option>
-          <option value="교육부찬조(유치부)">교육부찬조(유치부)</option>
-        </select></div>
-      <div class="fg"><div class="flbl">기간 (시작)</div><input type="date" class="finp" id="spon-from"></div>
-      <div class="fg"><div class="flbl">기간 (종료)</div><input type="date" class="finp" id="spon-to"></div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="doSponSearch()">🔍 조회</button>
-      <button class="btn btn-outline" onclick="resetSponSearch()">초기화</button>
-    </div>
-  </div>
-  <!-- hidden select for initSponsorTab -->
-  <select id="spon-type-sel" style="display:none"></select>
-
-  <!-- 결과 -->
-  <div class="result-section" id="spon-result">
-    <div class="g2 mb12" id="spon-stats-wrap"></div>
-
-    <!-- 찬조 목록 -->
-    <div class="card">
-      <div class="card-hd">
-        <div class="card-title">찬조 목록</div>
-        <div class="flex gap8 items-c">
-          <span id="spon-count" class="badge b-gold"></span>
-          <span id="spon-total" style="font-family:var(--fnum);font-weight:700;color:var(--gold);font-size:14px"></span>
-          <button class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ 인쇄</button>
-        </div>
-      </div>
-      <div id="spon-print-area">
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr>
-            <th>#</th><th>일자</th><th>유형</th><th>성도/기관</th>
-            <th class="nc">금액(원)</th><th>비고(헌금구분자)</th><th>출처</th>
-            <th class="no-print">삭제</th>
-          </tr></thead>
-          <tbody id="spon-tbody"></tbody>
-          <tfoot><tr>
-            <td colspan="4" style="text-align:center;font-weight:700">합계</td>
-            <td class="nc" id="spon-foot-total" style="font-weight:800;color:var(--gold)"></td>
-            <td colspan="3"></td>
-          </tr></tfoot>
-        </table></div>
-      </div>
-    </div>
-
-    <!-- 교육부찬조 전용 섹션 -->
-    <div class="spon-extra" id="spon-edu-extra">
-      <!-- 부서별 배분 현황 -->
-      <div class="card">
-        <div class="card-hd">
-          <div class="card-title">📊 교육부찬조 부서별 배분 현황</div>
-        </div>
-        <div style="font-size:11px;color:var(--g2);padding:6px 14px 0;margin-bottom:6px">
-          <b>지정금액</b>: 타입에 부서명 포함(예: 교육부찬조(청년부)) &nbsp;|&nbsp;
-          <b>배분금액</b>: 미지정 찬조 4등분 균등 배분 &nbsp;|&nbsp;
-          <b>찬조합계</b> = 지정 + 배분
-        </div>
-        <div class="tbl-wrap"><div id="spon-undesig-info" style="margin-bottom:8px;padding:6px 10px;background:#f0f6ff;border-radius:6px;border-left:3px solid var(--blue)"></div>
-      <table class="tbl">
-          <thead><tr>
-            <th>부서</th>
-            <th class="nc">지정금액</th>
-            <th class="nc">배분금액</th>
-            <th class="nc" style="font-weight:800">찬조합계</th>
-            <th class="nc">받아간금액</th>
-            <th>상태</th>
-          </tr></thead>
-          <tbody id="spon-dist-tbody"></tbody>
-          <tfoot><tr>
-            <td style="font-weight:700">합계</td>
-            <td class="nc" id="spon-dist-tot-des" style="font-weight:700"></td>
-            <td class="nc" id="spon-dist-tot-alloc" style="font-weight:700"></td>
-            <td class="nc" id="spon-dist-tot-sum" style="font-weight:800;color:var(--blue)"></td>
-            <td class="nc" id="spon-dist-tot-recv" style="font-weight:700"></td>
-            <td></td>
-          </tr></tfoot>
-        </table></div>
-      </div>
-
-      <!-- 입금내역 세부 -->
-      <div class="card">
-        <div class="card-hd">
-          <div class="card-title">📋 입금내역 세부</div>
-          <div style="font-size:11px;color:var(--g2)">수취자: 최희지·김하준→청년부 / 김미선→아동부 / 김여진→유치부 / 권순호→중고등부</div>
-        </div>
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr>
-            <th>입금일자</th><th>소속</th><th>내용</th>
-            <th class="nc">금액(원)</th><th>요청자</th><th>송금받은자</th>
-          </tr></thead>
-          <tbody id="spon-pay-tbody"></tbody>
-          <tfoot><tr>
-            <td colspan="3" style="text-align:center;font-weight:700">합계</td>
-            <td class="nc" id="spon-pay-total" style="font-weight:800;color:var(--red)"></td>
-            <td colspan="2"></td>
-          </tr></tfoot>
-        </table></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 월간보고 ===== -->
-
-<div id="tab-query" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">📄 헌금내역 조회</div></div>
-  <div class="search-panel">
-    <div class="panel-title">검색 조건</div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">조회 일자</div><input type="date" class="finp" id="qry-date"></div>
-      <div class="fg"><div class="flbl">성도명</div><input class="finp" id="qry-name" placeholder="이름 검색..."></div>
-    </div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">헌금구분</div>
-        <select class="fsel" id="qry-type">
-          <option value="">전체</option>
-        </select>
-      </div>
-      <div class="fg"><div class="flbl">온라인 입금</div>
-        <select class="fsel" id="qry-online">
-          <option value="">전체</option>
-          <option value="online">온라인 입금만</option>
-          <option value="offline">현장 헌금만</option>
-        </select>
-      </div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="doQuerySearch()">🔍 조회</button>
-      <button class="btn btn-outline" onclick="resetQuerySearch()">초기화</button>
-    </div>
-  </div>
-  <div class="result-section" id="qry-result">
-    <div class="card">
-      <div class="card-hd">
-        <div class="card-title">헌금내역 조회표</div>
-        <div class="flex gap8 items-c">
-          <span id="qry-total-badge" class="badge b-blue"></span>
-          <button class="btn btn-outline btn-sm no-print" onclick="printSection('qry-print-area')">🖨️ 인쇄</button>
-        </div>
-      </div>
-      <div id="qry-print-area">
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>No</th><th>주차</th><th>월/일</th><th>헌금구분</th><th>성도성명</th><th class="nc">금액(원)</th><th>입금방식</th><th>비고</th></tr></thead>
-          <tbody id="qry-tbody"></tbody>
-        </table></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 주보용 ===== -->
-
-<div id="tab-weekly" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">📰 주보작성용 헌금내역</div></div>
-  <div style="background:#fffde7;border:2px solid #f9ca24;border-radius:var(--rl);padding:8px 14px;font-weight:800;font-size:14px;color:#7c6a00;margin-bottom:14px">📰 주보작성용 — 금액 미표시</div>
-  <div class="search-panel">
-    <div class="panel-title">검색 조건</div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">조회 일자</div><input type="date" class="finp" id="wky-date"></div>
-      <div class="fg"><div class="flbl">성도명</div><input class="finp" id="wky-name" placeholder="이름 검색..."></div>
-    </div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">헌금구분</div>
-        <select class="fsel" id="wky-type"><option value="">전체</option></select>
-      </div>
-      <div class="fg"><div class="flbl">온라인 입금</div>
-        <select class="fsel" id="wky-online">
-          <option value="">전체</option>
-          <option value="online">온라인 입금만</option>
-          <option value="offline">현장 헌금만</option>
-        </select>
-      </div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="doWeeklySearch()">🔍 조회</button>
-      <button class="btn btn-outline" onclick="resetWeeklySearch()">초기화</button>
-    </div>
-  </div>
-  <div class="result-section" id="wky-result">
-    <div class="card">
-      <div class="card-hd">
-        <div class="card-title">헌금내역 (금액 미표시)</div>
-        <button class="btn btn-outline btn-sm no-print" onclick="printSection('wky-print-area')">🖨️ 인쇄</button>
-      </div>
-      <div id="wky-print-area">
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>No</th><th>주차</th><th>월/일</th><th>헌금구분</th><th>성도성명</th><th>입금방식</th><th>비고</th></tr></thead>
-          <tbody id="wky-tbody"></tbody>
-        </table></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 입금전표 ===== -->
-
-<div id="tab-receipt" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">🗒️ 입금전표</div></div>
-  <div class="search-panel no-print">
-    <div class="panel-title">전표 기준일 선택</div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">기준일</div><input type="date" class="finp" id="rec-date"></div>
+      <div class="fg"><div class="flbl">FROM (시작일)</div><input type="date" class="finp" id="fin-from"></div>
+      <div class="fg"><div class="flbl">TO (종료일)</div><input type="date" class="finp" id="fin-to"></div>
       <div class="fg"><div class="flbl" style="visibility:hidden">-</div>
-        <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ 인쇄</button></div>
+        <button class="btn btn-navy" onclick="renderFinSearch()" style="width:100%">🔍 재정현황 조회</button></div>
     </div>
-    <button class="btn btn-navy" onclick="renderReceipt()">🔍 조회</button>
+    <div class="alert alert-info">ℹ️ 이월금은 FROM 전월 마감 잔액이 자동 반영됩니다.</div>
   </div>
-  <div class="result-section" id="rec-result">
-    <div class="card"><div id="receipt-content"></div></div>
-  </div>
-</div>
-
-<!-- ===== 온라인 입금 확인 ===== -->
-
-<div id="tab-online-off" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">🌐 온라인 입금 확인</div><div style="font-size:12px;color:var(--g2);margin-top:4px">온라인입금된 십일조헌금·비전헌금 별도 조회</div></div>
-  <div class="g2 mb12" id="online-stats-wrap"></div>
-  <div class="search-panel">
-    <div class="panel-title">검색 조건</div>
-    <div class="g3 mb8">
-      <div class="fg"><div class="flbl">날짜</div>
-        <select class="fsel" id="online-fdate"><option value="">전체</option></select></div>
-      <div class="fg"><div class="flbl">헌금구분</div>
-        <select class="fsel" id="online-ftype">
-          <option value="">전체 (십일조+비전)</option>
-          <option value="십일조헌금">십일조헌금</option>
-          <option value="비전헌금">비전헌금</option>
-        </select></div>
-      <div class="fg"><div class="flbl">성도명</div>
-        <input class="finp" id="online-fname" placeholder="이름 검색..."></div>
+  <div class="result-section" id="fin-result">
+    <div class="flex jend mb8 no-print">
+      <button class="btn btn-outline btn-sm" onclick="printSection('finsearch-content')">🖨️ 인쇄</button>
     </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="doOnlineSearch()">🔍 조회</button>
-      <button class="btn btn-outline" onclick="resetOnlineSearch()">초기화</button>
-    </div>
-  </div>
-  <div class="result-section" id="online-result">
-    <div class="card">
-      <div class="card-hd">
-        <div class="card-title">온라인 입금 내역 <span class="badge b-blue" style="margin-left:6px">온라인입금 한정</span></div>
-        <div class="flex gap8 items-c">
-          <span id="online-count" class="badge b-navy"></span>
-          <span id="online-total" style="font-family:var(--fnum);font-weight:700;color:var(--blue);font-size:14px"></span>
-        </div>
-      </div>
-      <div class="tbl-wrap"><table class="tbl">
-        <thead><tr>
-          <th>#</th><th>날짜</th><th>주차</th><th>헌금구분</th><th>성도명</th>
-          <th class="nc">금액(원)</th><th>입금방식</th><th>비고</th><th>시트</th>
-        </tr></thead>
-        <tbody id="online-tbody"></tbody>
-        <tfoot><tr>
-          <td colspan="5" style="text-align:center;font-weight:800">합계</td>
-          <td class="nc" id="online-foot-total" style="color:var(--blue)"></td>
-          <td colspan="3"></td>
-        </tr></tfoot>
-      </table></div>
-    </div>
-    <div class="g2 mt12">
-      <div class="card">
-        <div class="card-title" style="margin-bottom:10px">십일조헌금 — 온라인입금</div>
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>날짜</th><th>성도명</th><th class="nc">금액(원)</th><th>비고</th></tr></thead>
-          <tbody id="online-tijo-tbody"></tbody>
-          <tfoot><tr><td colspan="2" style="text-align:center">소계</td>
-            <td class="nc" id="online-tijo-total"></td><td></td></tr></tfoot>
-        </table></div>
-      </div>
-      <div class="card">
-        <div class="card-title" style="margin-bottom:10px">비전헌금 — 온라인입금</div>
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>날짜</th><th>성도명</th><th class="nc">금액(원)</th><th>비고</th></tr></thead>
-          <tbody id="online-vision-tbody"></tbody>
-          <tfoot><tr><td colspan="2" style="text-align:center">소계</td>
-            <td class="nc" id="online-vision-total"></td><td></td></tr></tfoot>
-        </table></div>
-      </div>
-    </div>
-  </div>
-  <!-- 기타 헌금유형 온라인입금 동적 렌더링 영역 -->
-  <div id="online-other-wrap" class="flex gap12" style="flex-wrap:wrap;margin-top:12px"></div>
-</div>
-
-<!-- ===== 관리 ===== -->
-
-<div id="tab-manage" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">⚙️ 관리 설정</div></div>
-  <div class="sub-nav">
-    <div class="sub-btn on" onclick="switchMgr('offering-mgr',this)">헌금종류</div>
-    <div class="sub-btn" onclick="switchMgr('dept-mgr',this)">부서</div>
-    <div class="sub-btn" onclick="switchMgr('account-mgr',this)">수취자 계좌</div>
-    <div class="sub-btn" onclick="switchMgr('sponsor-mgr',this)">찬조유형</div>
-    <div class="sub-btn" onclick="switchMgr('budget-mgr',this)">연간예산</div>
-    <div class="sub-btn" onclick="switchMgr('carryover-mgr',this)">이월금 설정</div>
-    <div class="sub-btn" onclick="switchMgr('writer-mgr',this)">작성자</div>
-    <div class="sub-btn" onclick="switchMgr('data-mgr',this)">데이터</div>
-  </div>
-  <div id="offering-mgr" class="card" style="display:block">
-    <div class="card-title" style="margin-bottom:10px">헌금종류 관리</div>
-    <div class="flex gap8 mb12"><input class="finp" id="new-off" placeholder="새 헌금종류" style="max-width:200px"><button class="btn btn-navy" onclick="addOfferingType()">+ 추가</button></div>
-    <div id="off-type-list"></div>
-  </div>
-  <div id="dept-mgr" class="card hidden">
-    <div class="card-title" style="margin-bottom:10px">부서 관리</div>
-    <div class="flex gap8 mb12"><input class="finp" id="new-dept-mgr" placeholder="새 부서명" style="max-width:200px"><button class="btn btn-navy" onclick="addDeptType()">+ 추가</button></div>
-    <div id="dept-type-list"></div>
-  </div>
-  <div id="account-mgr" class="card hidden">
-    <div class="card-title" style="margin-bottom:10px">수취자 계좌 관리</div>
-    <div class="alert alert-info">지출 입력 시 자동 저장됩니다.</div>
-    <div class="flex gap8 mb12">
-      <input class="finp" id="new-recip-name" placeholder="수취자명" style="max-width:120px">
-      <input class="finp" id="new-recip-acc" placeholder="계좌번호 (은행 + 번호)" style="max-width:240px">
-      <button class="btn btn-navy" onclick="addRecipient()">+ 추가</button>
-    </div>
-    <div id="recip-list"></div>
-  </div>
-  <div id="sponsor-mgr" class="card hidden">
-    <div class="card-title" style="margin-bottom:10px">찬조 유형 관리</div>
-    <div class="flex gap8 mb12"><input class="finp" id="new-spon-type" placeholder="새 찬조유형" style="max-width:200px"><button class="btn btn-navy" onclick="addSponType()">+ 추가</button></div>
-    <div id="spon-type-list"></div>
-  </div>
-  <div id="budget-mgr" class="card hidden">
-    <div class="card-title" style="margin-bottom:10px">연간예산 입력</div>
-    <div class="alert alert-info">월간 회계보고 예산 진도율에 사용됩니다.</div>
-    <div id="budget-form"></div>
-    <button class="btn btn-navy mt12" onclick="saveBudget()">💾 예산 저장</button>
-  </div>
-
-  <div id="carryover-mgr" class="card hidden">
-    <div class="card-title" style="margin-bottom:6px">🏦 이월금 설정</div>
-    <div style="background:#e8f4fd;padding:10px 14px;border-radius:7px;font-size:12px;color:#1a6fa0;margin-bottom:14px;border-left:3px solid #2980b9">
-      각 연도 시작 이월금을 입력하세요. 월간 보고서의 <strong>이월금</strong>은 이 값과 해당 연도 수입·지출 누계로 자동 계산됩니다.
-    </div>
-    <div id="carryover-form"></div>
-    <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn btn-navy" onclick="saveCarryover()">💾 이월금 저장</button>
-    </div>
-  </div>
-
-  <div id="writer-mgr" class="card hidden">
-    <div class="card-title" style="margin-bottom:10px">✍️ 작성자 관리</div>
-    <div style="background:#e8f4fd;padding:9px 14px;border-radius:7px;font-size:11px;color:#1a6fa0;margin-bottom:12px;border-left:3px solid #2980b9">
-      헌금입력 화면의 작성자 목록을 관리합니다. 추가·삭제 후 저장하면 즉시 반영됩니다.
-    </div>
-    <div class="flex gap8 mb12">
-      <input class="finp" id="new-writer-name" placeholder="새 작성자 이름" style="max-width:200px"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();addWriter();}">
-      <button class="btn btn-navy" onclick="addWriter()">＋ 추가</button>
-    </div>
-    <div id="writer-list"></div>
-  </div>
-  <div id="data-mgr" class="card hidden">
-    <div class="card-title" style="margin-bottom:10px">데이터 관리</div>
-
-    <!-- 서브탭 카드형식 -->
-    <div class="dm-card-grid mb12">
-      <div class="dm-tab-card active" id="dmcard-view" onclick="switchDataTab('dtab-view',this,'dtab-view')">
-        <div class="dm-card-icon">📋</div>
-        <div><div class="dm-card-title">전체 내역 조회·수정</div><div class="dm-card-desc">헌금·지출·찬조 내역 확인 및 수정</div></div>
-      </div>
-      <div class="dm-tab-card" id="dmcard-io" onclick="switchDataTab('dtab-io',this,'dtab-io')">
-        <div class="dm-card-icon">💾</div>
-        <div><div class="dm-card-title">내보내기·불러오기</div><div class="dm-card-desc">엑셀/JSON 파일 저장·복원</div></div>
-      </div>
-    </div>
-
-    <!-- 전체 내역 조회·수정 탭 -->
-    <div id="dtab-view">
-      <!-- 헌금 전체 조회 -->
-      <div class="card" style="border:1px solid var(--blue-pale);margin-bottom:14px">
-        <div class="card-hd">
-          <div class="card-title">📊 전체 헌금내역</div>
-          <div class="flex gap8 items-c">
-            <span id="dm-off-count" class="badge b-navy"></span>
-            <span id="dm-off-total" style="font-family:var(--fnum);font-weight:700;color:var(--blue);font-size:13px"></span>
-          </div>
-        </div>
-        <!-- 필터 -->
-        <div class="g3 mb8">
-          <div class="fg"><div class="flbl">기간(시작)</div><input type="date" class="finp" id="dm-off-from"></div>
-          <div class="fg"><div class="flbl">기간(종료)</div><input type="date" class="finp" id="dm-off-to"></div>
-          <div class="fg"><div class="flbl">헌금구분</div><select class="fsel" id="dm-off-type"><option value="">전체</option></select></div>
-        </div>
-        <div class="g2 mb8">
-          <div class="fg"><div class="flbl">성도명</div><input class="finp" id="dm-off-name" placeholder="이름 검색..."></div>
-          <div class="fg"><div class="flbl">입금방식</div>
-            <select class="fsel" id="dm-off-online"><option value="">전체</option><option>현금입금</option><option>온라인입금</option></select></div>
-        </div>
-        <div class="flex gap8 mb12">
-          <button class="btn btn-navy" onclick="dmLoadOfferings()">🔍 조회</button>
-          <button class="btn btn-outline" onclick="dmResetOff()">초기화</button>
-          <button class="btn btn-outline btn-sm" onclick="printSection('dm-off-print')">🖨️ 인쇄</button>
-        </div>
-        <div id="dm-off-print">
-          <div class="tbl-wrap"><table class="tbl" id="dm-off-table">
-            <thead><tr>
-              <th style="width:30px">#</th>
-              <th style="width:90px">날짜</th>
-              <th style="width:110px">헌금구분</th>
-              <th>성도명</th>
-              <th class="nc" style="width:100px">금액(원)</th>
-              <th style="width:80px">입금방식</th>
-              <th>비고</th>
-              <th style="width:60px" class="no-print">수정</th>
-              <th style="width:50px" class="no-print">삭제</th>
-            </tr></thead>
-            <tbody id="dm-off-tbody"></tbody>
-            <tfoot><tr>
-              <td colspan="4" style="text-align:center;font-weight:800">합계</td>
-              <td class="nc" id="dm-off-foot" style="color:var(--blue)"></td>
-              <td colspan="3"></td>
-            </tr></tfoot>
-          </table></div>
-        </div>
-      </div>
-
-      <!-- 지출 전체 조회 -->
-      <div class="card" style="border:1px solid var(--red-l)">
-        <div class="card-hd">
-          <div class="card-title">💸 전체 지출내역</div>
-          <div class="flex gap8 items-c">
-            <span id="dm-exp-count" class="badge b-red"></span>
-            <span id="dm-exp-total" style="font-family:var(--fnum);font-weight:700;color:var(--red);font-size:13px"></span>
-          </div>
-        </div>
-        <!-- 필터 -->
-        <div class="g3 mb8">
-          <div class="fg"><div class="flbl">기간(시작)</div><input type="date" class="finp" id="dm-exp-from"></div>
-          <div class="fg"><div class="flbl">기간(종료)</div><input type="date" class="finp" id="dm-exp-to"></div>
-          <div class="fg"><div class="flbl">부서</div><select class="fsel" id="dm-exp-dept"><option value="">전체</option></select></div>
-        </div>
-        <div class="g2 mb8">
-          <div class="fg"><div class="flbl">수취자명</div><input class="finp" id="dm-exp-recip" placeholder="수취자 검색..."></div>
-          <div class="fg"><div class="flbl">지급방식</div>
-            <select class="fsel" id="dm-exp-pay"><option value="">전체</option><option>송금지급</option><option>현금지급</option><option>이자</option></select></div>
-        </div>
-        <div class="flex gap8 mb12">
-          <button class="btn btn-navy" onclick="dmLoadExpenses()">🔍 조회</button>
-          <button class="btn btn-outline" onclick="dmResetExp()">초기화</button>
-          <button class="btn btn-outline btn-sm" onclick="printSection('dm-exp-print')">🖨️ 인쇄</button>
-        </div>
-        <div id="dm-exp-print">
-          <div class="tbl-wrap"><table class="tbl" id="dm-exp-table">
-            <thead><tr>
-              <th style="width:30px">#</th>
-              <th style="width:90px">날짜</th>
-              <th style="width:90px">부서</th>
-              <th style="width:80px">요청자</th>
-              <th style="width:80px">수취자</th>
-              <th>계좌번호</th>
-              <th class="nc" style="width:100px">금액(원)</th>
-              <th>내용(비고)</th>
-              <th style="width:70px">지급방식</th>
-              <th style="width:60px" class="no-print">수정</th>
-              <th style="width:50px" class="no-print">삭제</th>
-            </tr></thead>
-            <tbody id="dm-exp-tbody"></tbody>
-            <tfoot><tr>
-              <td colspan="6" style="text-align:center;font-weight:800">합계</td>
-              <td class="nc" id="dm-exp-foot" style="color:var(--red)"></td>
-              <td colspan="3"></td>
-            </tr></tfoot>
-          </table></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 내보내기·불러오기 탭 -->
-    <div id="dtab-io" class="hidden">
-
-      <!-- ★ 엑셀 내보내기 -->
-      <div class="card-title" style="font-size:13px;margin-bottom:10px">📤 엑셀로 내보내기</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px">
-        <div onclick="exportExcelAll()" style="border:1.5px solid var(--border,#e2e8f0);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--navy,#1a2456)';this.style.background='#f8f9ff'" onmouseout="this.style.borderColor='var(--border,#e2e8f0)';this.style.background=''">
-          <div style="font-size:26px;margin-bottom:6px">📊</div>
-          <div style="font-size:12px;font-weight:700;color:var(--navy,#1a2456)">전체 내보내기</div>
-          <div style="font-size:10px;color:#888;margin-top:3px">헌금·지출·찬조+요약</div>
-        </div>
-        <div onclick="exportExcelOffering()" style="border:1.5px solid var(--border,#e2e8f0);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--navy,#1a2456)';this.style.background='#f8f9ff'" onmouseout="this.style.borderColor='var(--border,#e2e8f0)';this.style.background=''">
-          <div style="font-size:26px;margin-bottom:6px">🙏</div>
-          <div style="font-size:12px;font-weight:700;color:var(--navy,#1a2456)">헌금 내보내기</div>
-          <div style="font-size:10px;color:#888;margin-top:3px">헌금내역 xlsx</div>
-        </div>
-        <div onclick="exportExcelExpense()" style="border:1.5px solid var(--border,#e2e8f0);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--navy,#1a2456)';this.style.background='#f8f9ff'" onmouseout="this.style.borderColor='var(--border,#e2e8f0)';this.style.background=''">
-          <div style="font-size:26px;margin-bottom:6px">💸</div>
-          <div style="font-size:12px;font-weight:700;color:var(--navy,#1a2456)">지출 내보내기</div>
-          <div style="font-size:10px;color:#888;margin-top:3px">지출내역 xlsx</div>
-        </div>
-        <div onclick="exportExcelSponsor()" style="border:1.5px solid var(--border,#e2e8f0);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--navy,#1a2456)';this.style.background='#f8f9ff'" onmouseout="this.style.borderColor='var(--border,#e2e8f0)';this.style.background=''">
-          <div style="font-size:26px;margin-bottom:6px">🤝</div>
-          <div style="font-size:12px;font-weight:700;color:var(--navy,#1a2456)">찬조 내보내기</div>
-          <div style="font-size:10px;color:#888;margin-top:3px">찬조내역 xlsx</div>
-        </div>
-        <div onclick="exportData()" style="border:1.5px solid var(--border,#e2e8f0);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--navy,#1a2456)';this.style.background='#f8f9ff'" onmouseout="this.style.borderColor='var(--border,#e2e8f0)';this.style.background=''">
-          <div style="font-size:26px;margin-bottom:6px">🗂️</div>
-          <div style="font-size:12px;font-weight:700;color:var(--navy,#1a2456)">JSON 백업</div>
-          <div style="font-size:10px;color:#888;margin-top:3px">전체설정 포함 백업</div>
-        </div>
-      </div>
-
-      <!-- ★ 엑셀 불러오기 - 3단계 UX -->
-      <div class="card-title" style="font-size:13px;margin-bottom:10px;padding-top:4px;border-top:1px solid var(--border,#e2e8f0)">📥 엑셀 파일 업로드</div>
-
-      <!-- STEP 1: 파일 선택 -->
-      <div id="imp-step1" style="border:2px dashed var(--border,#e2e8f0);border-radius:12px;padding:24px;text-align:center;background:#fafbff;cursor:pointer;transition:all .2s" onclick="document.getElementById('imp-excel').click()" onmouseover="this.style.borderColor='var(--navy,#1a2456)'" onmouseout="document.getElementById('imp-step1').style.borderColor='var(--border,#e2e8f0)'">
-        <div style="font-size:36px;margin-bottom:8px">📂</div>
-        <div style="font-size:13px;font-weight:700;color:var(--navy,#1a2456);margin-bottom:4px">엑셀 파일을 클릭하여 선택하세요</div>
-        <div style="font-size:11px;color:#888">헌금내역.xlsx · 지출내역.xlsx · 찬조내역.xlsx 지원</div>
-        <input type="file" id="imp-excel" accept=".xlsx,.xls" style="display:none" onchange="handleExcelSelect(event)">
-      </div>
-
-      <!-- STEP 2: 검증 중 (숨김) -->
-      <div id="imp-step2" style="display:none;border-radius:12px;padding:20px;background:#f8f9ff;border:1.5px solid var(--border,#e2e8f0);margin-top:10px">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-          <div id="imp-spinner" style="width:24px;height:24px;border:3px solid #e2e8f0;border-top-color:var(--navy,#1a2456);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>
-          <div>
-            <div id="imp-step2-title" style="font-size:13px;font-weight:700;color:var(--navy,#1a2456)">파일 분석 중...</div>
-            <div id="imp-filename" style="font-size:11px;color:#888;margin-top:2px"></div>
-          </div>
-        </div>
-        <div id="imp-progress-wrap" style="background:#e9ecef;border-radius:4px;height:6px;overflow:hidden">
-          <div id="imp-progress-bar" style="height:100%;width:0%;background:var(--navy,#1a2456);border-radius:4px;transition:width .4s ease"></div>
-        </div>
-        <div id="imp-progress-msg" style="font-size:11px;color:#888;margin-top:6px">양식 확인 중...</div>
-      </div>
-
-      <!-- STEP 3: 검증 결과 (숨김) -->
-      <div id="imp-step3" style="display:none;margin-top:10px">
-        <!-- 검증 결과 카드 -->
-        <div id="imp-result-card" style="border-radius:12px;padding:16px;border:2px solid #e2e8f0">
-          <div id="imp-result-header" style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-            <div id="imp-result-icon" style="font-size:28px"></div>
-            <div>
-              <div id="imp-result-title" style="font-size:14px;font-weight:700"></div>
-              <div id="imp-result-sub" style="font-size:11px;color:#888;margin-top:2px"></div>
-            </div>
-          </div>
-          <!-- 시트별 검증 결과 -->
-          <div id="imp-sheet-results" style="margin-bottom:12px"></div>
-          <!-- 경고/오류 목록 -->
-          <div id="imp-warnings" style="margin-bottom:12px"></div>
-          <!-- 데이터 미리보기 -->
-          <div id="imp-preview-table" style="margin-bottom:12px"></div>
-        </div>
-
-        <!-- 확인 완료 버튼 -->
-        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button id="imp-confirm-btn"
-            onclick="confirmExcelUpload()"
-            disabled
-            style="padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;border:none;cursor:not-allowed;background:#ccc;color:#fff;transition:all .3s;display:flex;align-items:center;gap:8px">
-            <span id="imp-confirm-icon">⏳</span>
-            <span id="imp-confirm-text">검증 대기 중...</span>
-          </button>
-          <button onclick="resetExcelUpload()" style="padding:11px 16px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;border:1.5px solid var(--border,#e2e8f0);background:#fff;cursor:pointer;color:#666">
-            🔄 다시 선택
-          </button>
-          <div id="imp-confirm-hint" style="font-size:11px;color:#888"></div>
-        </div>
-      </div>
-
-      <!-- 업로드 완료 결과 -->
-      <div id="imp-done" style="display:none;margin-top:10px"></div>
-
-      <!-- JSON 불러오기 -->
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border,#e2e8f0)">
-        <div class="card-title" style="font-size:12px;margin-bottom:8px;color:#888">🗂️ JSON 백업 불러오기</div>
-        <button class="btn btn-outline" onclick="importData()">📂 JSON 파일 선택</button>
-        <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)">
-      </div>
-
-      <!-- 삭제 섹션 -->
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border,#e2e8f0)">
-        <div class="card-title" style="font-size:12px;margin-bottom:8px;color:#e74c3c">🗑️ 전체 삭제</div>
-        <div style="background:#fff8e1;padding:10px 12px;border-radius:7px;border-left:3px solid #f0c040;font-size:11px;margin-bottom:8px">⚠️ 삭제는 되돌릴 수 없습니다.</div>
-        <div class="flex gap8">
-          <button class="btn btn-red" onclick="clearOffering()">헌금 전체삭제</button>
-          <button class="btn btn-red" onclick="clearExpense()">지출 전체삭제</button>
-        </div>
-      </div>
-    </div>
+    <div id="finsearch-content"></div>
   </div>
 </div>
-</main>
-</div>
+
+<!-- ===== 헌금조회 ===== -->
+
 </main>
 
 </div>
@@ -5106,6 +4420,18 @@ if(document.readyState==='loading'){
     setTimeout(function(){if(!window._appInitDone) window._appInit();}, 3500);
   });
 }
+
+// ── 월간업무 전용 설정 ──
+window.READONLY_MODE = true;
+// 조회 전용 - 입력/삭제 버튼 숨김
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.btn-red, .btn-navy, [onclick*="delete"], [onclick*="add"], [onclick*="save"]').forEach(function(el){
+    if(!el.classList.contains('btn-search') && !el.textContent.includes('조회') && !el.textContent.includes('인쇄')){
+      el.style.display='none';
+    }
+  });
+});
+
 </script>
 </body>
 </html>
