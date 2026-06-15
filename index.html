@@ -1013,10 +1013,6 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
         <select class="fsel" id="spon-cat" onchange="onSponCatChange()">
           <option value="">전체</option>
           <option value="교육부찬조전체">교육부찬조 전체</option>
-          <option value="영상찬조">영상찬조</option>
-          <option value="야외예배찬조">야외예배찬조</option>
-          <option value="꽃꽂이찬조">꽃꽂이찬조</option>
-          <option value="기타찬조">기타찬조</option>
         </select></div>
       <div class="fg" id="spon-sub-wrap" style="display:none"><div class="flbl">교육부찬조 세부</div>
         <select class="fsel" id="spon-ftype-q" onchange="toggleSponExtra()">
@@ -3008,15 +3004,35 @@ function renderMonthlyGeneral(ym){
   <!-- (1) 총계 -->
   <div class="rpt-section">
     <div class="rpt-section-title">① 총 계 <span class="badge">${yr}. ${String(mo).padStart(2,'0')}</span></div>
-    <div class="rpt-summary">
-      <div class="rpt-summary-item"><span class="lbl">이 월 금</span><span class="val" style="color:#64748b">${fmtN(prevBal)}원</span></div>
-      <div class="rpt-summary-item hi"><span class="lbl">수입 누계</span><span class="val" style="color:#1d4ed8">${fmtN(tot2CuInc)}원</span></div>
-      <div class="rpt-summary-item hi"><span class="lbl">${mo}월 수입</span><span class="val" style="color:#1d4ed8">${fmtN(tot2MoInc)}원</span></div>
-      <div class="rpt-summary-item red"><span class="lbl">지출 누계</span><span class="val" style="color:#dc2626">${fmtN(tot2CuExp)}원</span></div>
-      <div class="rpt-summary-item red"><span class="lbl">${mo}월 지출</span><span class="val" style="color:#dc2626">${fmtN(tot2MoExp)}원</span></div>
-      <div class="rpt-summary-item navy"><span class="lbl">잔 액</span><span class="val" style="color:#2563eb">${fmtN(tot2CuInc-tot2CuExp)}원</span></div>
-      <div class="rpt-summary-item gold"><span class="lbl">${mo}월 결산</span><span class="val" style="color:#b45309">${fmtN(tot2MoInc-tot2MoExp)}원</span></div>
-    </div>
+    <table class="rpt-summary-tbl" style="width:100%;border-collapse:collapse;margin:10px 0">
+      <tbody>
+        <tr>
+          <td style="width:50%;padding:0;vertical-align:top;border:none">
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:8px 14px;background:#f8faff;border:1px solid #e2e8f0;font-size:11px;font-weight:600;color:#64748b;width:110px">이 월 금</td>
+                  <td style="padding:8px 14px;background:#f8faff;border:1px solid #e2e8f0;font-size:14px;font-weight:800;color:#64748b;text-align:right;font-family:Arial,sans-serif">${fmtN(prevBal)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:11px;font-weight:600;color:#1d4ed8">${mo}월 수입</td>
+                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:14px;font-weight:800;color:#1d4ed8;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoInc)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:11px;font-weight:600;color:#dc2626">${mo}월 지출</td>
+                  <td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:14px;font-weight:800;color:#dc2626;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoExp)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#fefce8;border:1px solid #fde047;font-size:11px;font-weight:600;color:#b45309">${mo}월 결산</td>
+                  <td style="padding:8px 14px;background:#fefce8;border:1px solid #fde047;font-size:14px;font-weight:800;color:#b45309;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoInc-tot2MoExp)}원</td></tr>
+            </table>
+          </td>
+          <td style="width:12px;border:none"></td>
+          <td style="width:50%;padding:0;vertical-align:top;border:none">
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:11px;font-weight:600;color:#1d4ed8;width:110px">수입 누계</td>
+                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:14px;font-weight:800;color:#1d4ed8;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuInc)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:11px;font-weight:600;color:#dc2626">지출 누계</td>
+                  <td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:14px;font-weight:800;color:#dc2626;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuExp)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:11px;font-weight:600;color:#2563eb">잔 액</td>
+                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:14px;font-weight:800;color:#2563eb;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuInc-tot2CuExp)}원</td></tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- (2) 수입 -->
@@ -4456,20 +4472,40 @@ window.printSelectedDepts=function(){
   const selected=[];
   document.querySelectorAll('.dept-print-cb:checked').forEach(function(cb){ selected.push(cb.value); });
   if(!selected.length){ alert('인쇄할 부서를 선택해주세요.'); return; }
-  // 선택한 부서만 임시 표시
+  // 선택된 부서 섹션만 HTML로 수집
   const allSections=document.querySelectorAll('#deptreport-content .rpt-section');
+  let html='';
   allSections.forEach(function(sec){
     const deptTitle=sec.querySelector('strong');
-    if(deptTitle){
-      const deptName=deptTitle.textContent.trim();
-      sec.style.display=selected.includes(deptName)?'block':'none';
+    if(deptTitle && selected.includes(deptTitle.textContent.trim())){
+      html+=sec.outerHTML;
     }
   });
-  setTimeout(function(){
-    window.print();
-    // 인쇄 후 모두 복원
-    allSections.forEach(function(sec){ sec.style.display=''; });
-  }, 200);
+  if(!html){ alert('조회 결과가 없습니다. 먼저 조회하세요.'); return; }
+  const ym=document.getElementById('dept-month')?.value||'';
+  const printWin=window.open('','_blank','width=900,height=700');
+  printWin.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>서부광성교회 — 부서별 예산집행보고서</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:'Gulim','굴림',sans-serif;font-size:12px;padding:16px;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      @page{margin:10mm;size:A4 portrait}
+      h2{font-size:16px;font-weight:900;color:#1a3a6e;text-align:center;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #1a3a6e}
+      .rpt-section{margin-bottom:24px;border:1.5px solid #c8d8e8;border-radius:8px;overflow:hidden;page-break-inside:avoid}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th{background:#1e3a5f;color:#fff;padding:7px 10px;text-align:center;font-weight:900;-webkit-print-color-adjust:exact}
+      td{padding:6px 10px;border-bottom:1px solid #e2e8f0}
+      tfoot td{background:#e8f0f8;font-weight:900;border-top:2px solid #c8d8e8}
+      .num{text-align:right;font-family:Arial,sans-serif;font-weight:700}
+      strong{color:#fff!important}
+    </style>
+  </head><body>
+    <h2>부서별 예산집행보고서 ${ym?'('+ym+')':''}</h2>
+    ${html}
+    <script>window.onload=function(){window.print();window.close();}<\/script>
+  </body></html>`);
+  printWin.document.close();
 };
 
 window.renderDeptReport=function(){
@@ -5254,6 +5290,29 @@ window.printSection=function(areaId){
       .b-gray{background:#e8eff6;color:#546e8a}
       tfoot td{background:#e8eff6;font-weight:800;font-family:'Arial','Helvetica Neue',sans-serif}
       .tbl-wrap{overflow:visible}
+      /* 입금전표 결재칸 */
+      .approv-tbl{border-collapse:collapse!important}
+      .approv-tbl th,.approv-tbl td{border:1px solid #aaa!important;padding:6px 18px!important;text-align:center!important}
+      .approv-tbl th{background:#e8eff6!important;font-weight:900!important;color:#1a3a6e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .approv-tbl td{height:48px!important;min-width:80px!important}
+      /* 월간보고 서머리 */
+      .monthly-summary-tbl{width:100%;border-collapse:collapse;margin-bottom:14px}
+      .monthly-summary-tbl td{padding:8px 16px;border:1px solid #c8d8e8;font-size:12px}
+      .monthly-summary-tbl .lbl{background:#f0f4f8;font-weight:700;color:#1a3a6e;width:120px}
+      .monthly-summary-tbl .val{font-family:Arial,sans-serif;font-weight:700;text-align:right}
+      .monthly-summary-tbl .val.blue{color:#1d4ed8}
+      .monthly-summary-tbl .val.red{color:#dc2626}
+      /* 월간보고 섹션 */
+      .rpt-section{margin-bottom:16px}
+      .rpt-section-title{background:#1e3a5f!important;color:#fff!important;padding:6px 12px!important;font-weight:900!important;font-size:12px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .rpt-tbl{width:100%;border-collapse:collapse}
+      .rpt-tbl th{background:#e8eff6!important;padding:6px 10px;border:1px solid #c5d3e8;font-size:11px;font-weight:700;-webkit-print-color-adjust:exact}
+      .rpt-tbl td{padding:5px 10px;border:1px solid #e2e8f0;font-size:11px}
+      .rpt-tbl .rpt-num{text-align:right;font-family:Arial,sans-serif}
+      .rpt-tbl tfoot td{font-weight:700;background:#e8eff6!important;-webkit-print-color-adjust:exact}
+      .rpt-inc-section{page-break-after:always}
+      .sum2{background:#fff3cd!important;font-weight:900!important;-webkit-print-color-adjust:exact}
+      .sum1{background:#e8eff6!important;font-weight:900!important;-webkit-print-color-adjust:exact}
     <\/style>
   <\/head>\u003cbody>`);
   const now=nowKST();
