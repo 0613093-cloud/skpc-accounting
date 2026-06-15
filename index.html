@@ -324,8 +324,43 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   #receipt-content{page-break-inside:avoid;break-inside:avoid}
   #receipt-content table td,#receipt-content table th{padding:2px 5px!important;font-size:10px!important;line-height:1.3!important}
   #receipt-content .rct-title{font-size:15px!important}
-  #receipt-content .approv-tbl td{height:28px!important;min-width:44px!important}
+  #receipt-content .approv-tbl td{height:44px!important;min-width:90px!important;padding:6px 20px!important}
   .cat-cell{font-size:9px!important}
+}
+
+/* ===== 월간보고 전용 인쇄 CSS ===== */
+@media print{
+  /* 월간보고 인쇄: 화면과 동일한 스타일 유지 */
+  #monthly-print-area{
+    display:block!important;
+    font-family:'Gulim','굴림',sans-serif;
+    font-size:11px;
+    color:#000;
+  }
+  /* 색상 유지 */
+  #monthly-print-area .rpt-num{ color:inherit!important; }
+  #monthly-print-area .rpt-tbl td,
+  #monthly-print-area .rpt-tbl th{ border:1px solid #aaa!important; }
+  /* 수입 섹션 - 페이지 나눔 없음 */
+  #monthly-print-area .rpt-inc-section{ page-break-after:always!important; break-after:page!important; }
+  /* 지출 섹션 - 별도 페이지 */
+  #monthly-print-area .rpt-exp-section{ page-break-before:avoid!important; }
+  /* 각 섹션 내부 줄바꿈 방지 */
+  #monthly-print-area .rpt-tbl{ page-break-inside:avoid!important; break-inside:avoid!important; }
+  /* 합계행 굵게 */
+  #monthly-print-area tfoot td{ font-weight:900!important; }
+  /* 헤더 고정 */
+  #monthly-print-area .rpt-hd{ text-align:center; border-bottom:2px solid #1e3a5f; margin-bottom:12px; }
+  /* 총계 박스 인쇄 */
+  #monthly-print-area .rpt-wrap{ background:#fff!important; }
+  /* 불필요 요소 숨김 */
+  #monthly-print-area .no-print{ display:none!important; }
+}
+
+/* ===== 부서보고서 전용 인쇄 CSS ===== */
+@media print{
+  #deptreport-print-area .rpt-section{ page-break-inside:avoid!important; break-inside:avoid!important; margin-bottom:16px!important; }
+  #deptreport-print-area{ font-size:11px; }
 }
 
 /* ===== 헌금유형 파스텔 행 색상 ===== */
@@ -1267,7 +1302,21 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     <select id="dept-month" onchange="updateMonthBadge('dept-month','dept-badge')"></select>
     <span class="m-badge" id="dept-badge">-</span>
     <button class="btn btn-navy" onclick="renderDeptReport()">🔍 조회</button>
-    <button class="btn btn-outline" onclick="printSection('deptreport-print-area')">🖨️ 인쇄</button>
+    <button class="btn btn-gold" onclick="showDeptPrintSelect()">🖨️ 부서 선택 인쇄</button>
+    <button class="btn btn-outline" onclick="printSection('deptreport-print-area')">전체 인쇄</button>
+  </div>
+  <!-- 부서 선택 인쇄 패널 -->
+  <div id="dept-print-panel" class="card hidden" style="margin-bottom:12px">
+    <div class="card-hd">
+      <div class="card-title">🖨️ 인쇄할 부서 선택</div>
+      <div class="flex gap8">
+        <button class="btn btn-outline btn-sm" onclick="toggleAllDeptPrint(true)">전체선택</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleAllDeptPrint(false)">전체해제</button>
+        <button class="btn btn-navy btn-sm" onclick="printSelectedDepts()">선택 인쇄</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('dept-print-panel').classList.add('hidden')">닫기</button>
+      </div>
+    </div>
+    <div id="dept-print-checkboxes" class="flex gap8" style="flex-wrap:wrap;padding:8px 0"></div>
   </div>
   <div id="deptreport-result" class="result-section">
     <div id="deptreport-print-area">
@@ -2527,8 +2576,18 @@ function initSponsorTab(){
   if(fd&&!fd.value) fd.value=firstOfYear;if(td&&!td.value) td.value=TODAY;
   const sfq=document.getElementById('spon-ftype-q');
   const sts=document.getElementById('spon-type-sel');
+  const cat=document.getElementById('spon-cat');
   if(sfq) sfq.innerHTML='<option value="">전체</option>'+getSponTypes().map(t=>`<option>${t}</option>`).join('');
   if(sts) sts.innerHTML='<option value="">선택...</option>'+getSponTypes().map(t=>`<option>${t}</option>`).join('');
+  // spon-cat 드롭다운도 getSponTypes 기반으로 동적 구성
+  if(cat){
+    const eduTypes=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)'];
+    const nonEdu=getSponTypes().filter(t=>!eduTypes.some(e=>t.startsWith(e)));
+    const prev=cat.value;
+    cat.innerHTML='<option value="">전체</option><option value="교육부찬조전체">교육부찬조 전체</option>'
+      +nonEdu.map(t=>`<option value="${t}">${t}</option>`).join('');
+    if(prev) cat.value=prev;
+  }
 }
 window.doSponSearch=function(){
   const cat=document.getElementById('spon-cat')?.value||'';
@@ -2961,7 +3020,7 @@ function renderMonthlyGeneral(ym){
   </div>
 
   <!-- (2) 수입 -->
-  <div class="rpt-section">
+  <div class="rpt-section rpt-inc-section">
     <div class="rpt-section-title">② 수 입</div>
     <table class="rpt-tbl">
       <thead><tr>
@@ -2987,7 +3046,7 @@ function renderMonthlyGeneral(ym){
   </div>
 
   <!-- (3) 지출 -->
-  <div class="rpt-section">
+  <div class="rpt-section rpt-exp-section">
     <div class="rpt-section-title">③ 지 출</div>
     <table class="rpt-tbl">
       <thead><tr>
@@ -3680,7 +3739,7 @@ window.doWeeklySearch=function(){
       +'<td style="font-weight:700">'+(e.name||'')+'</td>'
       +'<td style="text-align:center">'+(isOnlinePayment(e)
         ?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>'
-        :'<span style="color:var(--g3);font-size:11px">현장</span>')
+        :'')
       +'</td>'
       +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
       +'</tr>';
@@ -4378,6 +4437,41 @@ window.renderBankBalance=function(){
 
 
 // ── 부서보고서 렌더링 ─────────────────────────────────────────
+// 부서 선택 인쇄 함수들
+window.showDeptPrintSelect=function(){
+  const panel=document.getElementById('dept-print-panel');
+  const box=document.getElementById('dept-print-checkboxes');
+  if(!panel||!box) return;
+  const depts=getDeptTypes().filter(function(d){return !['건축헌금','전도헌금','사회봉사'].includes(d);});
+  box.innerHTML=depts.map(function(d){
+    return '<label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#f0f4f8;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700">'
+      +'<input type="checkbox" class="dept-print-cb" value="'+d+'" checked style="width:14px;height:14px"> '+d+'</label>';
+  }).join('');
+  panel.classList.remove('hidden');
+};
+window.toggleAllDeptPrint=function(on){
+  document.querySelectorAll('.dept-print-cb').forEach(function(cb){ cb.checked=on; });
+};
+window.printSelectedDepts=function(){
+  const selected=[];
+  document.querySelectorAll('.dept-print-cb:checked').forEach(function(cb){ selected.push(cb.value); });
+  if(!selected.length){ alert('인쇄할 부서를 선택해주세요.'); return; }
+  // 선택한 부서만 임시 표시
+  const allSections=document.querySelectorAll('#deptreport-content .rpt-section');
+  allSections.forEach(function(sec){
+    const deptTitle=sec.querySelector('strong');
+    if(deptTitle){
+      const deptName=deptTitle.textContent.trim();
+      sec.style.display=selected.includes(deptName)?'block':'none';
+    }
+  });
+  setTimeout(function(){
+    window.print();
+    // 인쇄 후 모두 복원
+    allSections.forEach(function(sec){ sec.style.display=''; });
+  }, 200);
+};
+
 window.renderDeptReport=function(){
   const ym=document.getElementById('dept-month')?.value||'';
   const el=document.getElementById('deptreport-content');
