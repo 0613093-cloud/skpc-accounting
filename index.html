@@ -868,6 +868,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     <div class="nav-group-label" data-group="monthly">월간</div>
     <div class="nav-item grp-monthly" data-tab="monthly">📊 월간보고</div>
     <div class="nav-item grp-monthly" data-tab="deptreport">🏢 부서보고서</div>
+    <div class="nav-item grp-monthly" data-tab="bankbal">🏦 통장잔고</div>
 
     <!-- 관리 -->
     <div class="nav-group-label" data-group="manage">관리</div>
@@ -1330,6 +1331,26 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 </div>
 
 
+
+<!-- ===== 통장잔고 조회 ===== -->
+
+<div id="tab-bankbal" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">🏦 통장잔고 조회</div></div>
+
+  <!-- 검색 -->
+  <div class="month-bar">
+    <label>조회 연도</label>
+    <select id="bankbal-year" class="fsel" style="height:34px;font-size:13px;font-weight:700;color:var(--navy)"></select>
+    <button class="btn btn-navy" onclick="renderBankBal()">🔍 조회</button>
+    <button class="btn btn-outline" onclick="printSection('bankbal-print-area')">🖨️ 인쇄</button>
+  </div>
+
+  <div id="bankbal-result" class="result-section">
+    <div id="bankbal-print-area">
+      <div id="bankbal-content"></div>
+    </div>
+  </div>
+</div>
 
 <!-- ===== 관리 ===== -->
 
@@ -1928,7 +1949,7 @@ function getLastSunday(fromDate){
 // 그룹 pill active 갱신
 function updateActiveGroup(tab){
   var weeklyTabs=['receipt','query','weekly','online-off','offering','expense','sponsor','input1','input2','input3'];
-  var monthlyTabs=['monthly','deptreport'];
+  var monthlyTabs=['monthly','deptreport','bankbal'];
   var grp='manage';
   if(weeklyTabs.includes(tab)||tab.startsWith('input')) grp='weekly';
   else if(monthlyTabs.includes(tab)) grp='monthly';
@@ -1947,6 +1968,7 @@ function onTabActivate(tab){
   if(tab==='sponsor') initSponsorTab();
   if(tab==='monthly') initMonthSel('monthly-month','monthly-badge');
   if(tab==='deptreport') initMonthSel('dept-month','dept-badge');
+  if(tab==='bankbal') initBankBalTab();
   if(tab==='query') initQueryTab();
   if(tab==='weekly') initWeeklyTab();
   if(tab==='receipt'){
@@ -2916,11 +2938,22 @@ function renderMonthlyGeneral(ym){
     : carryBase+prevCumOff.reduce((s,e)=>s+Number(e.amount||0),0)-prevCumExp.reduce((s,e)=>s+Number(e.amount||0),0);
 
   // 수입 헌금유형 목록
-  const incTypes=['십일조헌금','월정헌금','감사헌금','주일헌금','헌신예배','교회학교','장학헌금','부활절','맥추감사헌금','추수감사헌금','성탄절','일천번제','선교헌금','비전헌금','기타'];
+  // ── 수입 항목: 헌금내역DB의 getOffTypes()에서 특별3개 제외 → 자동계산 ──
+  const SPECIAL_INC=['건축헌금','전도헌금','지역봉사헌금'];
+  const incTypes=getOffTypes().filter(function(t){ return !SPECIAL_INC.includes(t); });
 
-  // 지출 부서 목록
-  // ★ '건축대출금상환'은 제외하고 '건축대출금 상환(일반회계)'를 별도 항목으로 추가
-  const outTypes=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','장학위원회','재정부','감사부','건축대출금상환적금','대출금이자','건축대출금 상환(일반회계)'];
+  // ── 지출 항목: 지출내역DB의 getDeptTypes()에서 특별3개 제외 → 자동계산 ──
+  const SPECIAL_EXP_DEPT=['건축헌금사용','전도헌금','사회봉사'];
+  // '건축대출금상환'은 EXCLUDE_DEPT로 처리되므로 여기서는 제외
+  // '건축대출금 상환(일반회계)'는 일반회계에 포함
+  const outTypes=(function(){
+    var base=getDeptTypes().filter(function(d){
+      return !SPECIAL_EXP_DEPT.includes(d) && d!=='건축대출금상환';
+    });
+    // '건축대출금 상환(일반회계)'가 없으면 추가
+    if(!base.includes('건축대출금 상환(일반회계)')) base.push('건축대출금 상환(일반회계)');
+    return base;
+  })();
 
   const byTypeInc={};cumOff.forEach(e=>{byTypeInc[e.type]=(byTypeInc[e.type]||0)+Number(e.amount||0);});
   const byTypeMo={};moOff.forEach(e=>{byTypeMo[e.type]=(byTypeMo[e.type]||0)+Number(e.amount||0);});
@@ -5486,6 +5519,304 @@ function init(){
 // 앱 데이터 초기화 (Firebase 연결 후 OR 1.5초 fallback)
 // 탭 클릭은 이미 위에서 즉시 바인딩되어 있음
 // ════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════
+// 통장잔고 조회
+// ════════════════════════════════════════════════════════════
+
+// 계정 설정
+var BANKBAL_ACCOUNTS = [
+  {
+    id: 'general',
+    label: '일반회계',
+    acctNo: '3583',
+    incTypes: null,   // null = 특별3개 제외 전부
+    expTypes: null,   // null = 특별 제외 전부
+    carryKey: 'general'
+  },
+  {
+    id: 'construction',
+    label: '건축회계',
+    acctNo: '3486',
+    incTypes: ['건축헌금'],
+    expTypes: ['건축헌금사용','건축대출금상환','건축대출금상환적금','대출금이자','건축대출금 상환(일반회계)'],
+    carryKey: 'construction'
+  },
+  {
+    id: 'mission',
+    label: '전도헌금',
+    acctNo: '4364',
+    incTypes: ['전도헌금'],
+    expTypes: ['전도헌금','친교부'],
+    carryKey: 'mission'
+  },
+  {
+    id: 'welfare',
+    label: '지역봉사헌금',
+    acctNo: '3591',
+    incTypes: ['지역봉사헌금'],
+    expTypes: ['사회봉사'],
+    carryKey: 'welfare'
+  }
+];
+
+var SPECIAL_INC_TYPES = ['건축헌금','전도헌금','지역봉사헌금'];
+var SPECIAL_EXP_TYPES = ['건축헌금사용','건축대출금상환','건축대출금상환적금','대출금이자',
+  '건축대출금 상환(일반회계)','전도헌금','친교부','사회봉사'];
+
+function initBankBalTab(){
+  var sel = document.getElementById('bankbal-year');
+  if(!sel || sel.options.length > 0) return;
+  var yr = new Date().getFullYear();
+  for(var y = yr; y >= yr - 4; y--){
+    var o = document.createElement('option');
+    o.value = y; o.textContent = y + '년';
+    if(y === yr) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+
+// 월별 수입/지출 계산
+function calcMonthly(yr, acct, offs, exps){
+  var rows = [];
+  // 이월금: ST에서 로드
+  var carryKey = 'bankbal_carry_' + acct.id + '_' + yr;
+  var carry = parseN(ST.get(carryKey, 0));
+  var cumInc = 0, cumExp = 0;
+  for(var m = 1; m <= 12; m++){
+    var ym = yr + '-' + String(m).padStart(2,'0');
+    var moInc = 0, moExp = 0;
+    offs.forEach(function(e){
+      if(!e.date || e.date.slice(0,7) !== ym) return;
+      if(acct.incTypes === null){
+        if(!SPECIAL_INC_TYPES.includes(e.type)) moInc += (e.amount||0);
+      } else {
+        if(acct.incTypes.some(function(t){ return e.type === t; })) moInc += (e.amount||0);
+      }
+    });
+    exps.forEach(function(e){
+      if(!e.date || e.date.slice(0,7) !== ym) return;
+      if(acct.expTypes === null){
+        if(!SPECIAL_EXP_TYPES.some(function(t){ return e.dept === t; })) moExp += (e.amount||0);
+      } else {
+        if(acct.expTypes.some(function(t){ return e.dept && (e.dept === t || e.dept.startsWith(t)); })) moExp += (e.amount||0);
+      }
+    });
+    cumInc += moInc;
+    cumExp += moExp;
+    rows.push({ m: m, ym: ym, moInc: moInc, moExp: moExp,
+                cumInc: cumInc, cumExp: cumExp,
+                bal: carry + cumInc - cumExp });
+  }
+  return { rows: rows, carry: carry };
+}
+
+// 통장잔고 렌더링
+window.renderBankBal = function(){
+  var yr = parseInt(document.getElementById('bankbal-year')?.value || new Date().getFullYear());
+  var el = document.getElementById('bankbal-content');
+  if(!el) return;
+
+  var offs = getOfferings();
+  var exps = getExpenses();
+
+  // 선택 월 입력 필드 (통장잔고 비교용)
+  var compareMonth = document.getElementById('bankbal-cmp-month')?.value ||
+    String(new Date().getMonth()+1).padStart(2,'0');
+
+  // ── 각 계정별 연간 테이블 ─────────────────────────────────
+  var acctTables = BANKBAL_ACCOUNTS.map(function(acct){
+    var data = calcMonthly(yr, acct, offs, exps);
+    var rows = data.rows;
+    var carry = data.carry;
+    var carryKey = 'bankbal_carry_' + acct.id + '_' + yr;
+
+    var trs = rows.map(function(r){
+      var isActive = r.m <= new Date().getMonth() + 1;
+      var rowStyle = isActive ? '' : 'color:#aaa';
+      return '<tr style="' + rowStyle + '">'
+        + '<td style="text-align:center;font-weight:700">' + r.m + '월</td>'
+        + '<td class="nc">' + (r.moInc ? fmtN(r.moInc) : '') + '</td>'
+        + '<td class="nc" style="color:#1d4ed8">' + fmtN(r.cumInc) + '</td>'
+        + '<td class="nc">' + (r.moExp ? fmtN(r.moExp) : '') + '</td>'
+        + '<td class="nc" style="color:#dc2626">' + fmtN(r.cumExp) + '</td>'
+        + '<td class="nc" style="font-weight:800;color:' + (r.bal >= 0 ? '#1d4ed8' : '#dc2626') + '">'
+        + fmtN(r.bal) + '</td>'
+        + '</tr>';
+    }).join('');
+
+    return '<div class="card" style="margin-bottom:16px">'
+      + '<div class="card-hd">'
+      + '<div class="card-title">'
+      + acct.label
+      + ' <span style="font-size:11px;color:var(--g2);font-weight:400">(통장 ' + acct.acctNo + ')</span>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;font-size:12px">'
+      + '<label style="font-weight:700;color:var(--g2)">이월금</label>'
+      + '<input type="text" id="carry-' + acct.id + '" value="' + (carry ? fmtN(carry) : '') + '"'
+      + ' placeholder="이월금 입력" oninput="fmtAmt(this)"'
+      + ' data-id="' + acct.id + '" data-yr="' + yr + '" onchange="saveBankBalCarry(this.dataset.id,this.dataset.yr)"'
+      + ' style="width:120px;height:30px;padding:0 8px;border:1.5px solid var(--blue);border-radius:6px;font-family:var(--fnum);text-align:right;font-size:12px;font-weight:700;color:var(--navy)">'
+      + '<button class="btn btn-outline btn-sm" onclick="renderBankBal()">🔄</button>'
+      + '</div>'
+      + '</div>'
+      + '<div class="tbl-wrap"><table class="tbl">'
+      + '<thead><tr>'
+      + '<th style="width:60px">구분(월)</th>'
+      + '<th class="nc">수입</th>'
+      + '<th class="nc" style="color:#1d4ed8">수입누계</th>'
+      + '<th class="nc">지출</th>'
+      + '<th class="nc" style="color:#dc2626">지출누계</th>'
+      + '<th class="nc">잔액</th>'
+      + '</tr></thead>'
+      + '<tbody>'
+      + '<tr style="background:#f0f6ff">'
+      + '<td style="text-align:center;font-weight:700;color:var(--g2)">이월금</td>'
+      + '<td colspan="5" class="nc" style="font-weight:700;color:var(--navy)">' + (carry ? fmtN(carry) : '—') + '</td>'
+      + '</tr>'
+      + trs
+      + '</tbody>'
+      + '</table></div>'
+      + '</div>';
+  });
+
+  // ── 장부상잔액 종합 테이블 (월별) ────────────────────────
+  var summaryRows = Array.from({length:12}, function(_, i){ return i+1; }).map(function(m){
+    var ym = yr + '-' + String(m).padStart(2,'0');
+    var vals = BANKBAL_ACCOUNTS.map(function(acct){
+      var data = calcMonthly(yr, acct, offs, exps);
+      return data.rows[m-1].bal;
+    });
+    var total = vals.reduce(function(s,v){ return s+v; }, 0);
+    return '<tr>'
+      + '<td style="text-align:center;font-weight:700">' + m + '월</td>'
+      + '<td class="nc" style="font-weight:800">' + fmtN(total) + '</td>'
+      + vals.map(function(v){ return '<td class="nc">' + fmtN(v) + '</td>'; }).join('')
+      + '</tr>';
+  }).join('');
+
+  // ── 통장잔고 비교 섹션 (월 선택) ─────────────────────────
+  var cmpMo = parseInt(compareMonth);
+  var cmpYm = yr + '-' + String(cmpMo).padStart(2,'0');
+  var cmpAccts = BANKBAL_ACCOUNTS.map(function(acct){
+    var data = calcMonthly(yr, acct, offs, exps);
+    var bal = data.rows[cmpMo-1] ? data.rows[cmpMo-1].bal : 0;
+    var realKey = 'bankbal_real_' + acct.id + '_' + cmpYm;
+    var realAmt = ST.get(realKey, null);
+    return { acct: acct, bal: bal, realAmt: realAmt, realKey: realKey };
+  });
+  var cmpTotalBal = cmpAccts.reduce(function(s,a){ return s+a.bal; }, 0);
+  var cmpTotalReal = cmpAccts.every(function(a){ return a.realAmt !== null; })
+    ? cmpAccts.reduce(function(s,a){ return s+(parseInt(a.realAmt)||0); }, 0) : null;
+  var totalDiff = cmpTotalReal !== null ? cmpTotalReal - cmpTotalBal : null;
+
+  var cmpRows = '<tr style="background:#fefce8">'
+    + '<td style="font-weight:900;color:#92400e">실제잔금</td>'
+    + '<td></td>'
+    + cmpAccts.map(function(a){
+        return '<td class="nc">'
+          + '<input type="text" id="real-' + a.acct.id + '" value="' + (a.realAmt !== null ? fmtN(a.realAmt) : '') + '"'
+          + ' placeholder="실제잔금 입력" oninput="fmtAmt(this)"'
+          + ' data-id="' + a.acct.id + '" data-ym="' + cmpYm + '" onchange="saveBankBalReal(this.dataset.id,this.dataset.ym)" '
+          + 'style="width:100%;text-align:right;border:none;border-bottom:2px solid #f59e0b;background:transparent;font-family:var(--fnum);font-size:12px;font-weight:700;color:#92400e">'
+          + '</td>';
+      }).join('')
+    + '</tr>'
+    + '<tr style="background:#eff6ff">'
+    + '<td style="font-weight:900;color:#1d4ed8">회계보고(장부)</td>'
+    + '<td class="nc" style="font-weight:900;color:#1d4ed8">' + fmtN(cmpTotalBal) + '</td>'
+    + cmpAccts.map(function(a){
+        return '<td class="nc" style="font-weight:700;color:#1d4ed8">' + fmtN(a.bal) + '</td>';
+      }).join('')
+    + '</tr>'
+    + '<tr style="background:#fef2f2">'
+    + '<td style="font-weight:900;color:#dc2626">조정필요</td>'
+    + '<td></td>'
+    + cmpAccts.map(function(a){
+        var diff = a.realAmt !== null ? (parseInt(a.realAmt)||0) - a.bal : null;
+        var diffColor = diff === 0 ? '#16a34a' : '#dc2626';
+        return '<td class="nc" style="font-weight:700;color:' + diffColor + '">'
+          + (diff !== null ? fmtN(diff) : '—') + '</td>';
+      }).join('')
+    + '</tr>';
+
+  var matchBadge = totalDiff === 0
+    ? '<span style="background:#fef08a;color:#92400e;padding:4px 16px;border-radius:20px;font-weight:900;font-size:13px">✅ 통장맞음</span>'
+    : totalDiff !== null
+      ? '<span style="background:#fecaca;color:#dc2626;padding:4px 16px;border-radius:20px;font-weight:900;font-size:13px">⚠️ 차이: ' + fmtN(Math.abs(totalDiff)) + '원</span>'
+      : '<span style="color:#aaa;font-size:12px">실제잔금을 입력하세요</span>';
+
+  var cmpSection = '<div class="card" style="border:2px solid var(--gold);margin-top:20px">'
+    + '<div class="card-hd">'
+    + '<div class="card-title">📊 월별 통장잔고 비교</div>'
+    + '<div style="display:flex;align-items:center;gap:8px">'
+    + '<label style="font-weight:700;font-size:12px">비교 월</label>'
+    + '<select id="bankbal-cmp-month" onchange="renderBankBal()"'
+    + ' style="height:32px;padding:0 8px;border:1.5px solid var(--blue);border-radius:6px;font-size:12px;font-weight:700;color:var(--navy)">'
+    + Array.from({length:12},function(_,i){
+        return '<option value="'+String(i+1).padStart(2,'0')+'"'+(i+1===cmpMo?' selected':'')+'>'+( i+1)+'월</option>';
+      }).join('')
+    + '</select>'
+    + '</div>'
+    + '</div>'
+    + '<div class="tbl-wrap"><table class="tbl">'
+    + '<thead><tr>'
+    + '<th>' + cmpMo + '월</th>'
+    + '<th class="nc" style="color:#1d4ed8">합 계</th>'
+    + BANKBAL_ACCOUNTS.map(function(a){
+        return '<th class="nc">' + a.label + '<br><span style="font-size:10px;font-weight:400;color:var(--g3)">' + a.acctNo + '</span></th>';
+      }).join('')
+    + '</tr></thead>'
+    + '<tbody>' + cmpRows + '</tbody>'
+    + '</table></div>'
+    + '<div style="padding:12px 16px;display:flex;align-items:center;justify-content:flex-end;gap:16px">'
+    + '<span style="font-size:12px;color:var(--g2)">차이: <strong style="font-family:var(--fnum);font-size:14px;color:' + (totalDiff === 0 ? '#16a34a' : '#dc2626') + '">' + (totalDiff !== null ? fmtN(totalDiff) : '—') + '</strong></span>'
+    + matchBadge
+    + '</div>'
+    + '</div>';
+
+  // ── 장부잔액 연간 종합 ────────────────────────────────────
+  var annualSummary = '<div class="card" style="margin-top:20px">'
+    + '<div class="card-hd"><div class="card-title">📋 장부상잔액 (월별 종합)</div></div>'
+    + '<div class="tbl-wrap"><table class="tbl">'
+    + '<thead><tr>'
+    + '<th>구분(월)</th><th class="nc">합 계</th>'
+    + BANKBAL_ACCOUNTS.map(function(a){
+        return '<th class="nc">' + a.label + ' <span style="font-size:10px;color:var(--g3)">' + a.acctNo + '</span></th>';
+      }).join('')
+    + '</tr></thead>'
+    + '<tbody>' + summaryRows + '</tbody>'
+    + '</table></div>'
+    + '</div>';
+
+  el.innerHTML = '<h3 style="font-size:16px;font-weight:900;color:var(--navy);margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--navy)">'
+    + yr + '년 통장잔고 현황</h3>'
+    + cmpSection
+    + '<div style="height:20px"></div>'
+    + acctTables.join('')
+    + annualSummary;
+
+  showResult('bankbal-result');
+};
+
+// 이월금 저장
+window.saveBankBalCarry = function(acctId, yr){
+  var inp = document.getElementById('carry-'+acctId) ||
+            document.querySelector('[data-id="'+acctId+'"]');
+  var val = parseN((inp?.value||'0'));
+  var key = 'bankbal_carry_'+acctId+'_'+yr;
+  ST.set(key, val);
+  if(window._fbSaveConfig) window._fbSaveConfig(key, val);
+};
+
+// 실제잔금 저장
+window.saveBankBalReal = function(acctId, ym){
+  var val = parseN(document.getElementById('real-'+acctId)?.value||'0');
+  var key = 'bankbal_real_'+acctId+'_'+ym;
+  ST.set(key, val);
+  if(window._fbSaveConfig) window._fbSaveConfig(key, val);
+  renderBankBal();
+};
 
 window.scrollToGroup=function(grp){
   if(grp==='weekly'){ selectInputSheet(1); }
