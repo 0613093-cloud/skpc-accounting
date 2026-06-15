@@ -4154,14 +4154,14 @@ window.renderReceipt=function(){
 
   const el=document.getElementById('receipt-content');
   el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
-    +'<div class="rct-title" style="font-size:17px;letter-spacing:2px">입 금 전 표</div>'
+    +'' // 입금전표 제목 제거 (to-be 디자인)
     +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">'
     +'<div class="rct-date">'+dateVal+'</div>'
     +'<table class="approv-tbl"><tr><th>부회계</th><th>회계</th><th>차장</th><th>부장</th></tr><tr><td></td><td></td><td></td><td></td></tr></table>'
     +'</div></div>'
-    +'<div style="display:grid;grid-template-columns:55% 45%;gap:8px;margin-bottom:8px">'
-    +'<div><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅰ. 수입내역</div>'
-    +'<table class="rct-tbl" style="width:100%;table-layout:fixed">'
+    +'<div style="display:grid;grid-template-columns:55% 45%;gap:8px;margin-bottom:8px;align-items:stretch">'
+    +'<div style="display:flex;flex-direction:column"><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅰ. 수입내역</div>'
+    +'<table class="rct-tbl" style="width:100%;table-layout:fixed;height:100%">'
     +'<colgroup><col style="width:34px"><col><col style="width:64px"><col style="width:64px"><col style="width:64px"></colgroup>'
     +'<thead><tr><th style="font-size:9px">구분</th><th style="font-size:9px">항목</th><th style="font-size:9px;color:#27ae60">현금입금</th><th style="font-size:9px;color:#2471a3">온라인</th><th style="font-size:9px">합계(원)</th></tr></thead>'
     +'<tbody>'+genOff.map(function(t,i){
@@ -4178,8 +4178,8 @@ window.renderReceipt=function(){
     +'<tr style="background:#e3f2fd;font-weight:800"><td colspan="2" style="text-align:center;font-size:10px;color:#2471a3">온라인입금 합계</td><td class="amt-cell" style="font-size:9px;color:#555">—</td><td class="amt-cell" style="font-size:10px;color:#2471a3;font-weight:800">'+fmtN(bankInc)+'</td><td class="amt-cell">'+fmtN(bankInc)+'</td></tr>'
     +'<tr style="background:#dce8f5;font-weight:800"><td colspan="2" style="text-align:center;font-size:11px;color:var(--navy)">수입 총계</td><td class="amt-cell" style="font-size:10px;color:#27ae60">'+fmtN(cashInc)+'</td><td class="amt-cell" style="font-size:10px;color:#2471a3">'+fmtN(bankInc)+'</td><td class="amt-cell" style="font-size:11px;color:var(--blue);font-weight:800">'+fmtN(totInc)+'</td></tr>'
     +'</tfoot></table></div>'
-    +'<div><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅱ. 지출내역</div>'
-    +'<table class="rct-tbl" style="width:100%;table-layout:fixed">'
+    +'<div style="display:flex;flex-direction:column"><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅱ. 지출내역</div>'
+    +'<table class="rct-tbl" style="width:100%;table-layout:fixed;height:100%">'
     +'<colgroup><col style="width:30px"><col><col style="width:56px"><col style="width:52px"><col style="width:60px"></colgroup>'
     +'<thead><tr><th style="font-size:9px">구분</th><th style="font-size:9px">부서</th><th style="font-size:9px;color:#2471a3">송금</th><th style="font-size:9px;color:#a04000">현금</th><th style="font-size:9px">합계(원)</th></tr></thead>'
     +'<tbody>'+genDept.map(function(d,i){
@@ -4213,7 +4213,7 @@ window.renderReceipt=function(){
     +'<tr><td style="font-size:10px;color:#a04000">└현금 '+fmtN(cashOut)+'</td><td></td></tr>'
     +'<tr style="background:#e8eff6;font-weight:800"><td colspan="2" style="text-align:center;font-size:11px">수입 - 지출 잔액</td><td class="rc-n" style="font-size:12px;font-weight:800;color:var(--navy)">'+fmtN(totInc-totOut)+'</td><td></td></tr>'
     +'</tbody></table>'
-    +'<div style="text-align:center;font-size:14px;font-weight:800;color:var(--navy)">서부광성교회</div>';
+    +'<div style="margin-top:30px;padding-top:14px;border-top:2px solid #c8d8e8;text-align:center;font-size:15px;font-weight:900;color:var(--navy);letter-spacing:2px">서부광성교회</div>';
   showResult('rec-result');
 };
 
