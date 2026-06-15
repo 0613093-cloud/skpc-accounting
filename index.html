@@ -805,8 +805,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 <nav class="nav" id="mainNav">
   <div class="nav-groups-row" id="navGroupsRow">
     <div class="nav-group-pill active-group" id="grp-weekly" onclick="scrollToGroup('weekly')">주간업무</div>
+    <div class="nav-group-pill" id="grp-monthly" onclick="scrollToGroup('monthly')">📅 월간업무</div>
     <div class="nav-group-pill" id="grp-manage" onclick="scrollToGroup('manage')">관리</div>
-    <div class="nav-group-pill" style="background:#2563eb;color:#fff;cursor:pointer" onclick="window.open('skpc_monthly.html','_blank')">📅 월간업무 →</div>
   </div>
   <div class="nav-items-row" id="navItemsRow">
     <!-- 주간업무 -->
@@ -821,6 +821,12 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     <div class="nav-item" data-tab="offering">📊 누적헌금</div>
     <div class="nav-item" data-tab="expense">💸 누적지출</div>
     <div class="nav-item" data-tab="sponsor">찬조내역</div>
+    <!-- 월간업무 -->
+    <div class="nav-group-label" data-group="monthly">월간</div>
+    <div class="nav-item grp-monthly" data-tab="monthly">📊 월간보고</div>
+    <div class="nav-item grp-monthly" data-tab="deptreport">🏢 부서보고서</div>
+    <div class="nav-item grp-monthly" data-tab="bankbal">🏦 통장잔액</div>
+    <div class="nav-item grp-monthly" data-tab="finsearch">🔍 기간별 조회</div>
     <!-- 관리 -->
     <div class="nav-group-label" data-group="manage">관리</div>
     <div class="nav-item" data-tab="manage">⚙️ 관리</div>
@@ -1248,6 +1254,86 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 
     <!-- 헌금유형별 분리 테이블 (동적 렌더링) -->
     <div id="online-split-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+  </div>
+</div>
+
+<!-- ===== 월간보고 ===== -->
+
+<div id="tab-monthly" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">📊 월간 수입/지출 보고</div></div>
+  <div class="month-bar">
+    <label>보고 기준 월</label>
+    <select id="monthly-month" onchange="updateMonthBadge('monthly-month','monthly-badge')"></select>
+    <span class="m-badge" id="monthly-badge">-</span>
+    <select id="monthly-report-type" class="fsel" style="height:34px;font-size:12px;font-weight:700;max-width:160px">
+      <option value="general">일반 월간보고</option>
+      <option value="special_all">특별헌금 전체</option>
+    </select>
+    <button class="btn btn-navy" onclick="renderMonthly()">🔍 조회</button>
+    <button class="btn btn-outline" onclick="printSection('monthly-print-area')">🖨️ 인쇄</button>
+  </div>
+  <div id="monthly-result" class="result-section">
+    <div id="monthly-print-area">
+      <div id="monthly-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 부서보고서 ===== -->
+
+<div id="tab-deptreport" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
+  <div class="alert alert-info" style="margin-bottom:14px">
+    📋 이 화면은 <strong>읽기 전용</strong>입니다. 부서 담당자 입력/수정은 별도 페이지에서만 가능합니다.
+    <button class="btn btn-blue btn-sm" style="margin-left:12px" onclick="window.open('skpc_monthly.html','_blank')">
+      🔗 부서보고서 입력 페이지 열기
+    </button>
+  </div>
+  <div class="month-bar">
+    <label>보고 기준 월</label>
+    <select id="dept-month" onchange="updateMonthBadge('dept-month','dept-badge')"></select>
+    <span class="m-badge" id="dept-badge">-</span>
+    <button class="btn btn-navy" onclick="renderDeptReport()">🔍 조회</button>
+    <button class="btn btn-outline" onclick="printSection('deptreport-print-area')">🖨️ 인쇄</button>
+  </div>
+  <div id="deptreport-result" class="result-section">
+    <div id="deptreport-print-area">
+      <div id="deptreport-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 통장잔액 ===== -->
+
+<div id="tab-bankbal" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">🏦 통장잔액 비교</div></div>
+  <div class="month-bar">
+    <label>기준 월</label>
+    <select id="bank-month" onchange="updateMonthBadge('bank-month','bank-badge')"></select>
+    <span class="m-badge" id="bank-badge">-</span>
+    <button class="btn btn-navy" onclick="renderBankBalance()">🔍 조회</button>
+  </div>
+  <div id="bank-result" class="result-section">
+    <div id="bank-content"></div>
+  </div>
+</div>
+
+<!-- ===== 기간별 조회 ===== -->
+
+<div id="tab-finsearch" class="tab-pane">
+  <div class="pg-hd"><div class="pg-title">🔍 기간별 재정 조회</div></div>
+  <div class="search-panel">
+    <div class="panel-title">기간 설정</div>
+    <div class="g2 mb8">
+      <div class="fg"><div class="flbl">시작일</div><input type="date" class="finp" id="fin-from"></div>
+      <div class="fg"><div class="flbl">종료일</div><input type="date" class="finp" id="fin-to"></div>
+    </div>
+    <div class="flex gap8">
+      <button class="btn btn-navy" onclick="renderFinSearch()">🔍 조회</button>
+    </div>
+  </div>
+  <div id="fin-result" class="result-section">
+    <div id="finsearch-content"></div>
   </div>
 </div>
 
@@ -1826,7 +1912,23 @@ function updateActiveGroup(tab){
 
 // 그룹 라벨 클릭 시 해당 첫 탭으로 스크롤
 window.scrollToGroup=function(grp){
-  const groupFirstTab={weekly:'navDropInput', monthly:'sep-monthly', manage:'sep-manage'};
+  // 해당 그룹의 첫 번째 탭 클릭
+  if(grp==='monthly'){
+    // 월간업무: 월간보고 탭으로 이동
+    const firstTab=document.querySelector('.nav-item.grp-monthly[data-tab="monthly"]')
+                  ||document.querySelector('[data-tab="monthly"]');
+    if(firstTab) firstTab.click();
+    else showTab('monthly');
+  } else if(grp==='manage'){
+    document.querySelector('[data-tab="manage"]')?.click();
+  } else {
+    // 주간업무: 입력1 탭
+    selectInputSheet(1);
+  }
+  // nav 스크롤: 해당 그룹의 첫 아이템으로 스크롤
+  const label=document.querySelector('.nav-group-label[data-group="'+grp+'"]');
+  if(label) label.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+};
   const targetId=groupFirstTab[grp];
   const el=document.getElementById(targetId)||document.querySelector('[data-tab="'+
     (grp==='weekly'?'receipt':grp==='monthly'?'monthly':'manage')+'"]');
@@ -1842,6 +1944,20 @@ window.scrollToGroup=function(grp){
     // 주간업무: 드롭다운 표시
     document.getElementById('navDropInput')?.click();
   }
+};
+
+// ── showTab 헬퍼 (JS에서 직접 탭 전환용) ─────────────────────
+window.showTab=function(tab){
+  const navEl=document.querySelector('.nav-item[data-tab="'+tab+'"]');
+  if(navEl){ navEl.click(); return; }
+  // nav 없이 직접 전환
+  document.querySelectorAll('.tab-pane').forEach(function(p){
+    p.classList.remove('active'); p.style.display='none';
+  });
+  const tp=document.getElementById('tab-'+tab);
+  if(tp){ tp.classList.add('active'); tp.style.display='block'; }
+  updateActiveGroup(tab);
+  onTabActivate(tab);
 };
 
 // ── 헌금입력 탭 전환 ────────────────────────────────────────
