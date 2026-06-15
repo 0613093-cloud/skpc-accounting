@@ -414,6 +414,14 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   .rpt-meta { text-align:right; font-size:10px; margin-bottom:8px; }
 }
 
+/* ===== 부서보고서 카드 스타일 (원장 형식) ===== */
+.dr-card{border:1.5px solid #c8d8e8;border-radius:10px;overflow:hidden;margin-bottom:20px;box-shadow:0 2px 8px rgba(26,58,110,.08)}
+.dr-head{background:linear-gradient(90deg,#1e3a5f,#2a4f80);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.dr-head h3{color:#fff;font-size:14px;font-weight:900;letter-spacing:.3px}
+.dr-officers{display:flex;gap:12px;align-items:center}
+.dr-body{padding:0;overflow-x:auto}
+.dr-row{display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;border-bottom:1px solid #e2e8f0;padding:7px 10px;align-items:center;font-size:12px;min-width:680px}
+
 /* ===== 월간보고 테이블 스타일 ===== */
 .rpt-sec{font-size:12px;font-weight:800;color:var(--navy);padding:5px 2px 5px;
   border-left:4px solid var(--navy);padding-left:10px;margin:12px 0 8px;letter-spacing:.3px}
@@ -4472,13 +4480,12 @@ window.printSelectedDepts=function(){
   const selected=[];
   document.querySelectorAll('.dept-print-cb:checked').forEach(function(cb){ selected.push(cb.value); });
   if(!selected.length){ alert('인쇄할 부서를 선택해주세요.'); return; }
-  // 선택된 부서 섹션만 HTML로 수집
-  const allSections=document.querySelectorAll('#deptreport-content .rpt-section');
+  const allCards=document.querySelectorAll('#deptreport-content .dr-card');
   let html='';
-  allSections.forEach(function(sec){
-    const deptTitle=sec.querySelector('strong');
-    if(deptTitle && selected.includes(deptTitle.textContent.trim())){
-      html+=sec.outerHTML;
+  allCards.forEach(function(card){
+    const title=card.querySelector('h3');
+    if(title && selected.includes(title.textContent.trim())){
+      html+=card.outerHTML;
     }
   });
   if(!html){ alert('조회 결과가 없습니다. 먼저 조회하세요.'); return; }
@@ -4489,128 +4496,207 @@ window.printSelectedDepts=function(){
     <title>서부광성교회 — 부서별 예산집행보고서</title>
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:'Gulim','굴림',sans-serif;font-size:12px;padding:16px;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      body{font-family:'Gulim','굴림',sans-serif;font-size:12px;padding:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       @page{margin:10mm;size:A4 portrait}
-      h2{font-size:16px;font-weight:900;color:#1a3a6e;text-align:center;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #1a3a6e}
-      .rpt-section{margin-bottom:24px;border:1.5px solid #c8d8e8;border-radius:8px;overflow:hidden;page-break-inside:avoid}
-      table{width:100%;border-collapse:collapse;font-size:11px}
-      th{background:#1e3a5f;color:#fff;padding:7px 10px;text-align:center;font-weight:900;-webkit-print-color-adjust:exact}
-      td{padding:6px 10px;border-bottom:1px solid #e2e8f0}
-      tfoot td{background:#e8f0f8;font-weight:900;border-top:2px solid #c8d8e8}
-      .num{text-align:right;font-family:Arial,sans-serif;font-weight:700}
-      strong{color:#fff!important}
+      .dr-card{border:1.5px solid #c8d8e8;border-radius:8px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid}
+      .dr-head{background:linear-gradient(90deg,#1e3a5f,#2a4f80);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact}
+      .dr-head h3{color:#fff;font-size:14px;font-weight:900}
+      .dr-officers{display:flex;gap:10px;align-items:center}
+      .dr-officers span{font-size:11px;color:rgba(255,255,255,.8)}
+      .dr-body{padding:0}
+      .dr-row{display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;border-bottom:1px solid #e2e8f0;padding:6px 10px;align-items:center;font-size:11px}
+      .dr-row:first-child{background:#e8eff6;font-weight:900;color:#1a3a6e}
+      .dr-row.budget-row{background:#eef4ff;border-bottom:2px solid #93c5fd;font-weight:700}
+      .dr-row.sum-row{background:#e8eff6;font-weight:900}
+      .dc-num{text-align:right;font-family:Arial,sans-serif}
+      .dc-center{text-align:center}
+      .no-print{display:none!important}
+      input{pointer-events:none;border:none;background:transparent;font-size:11px;font-family:inherit}
+      .save-btn{display:none}
     </style>
-  </head><body>
-    <h2>부서별 예산집행보고서 ${ym?'('+ym+')':''}</h2>
-    ${html}
+  </head><body>${html}
     <script>window.onload=function(){window.print();window.close();}<\/script>
   </body></html>`);
   printWin.document.close();
 };
 
+// ════════════════════════════════════════════════════════════
+// 부서보고서 조회 - skpc_monthly.html 과 동일한 원장(ledger) 형식
+// 원 지출DB 절대 수정 없음 - deptView_/deptTopRows_/deptOfficers 별도 DB 읽기
+// ════════════════════════════════════════════════════════════
 window.renderDeptReport=function(){
   const ym=document.getElementById('dept-month')?.value||'';
-  const el=document.getElementById('deptreport-content');
-  if(!el||!ym) return;
+  const container=document.getElementById('deptreport-content');
+  if(!container||!ym){ alert('월을 선택해주세요.'); return; }
+  container.innerHTML='';
+
   const EXCLUDE=['건축헌금','전도헌금','사회봉사'];
-  const depts=getDeptTypes().filter(function(d){return !EXCLUDE.includes(d);});
-  const allExp=getExpenses();
-  // skpc_monthly.html에서 저장된 데이터 읽기
-  const officers=ST.get('deptOfficers',{});
-  let html='';
-  depts.forEach(function(dept){
-    const moExp=allExp.filter(function(e){return e.dept===dept&&monthOf(e.date)===ym;});
-    // topRows: 교회예산 포함 수입행
-    const topRows=ST.get('deptTopRows_'+ym+'_'+dept,[]);
-    // deptView: 지출행 보기 데이터 (content, income, amount, memo)
-    const viewData=ST.get('deptView_'+ym+'_'+dept,{});
-    // footView: 월계/연누계 저장값
-    const footView=ST.get('deptFootView_'+ym+'_'+dept,{});
-    if(!moExp.length && !topRows.length && Object.keys(viewData).length===0) return;
-    const total=moExp.reduce(function(s,e){return s+(e.amount||0);},0);
-    const budgetRow=topRows.find(function(r){return r.isBudget;});
-    const budgetAmt=budgetRow?parseInt(budgetRow.income||0):0;
-    const off=officers[dept]||{};
-    const moInc=footView.moInc!==undefined?footView.moInc:topRows.reduce(function(s,r){return s+(parseInt(r.income||0));},0);
-    const moExp_saved=footView.moExp!==undefined?footView.moExp:total;
-    const moBal=moInc-moExp_saved;
-    // 연누계
-    const [yr]=ym.split('-');
-    let yearInc=0,yearExp=0;
-    for(let m=1;m<=parseInt(ym.split('-')[1]);m++){
-      const mym=yr+'-'+String(m).padStart(2,'0');
-      const mTop=ST.get('deptTopRows_'+mym+'_'+dept,[]);
-      const mFoot=ST.get('deptFootView_'+mym+'_'+dept,{});
-      const mExp=allExp.filter(function(e){return e.dept===dept&&monthOf(e.date)===mym;});
-      yearInc+=mFoot.moInc!==undefined?mFoot.moInc:mTop.reduce(function(s,r){return s+parseInt(r.income||0);},0);
-      yearExp+=mFoot.moExp!==undefined?mFoot.moExp:mExp.reduce(function(s,e){return s+(e.amount||0);},0);
+  const allDepts=getDeptTypes().filter(function(d){ return !EXCLUDE.includes(d); });
+  const allExp=getExpenses(); // 원 지출DB - 읽기 전용
+  const officerData=ST.get('deptOfficers',{});
+
+  // skpc_monthly.html에서 저장된 별도 DB 읽기
+  // Firebase DEPT_DOC → syncFromFirestore() → localStorage에 복원됨
+  let hasAny=false;
+
+  allDepts.forEach(function(dept){
+    // 당월 지출 (원 DB, 읽기 전용)
+    const dMoExp=allExp.filter(function(e){
+      return e.dept===dept && e.date && e.date.slice(0,7)===ym;
+    }).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+
+    // 별도 저장 DB 읽기
+    const topRowKey='deptTopRows_'+ym+'_'+dept;
+    const viewKey='deptView_'+ym+'_'+dept;
+    const topRows=ST.get(topRowKey,[]);    // 교회예산 등 상단 행
+    const viewData=ST.get(viewKey,{});     // 지출행 표시 오버라이드
+    const customRows=ST.get('deptCustomRows_'+ym+'_'+dept,[]); // 추가 행
+    const officers=officerData[dept]||{head:'',deputy:'',acct:''};
+    const savedAt=ST.get('deptSavedAt_'+ym+'_'+dept,'');
+
+    // 표시할 데이터가 있는 부서만
+    const hasTopData=topRows.length>0;
+    const hasExpData=dMoExp.length>0;
+    const hasViewData=Object.keys(viewData).length>0;
+    if(!hasTopData && !hasExpData && !hasViewData && !customRows.length) return;
+    hasAny=true;
+
+    // ── 카드 생성 ──
+    const card=document.createElement('div');
+    card.className='dr-card rpt-section';
+
+    // ── 헤더: 부서명 + 부장/차장/회계 ──
+    const head=document.createElement('div');
+    head.className='dr-head';
+    head.style.cssText='background:linear-gradient(90deg,#1e3a5f,#2a4f80);padding:10px 16px;display:flex;align-items:center;justify-content:space-between';
+    const titleEl=document.createElement('h3');
+    titleEl.textContent=dept;
+    titleEl.style.cssText='color:#fff;font-size:14px;font-weight:900;letter-spacing:.3px';
+    head.appendChild(titleEl);
+    const offDiv=document.createElement('div');
+    offDiv.className='dr-officers';
+    offDiv.style.cssText='display:flex;gap:12px;align-items:center';
+    [['부장',officers.head],['차장',officers.deputy],['회계',officers.acct]].forEach(function(o){
+      if(!o[1] && !o[0]) return;
+      const sp=document.createElement('span');
+      sp.innerHTML='<span style="color:rgba(255,255,255,.7);font-size:11px">'+o[0]+':</span> '
+        +'<span style="color:#fff;font-weight:700;background:rgba(255,255,255,.15);padding:2px 10px;border-radius:4px;font-size:12px">'+(o[1]||'—')+'</span>';
+      offDiv.appendChild(sp);
+    });
+    if(savedAt){
+      const ts=document.createElement('span');
+      ts.style.cssText='color:rgba(255,255,255,.5);font-size:10px';
+      ts.textContent='저장: '+savedAt.slice(0,10);
+      offDiv.appendChild(ts);
     }
-    html+='<div class="rpt-section" style="margin-bottom:24px;border:1.5px solid #c8d8e8;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(26,58,110,.08)">'
-      // 부서 헤더
-      +'<div style="background:linear-gradient(90deg,#1e3a5f,#2a4f80);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">'
-      +'<strong style="color:#fff;font-size:15px;letter-spacing:.5px">'+dept+'</strong>'
-      +'<div style="display:flex;gap:12px;align-items:center">'
-      +(off.head?'<span style="color:rgba(255,255,255,.8);font-size:11px">부장: <strong style="color:#fff">'+off.head+'</strong></span>':'')
-      +(off.deputy?'<span style="color:rgba(255,255,255,.8);font-size:11px">차장: <strong style="color:#fff">'+off.deputy+'</strong></span>':'')
-      +(off.acct?'<span style="color:rgba(255,255,255,.8);font-size:11px">회계: <strong style="color:#fff">'+off.acct+'</strong></span>':'')
-      +'<span style="color:rgba(255,255,255,.6);font-size:11px">'+ym+'</span>'
-      +'</div></div>'
-      // 요약 행 (교회예산 / 월계 / 연누계)
-      +(budgetAmt||footView.moInc!==undefined
-        ?'<div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0">'
-          +(budgetAmt?'<div style="flex:1;padding:8px 14px;border-right:1px solid #e2e8f0;background:#f0f6ff"><div style="font-size:10px;color:#64748b;font-weight:600">교회예산</div><div style="font-family:var(--fnum);font-size:14px;font-weight:700;color:#1d4ed8">'+fmtN(budgetAmt)+'원</div></div>':'')
-          +'<div style="flex:1;padding:8px 14px;border-right:1px solid #e2e8f0;background:#f0fff4"><div style="font-size:10px;color:#64748b;font-weight:600">월 계 (수입−지출)</div><div style="font-family:var(--fnum);font-size:14px;font-weight:700;color:'+(moBal>=0?'#1d4ed8':'#dc2626')+'">'+(moInc?fmtN(moInc)+'→':'')+'<span style="color:#dc2626">'+fmtN(moExp_saved)+'</span> = '+fmtN(moBal)+'원</div></div>'
-          +'<div style="flex:1;padding:8px 14px;background:#fff8f0"><div style="font-size:10px;color:#64748b;font-weight:600">연 누 계</div><div style="font-family:var(--fnum);font-size:14px;font-weight:700;color:#92400e">'+fmtN(yearExp)+'원</div></div>'
-          +'</div>'
-        :'')
-      // 수입 행 (교회예산 외 topRows)
-      +(topRows.filter(function(r){return !r.isBudget&&(parseInt(r.income||0)>0);}).length
-        ?'<div style="padding:8px 14px;background:#eff6ff;border-bottom:1px solid #e2e8f0">'
-          +'<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-bottom:4px">▶ 수 입</div>'
-          +topRows.filter(function(r){return !r.isBudget&&parseInt(r.income||0)>0;}).map(function(r){
-            return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0">'
-              +'<span style="color:#1e3a5f">'+(r.date||'')+'&nbsp;&nbsp;'+(r.content||'')+'</span>'
-              +'<span style="font-family:var(--fnum);font-weight:700;color:#1d4ed8">'+fmtN(parseInt(r.income||0))+'원</span>'
-              +'</div>';
-          }).join('')
-          +'</div>'
-        :'')
-      // 지출 테이블
-      +'<div style="padding:8px 14px 0;font-size:11px;font-weight:700;color:#dc2626">▶ 지 출</div>'
-      +'<div class="tbl-wrap"><table class="tbl" style="table-layout:fixed;width:100%">'
-      +'<colgroup><col style="width:100px"><col><col style="width:110px"><col style="width:80px"><col style="width:150px"></colgroup>'
-      +'<thead><tr>'
-      +'<th style="text-align:center">날짜</th>'
-      +'<th style="text-align:left;padding-left:10px">내용</th>'
-      +'<th style="text-align:right;padding-right:12px">금액(원)</th>'
-      +'<th style="text-align:center">요청자</th>'
-      +'<th style="text-align:left;padding-left:8px">수취자</th>'
-      +'</tr></thead><tbody>'
-      +(moExp.length
-        ? moExp.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).map(function(e,ri){
-            const vd=viewData[e.id]||{};
-            const dispContent=vd.content!==undefined?vd.content:(e.content||e.item||'');
-            const bg=ri%2===0?'#fff':'#f8faff';
-            return '<tr style="background:'+bg+'">'
-              +'<td style="text-align:center;font-family:var(--fnum);font-size:12px;color:var(--g2)">'+e.date+'</td>'
-              +'<td style="text-align:left;padding-left:10px;font-weight:500">'+dispContent+'</td>'
-              +'<td style="text-align:right;padding-right:12px;font-family:var(--fnum);color:var(--red);font-weight:700">'+fmtN(e.amount)+'</td>'
-              +'<td style="text-align:center;font-size:12px">'+(e.requester||'')+'</td>'
-              +'<td style="text-align:left;padding-left:8px;font-size:12px;color:var(--g2)">'+(e.recipient||e.recip||'')+'</td>'
-              +'</tr>';
-          }).join('')
-        : '<tr><td colspan="5" class="tbl-empty">지출 내역 없음</td></tr>'
-      )
-      +'</tbody><tfoot><tr style="background:#e8f0f8;border-top:2px solid #c8d8e8">'
-      +'<td colspan="2" style="text-align:center;font-weight:900;color:var(--navy)">합 계</td>'
-      +'<td style="text-align:right;padding-right:12px;font-family:var(--fnum);font-weight:900;color:var(--red);font-size:13px">'+fmtN(total)+'원</td>'
-      +'<td colspan="2"></td>'
-      +'</tr></tfoot></table></div>'
-      +'</div>';
+    head.appendChild(offDiv);
+    card.appendChild(head);
+
+    // ── 테이블 헤더 ──
+    const body=document.createElement('div');
+    body.className='dr-body';
+    body.style.cssText='padding:0';
+
+    const hrow=document.createElement('div');
+    hrow.className='dr-row';
+    hrow.style.cssText='display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;padding:8px 10px;background:#e8eff6;font-weight:900;color:#1a3a6e;font-size:11px;border-bottom:2px solid #c8d8e8';
+    ['날짜','적 요','수 입','지 출','잔 액','비 고'].forEach(function(h,i){
+      const dc=document.createElement('div');
+      dc.textContent=h;
+      if(i===0) dc.style.textAlign='center';
+      if(i>=2&&i<=4) dc.style.textAlign='right';
+      dc.style.fontWeight='900';
+      hrow.appendChild(dc);
+    });
+    body.appendChild(hrow);
+
+    // ── 잔액 누계 계산 ──
+    let runBal=0;
+
+    function makeRow(dateV,contV,incV,expV,memoV,style){
+      incV=parseInt(incV)||0; expV=parseInt(expV)||0;
+      runBal+=incV-expV;
+      const balColor=runBal>=0?'#1d4ed8':'#dc2626';
+      const row=document.createElement('div');
+      row.className='dr-row';
+      row.style.cssText='display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;padding:7px 10px;border-bottom:1px solid #e2e8f0;align-items:center;font-size:12px;'+(style||'');
+      const cols=[
+        {txt:dateV,st:'text-align:center;font-family:Arial,sans-serif;font-size:11px;color:#546e8a'},
+        {txt:contV,st:'font-weight:'+(style?'700':'400')},
+        {txt:incV>0?fmtN(incV):'',st:'text-align:right;font-family:Arial,sans-serif;color:#1d4ed8;font-weight:700'},
+        {txt:expV>0?fmtN(expV):'',st:'text-align:right;font-family:Arial,sans-serif;color:#dc2626;font-weight:700'},
+        {txt:fmtN(runBal),st:'text-align:right;font-family:Arial,sans-serif;font-weight:800;color:'+balColor},
+        {txt:memoV,st:'font-size:11px;color:#546e8a'},
+      ];
+      cols.forEach(function(col){
+        const dc=document.createElement('div');
+        dc.style.cssText=col.st;
+        dc.textContent=col.txt;
+        row.appendChild(dc);
+      });
+      return row;
+    }
+
+    // ── 상단 행 (교회예산 포함) ──
+    topRows.forEach(function(r){
+      const style=r.isBudget?'background:#eef4ff;border-bottom:2px solid #93c5fd;':'background:#f8faff;';
+      body.appendChild(makeRow(
+        r.date||ym+'-01',
+        r.content||(r.isBudget?'교회예산':''),
+        r.income||0, r.amount||0,
+        r.memo||'',
+        style
+      ));
+    });
+
+    // ── 원 지출DB 행 (읽기 전용, viewData 오버라이드 적용) ──
+    dMoExp.forEach(function(e){
+      const sv=viewData[e.id]||{};
+      const dateV=sv.date!==undefined?sv.date:(e.date||'');
+      const contV=sv.content!==undefined?sv.content:(e.content||e.item||'');
+      const incV=sv.income!==undefined?sv.income:0;
+      const expV=sv.amount!==undefined?sv.amount:e.amount||0;
+      const memoV=sv.memo!==undefined?sv.memo:(e.memo||'요청:' +(e.requester||''));
+      body.appendChild(makeRow(dateV,contV,incV,expV,memoV,''));
+    });
+
+    // ── 커스텀 추가 행 ──
+    customRows.forEach(function(r){
+      body.appendChild(makeRow(r.date||'',r.content||'',r.income||0,r.amount||0,r.memo||'','background:#fffbeb;'));
+    });
+
+    // ── 합계 행 ──
+    const totalExp=topRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0)
+      +dMoExp.reduce(function(s,e){const sv=viewData[e.id]||{};return s+(sv.amount!==undefined?parseInt(sv.amount)||0:e.amount||0);},0)
+      +customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+    const totalInc=topRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0)
+      +dMoExp.reduce(function(s,e){const sv=viewData[e.id]||{};return s+(parseInt(sv.income)||0);},0)
+      +customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    const sumrow=document.createElement('div');
+    sumrow.style.cssText='display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;padding:8px 10px;background:#e8f0f8;font-weight:900;font-size:12px;border-top:2px solid #c8d8e8;color:#1a3a6e';
+    ['','합 계',totalInc>0?fmtN(totalInc):'',fmtN(totalExp),fmtN(runBal),''].forEach(function(v,i){
+      const dc=document.createElement('div');
+      dc.textContent=v;
+      if(i>=2&&i<=4){dc.style.textAlign='right';dc.style.fontFamily='Arial,sans-serif';}
+      if(i===3){dc.style.color='#dc2626';}
+      if(i===4){dc.style.color=runBal>=0?'#1d4ed8':'#dc2626';}
+      sumrow.appendChild(dc);
+    });
+    body.appendChild(sumrow);
+    card.appendChild(body);
+    container.appendChild(card);
   });
-  el.innerHTML=html||'<div class="tbl-empty" style="padding:30px;text-align:center">해당 월 데이터가 없습니다<br><small style="color:#aaa">부서보고서 입력 페이지에서 저장 후 Firebase 동기화가 필요합니다</small></div>';
+
+  if(!hasAny){
+    container.innerHTML='<div class="tbl-empty" style="padding:40px;text-align:center;color:#94a3b8">'
+      +'<div style="font-size:24px;margin-bottom:8px">📋</div>'
+      +'<div style="font-weight:700;margin-bottom:4px">해당 월 데이터가 없습니다</div>'
+      +'<div style="font-size:12px">skpc_monthly.html 에서 저장 후 재조회하세요</div>'
+      +'</div>';
+  }
   showResult('deptreport-result');
 };
+
 
 window.saveBudget=function(){
   const budget={};
