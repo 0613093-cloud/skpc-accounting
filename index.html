@@ -1872,6 +1872,22 @@ function getLastSunday(fromDate){
   return d.toISOString().slice(0,10);
 }
 
+// 그룹 pill active 갱신
+function updateActiveGroup(tab){
+  var weeklyTabs=['receipt','query','weekly','online-off','offering','expense','sponsor','input1','input2','input3'];
+  var monthlyTabs=['monthly','deptreport'];
+  var grp='manage';
+  if(weeklyTabs.includes(tab)||tab.startsWith('input')) grp='weekly';
+  else if(monthlyTabs.includes(tab)) grp='monthly';
+  document.querySelectorAll('.nav-group-pill').forEach(function(p){ p.classList.remove('active-group'); });
+  var gEl=document.getElementById('grp-'+grp);
+  if(gEl) gEl.classList.add('active-group');
+  // nav-group-label active
+  document.querySelectorAll('.nav-group-label').forEach(function(l){ l.classList.remove('active'); });
+  var lEl=document.querySelector('.nav-group-label[data-group="'+(grp==='weekly'?'weekly':grp==='monthly'?'monthly':'manage')+'"]');
+  if(lEl) lEl.classList.add('active');
+}
+
 function onTabActivate(tab){
   if(tab==='offering') initOfferingTab();
   if(tab==='expense'){initExpenseTab();}
@@ -4328,8 +4344,7 @@ window.renderFinSearch=function(){
       return '<tr><td>'+e[0]+'</td><td class="nc">'+fmtN(e[1])+'</td></tr>';
     }).join('')
     +'</tbody></table></div>'
-    +'<div id="spon-edu-print-area">
-      <div class="card"><div class="card-title mb8">지출 부서별</div>'
+    +'<div id="spon-edu-print-area"><div class="card"><div class="card-title mb8">지출 부서별</div>'
     +'<table class="tbl"><thead><tr><th>부서</th><th class="nc">금액</th></tr></thead><tbody>'
     +Object.entries(byDept).sort(function(a,b){return b[1]-a[1];}).map(function(e){
       return '<tr><td>'+e[0]+'</td><td class="nc" style="color:var(--red)">'+fmtN(e[1])+'</td></tr>';
