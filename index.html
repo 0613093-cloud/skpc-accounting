@@ -2313,6 +2313,19 @@ window.updateEduSponRow=function(){
 
   // (1) 총계 카드 업데이트
   updateMonthlySummaryCards(tot2Cu, tot2Mo);
+
+  // 자동저장 (별도 DB - ST.set)
+  const ymKey=document.getElementById('edu-bud-inp')?.dataset?.ym||'';
+  if(ymKey){
+    ST.set('eduSponBud_'+ymKey, eduBud);
+    ST.set('eduSponCu_'+ymKey, eduCu);
+    ST.set('eduSponMo_'+ymKey, eduMo);
+    if(window._fbSaveConfig){
+      window._fbSaveConfig('eduSponBud_'+ymKey, eduBud);
+      window._fbSaveConfig('eduSponCu_'+ymKey, eduCu);
+      window._fbSaveConfig('eduSponMo_'+ymKey, eduMo);
+    }
+  }
 };
 
 window.updateOffering=function(id,field,val){
@@ -3094,12 +3107,12 @@ function renderMonthlyGeneral(ym){
         <tr class="edu" id="rpt-edu-row">
           <td class="rpt-item" style="color:#92400e;font-weight:700">교육부찬조 전체</td>
           <td class="rpt-num">
-            <input id="edu-bud-inp" type="text" value="${eduSponBudget?fmtN(eduSponBudget):''}"
-              placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
+            <input id="edu-bud-inp" type="text" value="${ST.get('eduSponBud_'+ym,eduSponBudget)?fmtN(ST.get('eduSponBud_'+ym,eduSponBudget)):''}"
+              data-ym="${ym}" placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
               style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#b45309;font-weight:700"></td>
           <td class="rpt-num">
-            <input id="edu-cu-inp" type="text" value="${eduSponExp_cu?fmtN(eduSponExp_cu):''}"
-              placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
+            <input id="edu-cu-inp" type="text" value="${fmtN(ST.get('eduSponCu_'+ym)||eduSponExp_cu||0)}"
+              data-ym="${ym}" placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
               style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700"></td>
           <td class="rpt-num">
             <input id="edu-mo-inp" type="text" value="${eduSponExp_mo?fmtN(eduSponExp_mo):''}"
@@ -3222,7 +3235,7 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
   }).join('');
 
   // 표 스타일 공통
-  const tdL='padding:7px 14px;font-size:12px;font-weight:600;width:130px;border:1px solid #d1d5db;';
+  const tdL='padding:7px 12px;font-size:12px;font-weight:600;width:120px;border:1px solid #d1d5db;';
   const tdR='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;';
   const tdRB='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;font-weight:800;';
 
@@ -3235,12 +3248,13 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'</div>'
 
     // (1) 총계 표 - 첨부 이미지 형식
-    +'<div style="padding:14px 16px;background:#f8faff;border-bottom:1px solid #e2e8f0">'
-    +'<div style="background:linear-gradient(90deg,#1e3a5f,#374151);padding:7px 14px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div style="padding:0;background:#f8faff;border-bottom:1px solid #e2e8f0">'
+    +'<div style="background:linear-gradient(90deg,#1e3a5f,#374151);padding:8px 14px;display:flex;align-items:center;justify-content:space-between">'
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.3px">① 총 계</span>'
     +'<span style="color:rgba(255,255,255,.6);font-size:10px">(단위:원)</span>'
     +'</div>'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;table-layout:fixed">'
+    +'<colgroup><col style="width:120px"><col><col style="width:120px"><col></colgroup>'
     +'<tbody>'
     // 이월금 / 전년도이월금 (입력)
     +'<tr>'
@@ -5433,7 +5447,12 @@ window.printSection=function(areaId){
       .rpt-section-title{background:#1e3a5f!important;color:#fff!important;padding:6px 12px!important;font-weight:900!important;font-size:12px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .rpt-tbl{width:100%;border-collapse:collapse}
       .rpt-tbl th{background:#e8eff6!important;padding:6px 10px;border:1px solid #c5d3e8;font-size:11px;font-weight:700;-webkit-print-color-adjust:exact}
-      .rpt-tbl td{padding:5px 10px;border:1px solid #e2e8f0;font-size:11px}
+      .rpt-tbl td{padding:5px 10px;border:1px solid #e2e8f0;font-size:12px}
+      .rpt-item{font-size:12px!important;font-family:'Gulim','굴림',sans-serif!important}
+      .rpt-num{font-size:12px!important;font-family:Arial,sans-serif!important}
+      .rpt-bud{color:#374151!important}
+      .rpt-cu{color:#1d4ed8!important}
+      .rpt-mo{color:#374151!important}
       .rpt-tbl .rpt-num{text-align:right;font-family:Arial,sans-serif}
       .rpt-tbl tfoot td{font-weight:700;background:#e8eff6!important;-webkit-print-color-adjust:exact}
       .rpt-inc-section{page-break-after:always}
