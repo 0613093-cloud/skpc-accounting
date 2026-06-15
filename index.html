@@ -1879,23 +1879,39 @@ window._fbLiveRefresh = function(key){
   }
 };
 
-document.querySelectorAll('.nav-item').forEach(el=>{
-  el.addEventListener('click',()=>{
-    const tab=el.dataset.tab;
-    if(!tab) return;
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('inputDropMenu')?.classList.remove('open');
-    document.querySelectorAll('.tab-pane').forEach(p=>{
-      p.classList.remove('active');
-      p.style.display='none';
-    });
-    const tp=document.getElementById('tab-'+tab);
-    if(tp){tp.classList.add('active');tp.style.display='block';}
-    updateActiveGroup(tab);
-    onTabActivate(tab);
+// ── 탭 전환: 이벤트 위임 방식 (동적 nav-item 포함 모두 처리) ──
+function _doTabSwitch(tab, clickedEl){
+  if(!tab) return;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(clickedEl) clickedEl.classList.add('active');
+  document.getElementById('inputDropMenu')?.classList.remove('open');
+  document.querySelectorAll('.tab-pane').forEach(p=>{
+    p.classList.remove('active');
+    p.style.display='none';
   });
-});
+  const tp=document.getElementById('tab-'+tab);
+  if(tp){tp.classList.add('active');tp.style.display='block';}
+  updateActiveGroup(tab);
+  onTabActivate(tab);
+}
+
+// nav 영역 클릭 이벤트 위임 — DOM 준비 후 한 번만 바인딩
+function _bindNavClicks(){
+  const navWrap=document.getElementById('navItemsRow');
+  if(!navWrap) return;
+  navWrap.addEventListener('click', function(e){
+    const el=e.target.closest('.nav-item[data-tab]');
+    if(!el) return;
+    _doTabSwitch(el.dataset.tab, el);
+  });
+}
+// 탭 클릭 바인딩 & 초기화 즉시 실행 (DOM이 이미 파싱된 후이므로 즉시 실행)
+_bindNavClicks();
+// init()도 즉시 실행 (Firebase 연결 전이어도 localStorage 데이터로 동작)
+if(!window._appInitDone){
+  window._appInitDone = true;
+  try{ init(); } catch(e){ console.error('[SKPC] init 오류:', e); }
+}
 
 // 현재 탭에 맞는 그룹 라벨 active 갱신
 function updateActiveGroup(tab){
@@ -1949,15 +1965,7 @@ window.scrollToGroup=function(grp){
 // ── showTab 헬퍼 (JS에서 직접 탭 전환용) ─────────────────────
 window.showTab=function(tab){
   const navEl=document.querySelector('.nav-item[data-tab="'+tab+'"]');
-  if(navEl){ navEl.click(); return; }
-  // nav 없이 직접 전환
-  document.querySelectorAll('.tab-pane').forEach(function(p){
-    p.classList.remove('active'); p.style.display='none';
-  });
-  const tp=document.getElementById('tab-'+tab);
-  if(tp){ tp.classList.add('active'); tp.style.display='block'; }
-  updateActiveGroup(tab);
-  onTabActivate(tab);
+  _doTabSwitch(tab, navEl||null);
 };
 
 // ── 헌금입력 탭 전환 ────────────────────────────────────────
@@ -1968,8 +1976,7 @@ window.selectInputSheet=function(num){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const wrap=document.getElementById('nav-input-'+num);
   if(wrap) wrap.classList.add('active');
-  updateActiveGroup('input'+num);
-  // 탭 전환 - classList + style.display 동시 처리
+  // 탭 전환
   document.querySelectorAll('.tab-pane').forEach(function(p){
     p.classList.remove('active');
     p.style.display='none';
@@ -1979,8 +1986,8 @@ window.selectInputSheet=function(num){
     tp.classList.add('active');
     tp.style.display='block';
     buildInputSheet(num);
-    tp.scrollIntoView({behavior:'smooth',block:'start'});
   }
+  updateActiveGroup('input'+num);
 
 };
 
@@ -5267,54 +5274,51 @@ window.printSection=function(areaId){
 };
 
 function init(){
-  // 기존 DB의 online 필드 정규화 (boolean→문자열 마이그레이션)
+  // ── 모든 탭 display 초기화 (CSS와 style 일치) ──
+  document.querySelectorAll('.tab-pane').forEach(function(p){
+    p.style.display='none';
+    p.classList.remove('active');
+  });
+
+  // ── DB 필드 정규화 ──
   try{
     const offs=JSON.parse(localStorage.getItem('accountBook')||'[]');
     let changed=false;
     offs.forEach(function(e){const n=_normalizeOnline(e.online);if(e.online!==n){e.online=n;changed=true;}});
     if(changed) localStorage.setItem('accountBook',JSON.stringify(offs));
   }catch(e){console.warn('online 정규화 실패:',e);}
+
+  // ── 헌금입력 시트 빌드 & 탭1 활성화 ──
   try{
     buildInputSheet(1);buildInputSheet(2);buildInputSheet(3);
-    // 초기 탭 1 활성화
-    selectInputSheet(1);
   }catch(e){
     console.error('buildInputSheet error:',e);
     var el=document.getElementById('tab-input1');
     if(el) el.innerHTML='<div style="padding:20px;color:red;font-weight:bold">오류: '+e.message+'<br>브라우저 콘솔(F12)을 확인하세요.</div>';
   }
+
+  // ── 월 선택기 초기화 ──
   try{
     initMonthSel('monthly-month','monthly-badge');
     initMonthSel('dept-month','dept-badge');
     initMonthSel('bank-month','bank-badge');
   }catch(e){console.error('initMonthSel error:',e);}
-  // 초기 탭 상태: input1만 표시, 나머지 모두 숨김
-  document.querySelectorAll('.tab-pane').forEach(function(p){
-    p.style.display=(p.classList.contains('active'))?'block':'none';
-  });
+
+  // ── 초기 탭: 입력1 활성화 ──
+  selectInputSheet(1);
 }
 
-// Firebase가 준비되면 _appInit 호출 (Firebase SDK에서 호출)
-// fallback: Firebase 없으면 2초 후 직접 실행
+// Firebase 동기화 완료 후 현재 탭 데이터 갱신
 window._appInit = function(){
-  if(window._appInitDone) return;
+  // init이 이미 실행됐으면 현재 탭만 refresh
+  if(window._appInitDone){
+    const activeTab=document.querySelector('.nav-item.active')?.dataset?.tab;
+    if(activeTab && typeof onTabActivate==='function') onTabActivate(activeTab);
+    return;
+  }
   window._appInitDone = true;
   init();
 };
-// Firebase 로딩 실패 시 fallback
-setTimeout(function(){
-  if(!window._appInitDone){
-    console.warn('[SKPC] Firebase 미연결 - localStorage 모드로 실행');
-    window._appInit();
-  }
-}, 3000);
-// DOM이 준비되면 Firebase 연결 대기
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded', function(){
-    // Firebase가 먼저 로드되지 않은 경우 fallback
-    setTimeout(function(){if(!window._appInitDone) window._appInit();}, 3500);
-  });
-}
 </script>
 </body>
 </html>
