@@ -2957,8 +2957,44 @@ function renderMonthlyGeneral(ym){
 
   const byTypeInc={};cumOff.forEach(e=>{byTypeInc[e.type]=(byTypeInc[e.type]||0)+Number(e.amount||0);});
   const byTypeMo={};moOff.forEach(e=>{byTypeMo[e.type]=(byTypeMo[e.type]||0)+Number(e.amount||0);});
-  const byDeptCu={};cumExp.forEach(e=>{byDeptCu[e.dept]=(byDeptCu[e.dept]||0)+Number(e.amount||0);});
-  const byDeptMo={};moExp.forEach(e=>{byDeptMo[e.dept]=(byDeptMo[e.dept]||0)+Number(e.amount||0);});
+  // 지출 집계: expenseDB + deptView_ 오버라이드 + deptTopRows 지출행 + deptCustomRows
+  const byDeptCu={};
+  const byDeptMo={};
+  const allDepts2=getDeptTypes().filter(function(d){
+    return !['건축헌금사용','전도헌금','사회봉사'].includes(d)&&d!=='건축대출금상환';
+  });
+
+  // 지출 집계 함수: renderDeptReport와 완전 동일한 로직
+  // = expenseDB(viewData오버라이드) + topRows(비예산 지출) + customRows
+  function calcDeptExp(dept, targetYm, allExpDB){
+    var vd=ST.get('deptView_'+targetYm+'_'+dept,{})||{};
+    var moE=allExpDB.filter(function(e){ return e.dept===dept && monthOf(e.date)===targetYm; });
+    var topR=ST.get('deptTopRows_'+targetYm+'_'+dept,[])||[];
+    var custR=ST.get('deptCustomRows_'+targetYm+'_'+dept,[])||[];
+    // expenseDB 금액 (viewData 오버라이드 우선)
+    var fromDB=moE.reduce(function(s,e){
+      var sv=vd[e.id]||{};
+      return s+(sv.amount!==undefined?Number(sv.amount||0):Number(e.amount||0));
+    },0);
+    // topRows 지출 (isBudget 행의 amount도 포함 - 실제 지출로 기록된 경우)
+    var fromTop=topR.reduce(function(s,r){ return s+(parseInt(r.amount)||0); },0);
+    // customRows
+    var fromCust=custR.reduce(function(s,r){ return s+(parseInt(r.amount)||0); },0);
+    return fromDB+fromTop+fromCust;
+  }
+
+  // 누계: 1월~해당월 합산
+  allDepts2.forEach(function(dept){
+    var cuTotal=0, moTotal=0;
+    for(var m2=1;m2<=mo;m2++){
+      var mym=yr+'-'+String(m2).padStart(2,'0');
+      var monthExp=calcDeptExp(dept, mym, expenses);
+      cuTotal+=monthExp;
+      if(mym===ym) moTotal=monthExp;
+    }
+    byDeptCu[dept]=cuTotal;
+    byDeptMo[dept]=moTotal;
+  });
 
   const budget=getBudget();
 
@@ -2986,15 +3022,25 @@ function renderMonthlyGeneral(ym){
   const cuExpT=cumExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
   const bal=carryBase+cuInc-cuExpT;
 
-  // ── 교육부찬조 전체 수입/지출 계산 ──────────────────────────
-  const eduSponInc_cu=cumOff.filter(e=>String(e.type||'').includes('교육부찬조'))
-    .reduce((s,e)=>s+Number(e.amount||0),0);
-  const eduSponInc_mo=moOff.filter(e=>String(e.type||'').includes('교육부찬조'))
-    .reduce((s,e)=>s+Number(e.amount||0),0);
-  const eduSponExp_cu=cumExp.filter(e=>String(e.dept||'').includes('교육부찬조'))
-    .reduce((s,e)=>s+Number(e.amount||0),0);
-  const eduSponExp_mo=moExp.filter(e=>String(e.dept||'').includes('교육부찬조'))
-    .reduce((s,e)=>s+Number(e.amount||0),0);
+  // ── 교육부찬조 전체: 찬조내역DB(sponsorBook) 자동계산 ──────
+  // 수입: 헌금내역에서 교육부찬조 타입 합산 (수입 측면)
+  const eduSponInc_cu=cumOff.filter(function(e){return String(e.type||'').includes('교육부찬조');})
+    .reduce(function(s,e){return s+Number(e.amount||0);},0);
+  const eduSponInc_mo=moOff.filter(function(e){return String(e.type||'').includes('교육부찬조');})
+    .reduce(function(s,e){return s+Number(e.amount||0);},0);
+  // 지출: 찬조내역DB(sponsorBook)에서 교육부찬조 타입 조회 (조회연도 1월~해당월 누계)
+  const allSpons=getSponsors();
+  const cumSpons=allSpons.filter(function(e){
+    return e.date && e.date.slice(0,4)===String(yr) && monthOf(e.date)<=ym
+      && String(e.type||'').includes('교육부찬조');
+  });
+  const moSpons=allSpons.filter(function(e){
+    return e.date && monthOf(e.date)===ym
+      && String(e.type||'').includes('교육부찬조');
+  });
+  const eduSponExp_cu=cumSpons.reduce(function(s,e){return s+Number(e.amount||0);},0);
+  const eduSponExp_mo=moSpons.reduce(function(s,e){return s+Number(e.amount||0);},0);
+  // 저장된 예산값 로드 (누계/월계는 이제 자동계산)
   // 교육부찬조 예산
   // 교육부찬조 당년예산: 입력값 기준 (입력 전 기본값 0)
   const eduSponBudget=0; // 사용자가 직접 입력
@@ -3144,13 +3190,15 @@ function renderMonthlyGeneral(ym){
               data-ym="${ym}" placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
               style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#b45309;font-weight:700"></td>
           <td class="rpt-num">
-            <input id="edu-cu-inp" type="text" value="${fmtN(ST.get('eduSponCu_'+ym)||eduSponExp_cu||0)}"
-              data-ym="${ym}" placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
-              style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700"></td>
+            <input id="edu-cu-inp" type="text" value="${fmtN(eduSponExp_cu)}"
+              data-ym="${ym}" placeholder="—" readonly
+              style="width:100%;text-align:right;border:none;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700;cursor:default"
+              title="찬조내역DB에서 자동계산"></td>
           <td class="rpt-num">
             <input id="edu-mo-inp" type="text" value="${eduSponExp_mo?fmtN(eduSponExp_mo):''}"
-              placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
-              style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700"></td>
+              placeholder="—" readonly
+              style="width:100%;text-align:right;border:none;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700;cursor:default"
+              title="찬조내역DB에서 자동계산"></td>
           <td class="rpt-num" id="edu-pct-cell">${eduPct}</td>
           <td class="rpt-note">변동비</td>
         </tr>
@@ -5547,7 +5595,7 @@ var BANKBAL_ACCOUNTS = [
     label: '전도헌금',
     acctNo: '4364',
     incTypes: ['전도헌금'],
-    expTypes: ['전도헌금','친교부'],
+    expTypes: ['전도헌금'],   // 친교부는 일반회계에 포함
     carryKey: 'mission'
   },
   {
@@ -5562,7 +5610,7 @@ var BANKBAL_ACCOUNTS = [
 
 var SPECIAL_INC_TYPES = ['건축헌금','전도헌금','지역봉사헌금'];
 var SPECIAL_EXP_TYPES = ['건축헌금사용','건축대출금상환','건축대출금상환적금','대출금이자',
-  '건축대출금 상환(일반회계)','전도헌금','친교부','사회봉사'];
+  '건축대출금 상환(일반회계)','전도헌금','사회봉사']; // 친교부는 일반회계
 
 function initBankBalTab(){
   var sel = document.getElementById('bankbal-year');
@@ -5579,7 +5627,6 @@ function initBankBalTab(){
 // 월별 수입/지출 계산
 function calcMonthly(yr, acct, offs, exps){
   var rows = [];
-  // 이월금: ST에서 로드
   var carryKey = 'bankbal_carry_' + acct.id + '_' + yr;
   var carry = parseN(ST.get(carryKey, 0));
   var cumInc = 0, cumExp = 0;
@@ -5602,6 +5649,12 @@ function calcMonthly(yr, acct, offs, exps){
         if(acct.expTypes.some(function(t){ return e.dept && (e.dept === t || e.dept.startsWith(t)); })) moExp += (e.amount||0);
       }
     });
+    // 통장간 잔고이동 반영
+    var transfers = ST.get('bankbal_transfer_' + ym, []) || [];
+    transfers.forEach(function(tr){
+      if(tr.from === acct.id) moExp += (parseInt(tr.amount)||0); // 출금
+      if(tr.to === acct.id) moInc += (parseInt(tr.amount)||0);   // 입금
+    });
     cumInc += moInc;
     cumExp += moExp;
     rows.push({ m: m, ym: ym, moInc: moInc, moExp: moExp,
@@ -5610,6 +5663,7 @@ function calcMonthly(yr, acct, offs, exps){
   }
   return { rows: rows, carry: carry };
 }
+
 
 // 통장잔고 렌더링
 window.renderBankBal = function(){
@@ -5792,11 +5846,118 @@ window.renderBankBal = function(){
   el.innerHTML = '<h3 style="font-size:16px;font-weight:900;color:var(--navy);margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--navy)">'
     + yr + '년 통장잔고 현황</h3>'
     + cmpSection
+    + renderTransferSection(yr)
     + '<div style="height:20px"></div>'
     + acctTables.join('')
     + annualSummary;
 
   showResult('bankbal-result');
+};
+
+// ════════════════════════════════════════════════════════
+// 통장간 잔고이동
+// ════════════════════════════════════════════════════════
+function renderTransferSection(yr){
+  var acctOpts = BANKBAL_ACCOUNTS.map(function(a){
+    return '<option value="'+a.id+'">'+a.label+' ('+a.acctNo+')</option>';
+  }).join('');
+  var moOpts = Array.from({length:12},function(_,i){
+    var m=String(i+1).padStart(2,'0');
+    return '<option value="'+yr+'-'+m+'">'+yr+'년 '+(i+1)+'월</option>';
+  }).join('');
+  // 저장된 이동내역 로드
+  var allTransfers = [];
+  for(var m=1;m<=12;m++){
+    var ym=yr+'-'+String(m).padStart(2,'0');
+    var trs=ST.get('bankbal_transfer_'+ym,[])||[];
+    trs.forEach(function(tr){ allTransfers.push(Object.assign({},tr,{ym:ym})); });
+  }
+  var trRows = allTransfers.length===0
+    ? '<tr><td colspan="6" class="tbl-empty">잔고이동 내역 없음</td></tr>'
+    : allTransfers.map(function(tr,i){
+        var fromA=BANKBAL_ACCOUNTS.find(function(a){return a.id===tr.from;})||{label:tr.from};
+        var toA=BANKBAL_ACCOUNTS.find(function(a){return a.id===tr.to;})||{label:tr.to};
+        return '<tr>'
+          +'<td style="text-align:center">'+tr.ym+'</td>'
+          +'<td><span class="badge b-red">'+fromA.label+'</span></td>'
+          +'<td style="text-align:center">→</td>'
+          +'<td><span class="badge b-blue">'+toA.label+'</span></td>'
+          +'<td class="nc" style="font-weight:700;color:var(--navy)">'+fmtN(parseInt(tr.amount)||0)+'원</td>'
+          +'<td style="font-size:11px;color:var(--g2)">'+(tr.memo||'')+'</td>'
+          +'<td style="text-align:center">'
+          +'<button class="btn btn-red btn-xs" data-ym="'+tr.ym+'" data-idx="'+i+'" onclick="deleteBankTransfer(this.dataset.ym,this.dataset.idx)">삭제</button>'
+          +'</td></tr>';
+      }).join('');
+
+  return '<div class="card" style="margin-top:20px;border:2px solid #93c5fd">'
+    +'<div class="card-hd"><div class="card-title">↔️ 통장간 잔고이동</div>'
+    +'<span style="font-size:11px;color:var(--g2)">계좌 간 이체 내역을 입력하면 잔고에 자동 반영됩니다</span>'
+    +'</div>'
+    // 입력 폼
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:8px;align-items:end;padding:12px 16px;background:#f8faff;border-bottom:1px solid #e2e8f0">'
+    +'<div><div style="font-size:11px;font-weight:700;color:var(--g2);margin-bottom:4px">이동 월</div>'
+    +'<select id="tr-month" class="fsel" style="height:34px">'+moOpts+'</select></div>'
+    +'<div><div style="font-size:11px;font-weight:700;color:var(--g2);margin-bottom:4px">출금 통장 (FROM)</div>'
+    +'<select id="tr-from" class="fsel" style="height:34px">'+acctOpts+'</select></div>'
+    +'<div><div style="font-size:11px;font-weight:700;color:var(--g2);margin-bottom:4px">입금 통장 (TO)</div>'
+    +'<select id="tr-to" class="fsel" style="height:34px">'+acctOpts+'</select></div>'
+    +'<div><div style="font-size:11px;font-weight:700;color:var(--g2);margin-bottom:4px">금액 (원)</div>'
+    +'<input id="tr-amount" type="text" class="finp" placeholder="0" oninput="fmtAmt(this)" style="height:34px;text-align:right"></div>'
+    +'<div><div style="font-size:11px;font-weight:700;color:var(--g2);margin-bottom:4px">메모</div>'
+    +'<input id="tr-memo" type="text" class="finp" placeholder="이동 사유..." style="height:34px"></div>'
+    +'<div><div style="font-size:11px;margin-bottom:4px">&nbsp;</div>'
+    +'<button class="btn btn-navy" onclick="addBankTransfer('+yr+')" style="height:34px;white-space:nowrap">➕ 추가</button></div>'
+    +'</div>'
+    // 이동내역 테이블
+    +'<div class="tbl-wrap"><table class="tbl">'
+    +'<thead><tr>'
+    +'<th style="width:90px">월</th>'
+    +'<th>출금</th><th style="width:30px"></th><th>입금</th>'
+    +'<th class="nc">금액</th><th>메모</th><th style="width:50px">삭제</th>'
+    +'</tr></thead>'
+    +'<tbody>'+trRows+'</tbody>'
+    +'</table></div>'
+    +'</div>';
+}
+
+window.addBankTransfer = function(yr){
+  var ym = document.getElementById('tr-month')?.value||'';
+  var from = document.getElementById('tr-from')?.value||'';
+  var to = document.getElementById('tr-to')?.value||'';
+  var amount = parseN(document.getElementById('tr-amount')?.value||'0');
+  var memo = document.getElementById('tr-memo')?.value||'';
+  if(!ym||!from||!to||!amount){ alert('월, 출금/입금 통장, 금액을 모두 입력하세요.'); return; }
+  if(from===to){ alert('출금과 입금 통장이 같습니다.'); return; }
+  var key = 'bankbal_transfer_'+ym;
+  var trs = ST.get(key,[])||[];
+  trs.push({from:from, to:to, amount:amount, memo:memo});
+  ST.set(key, trs);
+  if(window._fbSaveConfig) window._fbSaveConfig(key, trs);
+  renderBankBal();
+};
+
+window.deleteBankTransfer = function(ym, idx){ idx=parseInt(idx);
+  if(!confirm('이 잔고이동 내역을 삭제하시겠습니까?')) return;
+  var key = 'bankbal_transfer_'+ym;
+  var trs = ST.get(key,[])||[];
+  // idx는 전체 allTransfers 기준 → 해당 ym의 인덱스 재계산
+  var ymTrs = trs;
+  var ymIdx = 0;
+  // 실제 같은 ym의 몇 번째인지 계산
+  var allTrs = [];
+  for(var m=1;m<=12;m++){
+    var mym=ym.slice(0,4)+'-'+String(m).padStart(2,'0');
+    var mTrs=ST.get('bankbal_transfer_'+mym,[])||[];
+    mTrs.forEach(function(tr,i){ allTrs.push({ym:mym,i:i}); });
+  }
+  if(allTrs[idx]){
+    var target=allTrs[idx];
+    var targetTrs=ST.get('bankbal_transfer_'+target.ym,[])||[];
+    targetTrs.splice(target.i,1);
+    ST.set('bankbal_transfer_'+target.ym, targetTrs);
+    if(window._fbSaveConfig) window._fbSaveConfig('bankbal_transfer_'+target.ym, targetTrs);
+  }
+  renderBankBal();
 };
 
 // 이월금 저장
