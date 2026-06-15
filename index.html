@@ -2943,15 +2943,15 @@ function renderMonthlyGeneral(ym){
   const incTypes=getOffTypes().filter(function(t){ return !SPECIAL_INC.includes(t); });
 
   // ── 지출 항목: 지출내역DB의 getDeptTypes()에서 특별3개 제외 → 자동계산 ──
-  const SPECIAL_EXP_DEPT=['건축헌금사용','전도헌금','사회봉사'];
-  // '건축대출금상환'은 EXCLUDE_DEPT로 처리되므로 여기서는 제외
-  // '건축대출금 상환(일반회계)'는 일반회계에 포함
+  // 특별회계 제외 목록 (건축 관련 전체 제외)
+  const SPECIAL_EXP_DEPT=['건축헌금사용','건축헌금','전도헌금','사회봉사',
+    '건축대출금상환','건축대출금상환적금','대출금이자'];
   const outTypes=(function(){
     var base=getDeptTypes().filter(function(d){
-      return !SPECIAL_EXP_DEPT.includes(d) && d!=='건축대출금상환';
+      return !SPECIAL_EXP_DEPT.includes(d);
     });
-    // '건축대출금 상환(일반회계)'가 없으면 추가
-    if(!base.includes('건축대출금 상환(일반회계)')) base.push('건축대출금 상환(일반회계)');
+    // '건축대출금상환적금'을 일반회계에 포함 (건축적금 상환분)
+    if(!base.includes('건축대출금상환적금')) base.push('건축대출금상환적금');
     return base;
   })();
 
@@ -3009,14 +3009,8 @@ function renderMonthlyGeneral(ym){
   //   '건축대출금 상환(일반회계)'는 DB의 '건축대출금상환' 부서 데이터를 제외하고 별도 입력값만 반영
   //   '건축대출금상환' 부서 실제 데이터는 합계에서 제외
   const EXCLUDE_DEPT='건축대출금상환'; // DB에서 이 부서는 합계 제외
-  const cuExpTable=outTypes.reduce((s,d)=>{
-    if(d==='건축대출금 상환(일반회계)') return s+(byDeptCu['건축대출금 상환(일반회계)']||0);
-    return s+(byDeptCu[d]||0);
-  },0);
-  const moExpTable=outTypes.reduce((s,d)=>{
-    if(d==='건축대출금 상환(일반회계)') return s+(byDeptMo['건축대출금 상환(일반회계)']||0);
-    return s+(byDeptMo[d]||0);
-  },0);
+  const cuExpTable=outTypes.reduce(function(s,d){ return s+(byDeptCu[d]||0); },0);
+  const moExpTable=outTypes.reduce(function(s,d){ return s+(byDeptMo[d]||0); },0);
   // 총계용 지출 = 전체 - '건축대출금상환' 제외
   const moExpT=moExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
   const cuExpT=cumExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
@@ -4153,12 +4147,31 @@ window.addDeptType=function(){
   types.push(v);ST.set('deptTypes',types);
   if(window._fbSaveConfig)window._fbSaveConfig('deptTypes',types);
   inp.value='';renderDeptTypeList();
+  // 지출 입력 탭 부서 라디오 & 검색 필터 즉시 반영
+  try{
+    buildRadioGroup('exp-deptRadio',getDeptTypes(),ST.get('selDept',getDeptTypes()[0]),function(v){ST.set('selDept',v);});
+    var fdept=document.getElementById('exp-fdept');
+    if(fdept){
+      fdept.innerHTML='<option value="">전체</option>'+getDeptTypes().map(function(d){return '<option>'+d+'</option>';}).join('');
+    }
+    var dmDept=document.getElementById('dm-exp-dept');
+    if(dmDept){
+      dmDept.innerHTML='<option value="">전체</option>'+getDeptTypes().map(function(d){return '<option>'+d+'</option>';}).join('');
+    }
+  }catch(e){}
 };
 window.removeDeptType=function(i){
   const types=getDeptTypes();types.splice(i,1);
   ST.set('deptTypes',types);
   if(window._fbSaveConfig)window._fbSaveConfig('deptTypes',types);
   renderDeptTypeList();
+  try{
+    buildRadioGroup('exp-deptRadio',getDeptTypes(),ST.get('selDept',getDeptTypes()[0]),function(v){ST.set('selDept',v);});
+    var fd=document.getElementById('exp-fdept');
+    if(fd) fd.innerHTML='<option value="">전체</option>'+getDeptTypes().map(function(d){return '<option>'+d+'</option>';}).join('');
+    var dm=document.getElementById('dm-exp-dept');
+    if(dm) dm.innerHTML='<option value="">전체</option>'+getDeptTypes().map(function(d){return '<option>'+d+'</option>';}).join('');
+  }catch(e){}
 };
 window.addRecipient=function(){
   const name=(document.getElementById('new-recip-name')?.value||'').trim();
