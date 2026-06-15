@@ -825,8 +825,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     <div class="nav-group-label" data-group="monthly">월간</div>
     <div class="nav-item grp-monthly" data-tab="monthly">📊 월간보고</div>
     <div class="nav-item grp-monthly" data-tab="deptreport">🏢 부서보고서</div>
-    <div class="nav-item grp-monthly" data-tab="bankbal">🏦 통장잔액</div>
-    <div class="nav-item grp-monthly" data-tab="finsearch">🔍 기간별 조회</div>
+
     <!-- 관리 -->
     <div class="nav-group-label" data-group="manage">관리</div>
     <div class="nav-item" data-tab="manage">⚙️ 관리</div>
@@ -1038,9 +1037,11 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     <!-- 교육부찬조 전용 섹션 -->
     <div class="spon-extra" id="spon-edu-extra">
       <!-- 부서별 배분 현황 -->
+      <div id="spon-edu-print-area">
       <div class="card">
         <div class="card-hd">
           <div class="card-title">📊 교육부찬조 부서별 배분 현황</div>
+          <button class="btn btn-outline btn-sm no-print" onclick="printSection('spon-edu-print-area')">🖨️ 인쇄</button>
         </div>
         <div style="font-size:11px;color:var(--g2);padding:6px 14px 0;margin-bottom:6px">
           <b>지정금액</b>: 타입에 부서명 포함(예: 교육부찬조(청년부)) &nbsp;|&nbsp;
@@ -1088,6 +1089,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
           </tr></tfoot>
         </table></div>
       </div>
+      </div><!-- /spon-edu-print-area -->
     </div>
   </div>
 </div>
@@ -1207,14 +1209,12 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 <div id="tab-online-off" class="tab-pane">
   <div class="pg-hd"><div class="pg-title">🌐 온라인 입금 내역</div></div>
 
-  <!-- 검색 -->
+  <!-- 날짜 선택 -->
   <div class="search-panel">
-    <div class="panel-title">검색 조건</div>
-    <div class="g3 mb8">
+    <div class="panel-title">날짜 선택</div>
+    <div class="g2 mb8">
       <div class="fg"><div class="flbl">날짜</div>
         <select class="fsel" id="online-fdate"><option value="">전체</option></select></div>
-      <div class="fg"><div class="flbl">헌금구분</div>
-        <select class="fsel" id="online-ftype"><option value="">전체</option></select></div>
       <div class="fg"><div class="flbl">성도명</div>
         <input class="finp" id="online-fname" placeholder="이름 검색..."></div>
     </div>
@@ -1224,36 +1224,9 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     </div>
   </div>
 
-  <!-- 통계 -->
-  <div class="g4 mb12" id="online-stats-wrap"></div>
-
-  <!-- 결과: 전체 통합 테이블 -->
-  <div class="result-section" id="online-result">
-    <div class="card mb12">
-      <div class="card-hd">
-        <div class="card-title">온라인 입금 내역 <span class="badge b-blue" id="online-count" style="margin-left:6px"></span></div>
-        <span id="online-total" style="font-family:var(--fnum);font-weight:700;color:var(--blue);font-size:14px"></span>
-      </div>
-      <div class="tbl-wrap"><table class="tbl">
-        <thead><tr>
-          <th style="width:36px">#</th>
-          <th>날짜</th>
-          <th>헌금구분</th>
-          <th>성도명</th>
-          <th class="nc">금액(원)</th>
-          <th>비고</th>
-        </tr></thead>
-        <tbody id="online-tbody"></tbody>
-        <tfoot><tr>
-          <td colspan="4" style="text-align:center;font-weight:900">합 계</td>
-          <td class="nc" id="online-foot-total" style="color:var(--blue);font-weight:900"></td>
-          <td></td>
-        </tr></tfoot>
-      </table></div>
-    </div>
-
-    <!-- 헌금유형별 분리 테이블 (동적 렌더링) -->
-    <div id="online-split-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+  <!-- 유형별 카드 (동적 렌더링) -->
+  <div id="online-result" class="result-section">
+    <div id="online-split-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:14px"></div>
   </div>
 </div>
 
@@ -1303,39 +1276,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   </div>
 </div>
 
-<!-- ===== 통장잔액 ===== -->
 
-<div id="tab-bankbal" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">🏦 통장잔액 비교</div></div>
-  <div class="month-bar">
-    <label>기준 월</label>
-    <select id="bank-month" onchange="updateMonthBadge('bank-month','bank-badge')"></select>
-    <span class="m-badge" id="bank-badge">-</span>
-    <button class="btn btn-navy" onclick="renderBankBalance()">🔍 조회</button>
-  </div>
-  <div id="bank-result" class="result-section">
-    <div id="bank-content"></div>
-  </div>
-</div>
-
-<!-- ===== 기간별 조회 ===== -->
-
-<div id="tab-finsearch" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">🔍 기간별 재정 조회</div></div>
-  <div class="search-panel">
-    <div class="panel-title">기간 설정</div>
-    <div class="g2 mb8">
-      <div class="fg"><div class="flbl">시작일</div><input type="date" class="finp" id="fin-from"></div>
-      <div class="fg"><div class="flbl">종료일</div><input type="date" class="finp" id="fin-to"></div>
-    </div>
-    <div class="flex gap8">
-      <button class="btn btn-navy" onclick="renderFinSearch()">🔍 조회</button>
-    </div>
-  </div>
-  <div id="fin-result" class="result-section">
-    <div id="finsearch-content"></div>
-  </div>
-</div>
 
 <!-- ===== 관리 ===== -->
 
@@ -1664,7 +1605,7 @@ const ST={
 // ===== DEFAULT DATA =====
 const DEF_OFF_TYPES=['십일조헌금','월정헌금','감사헌금','주일헌금','비전헌금','맥추감사헌금','헌신예배','교회학교','장학헌금','추수감사헌금','일천번제','선교헌금','부활절','성탄절','신년헌금','기타','건축헌금','전도헌금','지역봉사헌금'];
 const DEF_DEPT_TYPES=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','기타(예비비)','건축헌금','전도헌금','사회봉사'];
-const DEF_SPON_TYPES=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','꽃꽂이찬조','기타찬조'];
+const DEF_SPON_TYPES=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','꽃꽃이찬조','꽃꽂이찬조','기타찬조'];
 const DEF_WRITERS=['이광원','유치주','하태식','김종우'];
 function getWriters(){return ST.get('writers',DEF_WRITERS);}
 
@@ -1865,9 +1806,9 @@ window._fbLiveRefresh = function(key){
   if(!activeTab) return;
   const refreshMap = {
     'accountBook':  ['offering','query','weekly','receipt','monthly','bankbal','finsearch'],
-    'expenseBook':  ['expense','monthly','deptreport','bankbal','finsearch','receipt'],
+    'expenseBook':  ['expense','monthly','deptreport','receipt'],
     'sponsorBook':  ['sponsor'],
-    'config':       ['manage','monthly','bankbal']
+    'config':       ['manage','monthly']
   };
   const tabs = refreshMap[key] || [];
   if(tabs.includes(activeTab)){
@@ -1937,7 +1878,6 @@ function onTabActivate(tab){
   if(tab==='sponsor') initSponsorTab();
   if(tab==='monthly') initMonthSel('monthly-month','monthly-badge');
   if(tab==='deptreport') initMonthSel('dept-month','dept-badge');
-  if(tab==='bankbal') initMonthSel('bank-month','bank-badge');
   if(tab==='query') initQueryTab();
   if(tab==='weekly') initWeeklyTab();
   if(tab==='receipt'){
@@ -2188,8 +2128,13 @@ function renderEntryTable(num){
           <option ${e.online==='현금입금'?'selected':''}>현금입금</option>
           <option ${e.online==='온라인입금'?'selected':''}>온라인입금</option>
         </select></td>
-      <td>${e.memo||'—'}</td>
-      <td>${sponBadge}</td>
+      <td><input class="entry-edit-inp" value="${e.memo||''}" placeholder="비고"
+          style="min-width:70px" onchange="updateEntry(${num},'${e.id}','memo',this.value)"></td>
+      <td><select class="fsel" style="height:26px;font-size:11px;min-width:90px"
+          onchange="updateEntry(${num},'${e.id}','spon',this.value)">
+          <option value="">찬조없음</option>
+          ${getSponTypes().map(t=>'<option value="'+t+'"'+(t===e.spon?' selected':'')+'>'+t+'</option>').join('')}
+        </select></td>
       <td><button class="btn btn-red btn-xs" onclick="deleteEntry(${num},'${e.id}')">삭제</button></td>
     </tr>`;
   }).join('')||'<tr><td colspan="9" class="tbl-empty">입력된 내역이 없습니다</td></tr>';
@@ -2561,9 +2506,9 @@ window.toggleSponExtra=function(){
 
 function initSponsorTab(){
   const today=nowKST();
-  const first=new Date(today.getUTCFullYear(),today.getMonth(),1).toISOString().slice(0,10);
+  const firstOfYear=today.getUTCFullYear()+'-01-01'; // 당해년 1월 1일
   const fd=document.getElementById('spon-from');const td=document.getElementById('spon-to');
-  if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;
+  if(fd&&!fd.value) fd.value=firstOfYear;if(td&&!td.value) td.value=TODAY;
   const sfq=document.getElementById('spon-ftype-q');
   const sts=document.getElementById('spon-type-sel');
   if(sfq) sfq.innerHTML='<option value="">전체</option>'+getSponTypes().map(t=>`<option>${t}</option>`).join('');
@@ -2836,9 +2781,11 @@ window.renderMonthly=function(){
       if(el) el.innerHTML='<div style="background:#fef3f2;border:2px solid #f87171;padding:14px;border-radius:8px;color:#b91c1c;font-size:12px">'
         +'<strong>⚠️ 조회 오류:</strong> '+err.message
         +'<br><small>콘솔(F12)에서 상세 확인 가능</small></div>';
+      showResult('monthly-result');
     }
   }
-  else if(rptType==='special_all') renderMonthlySpecialAll(ym);
+  else if(rptType==='special_all'){ renderMonthlySpecialAll(ym); }
+  showResult('monthly-result');
 };
 
 // ── 이월금 가져오기 ──────────────────────────────────────────
@@ -3740,132 +3687,66 @@ window.resetWeeklySearch=function(){
   const o=document.getElementById('wky-online');if(o) o.selectedIndex=0;
 };
 
-// ── 온라인 입금내역 탭 ───────────────────────────────────────
 // ── 온라인 입금내역 탭 ──────────────────────────────────────
+// 표시할 헌금유형 고정 목록 (이 유형들만 카드로 표시)
+var ONLINE_DISPLAY_TYPES = ['십일조헌금', '비전헌금', '전도헌금', '지역봉사헌금'];
+
 window.initOnlineTab=function(){
-  // 날짜 셀렉트 초기화
-  const dateSel=document.getElementById('online-fdate');
+  var dateSel=document.getElementById('online-fdate');
   if(dateSel){
-    const offs=getOfferings().filter(isOnlinePayment);
-    const dates=[...new Set(offs.map(function(e){return e.date;}).filter(Boolean))].sort().reverse();
+    var offs=getOfferings().filter(isOnlinePayment);
+    var dates=[...new Set(offs.map(function(e){return e.date;}).filter(Boolean))].sort().reverse();
     dateSel.innerHTML='<option value="">전체</option>';
     dates.forEach(function(d){
-      const o=document.createElement('option');o.value=d;
-      const dt=new Date(d);
+      var o=document.createElement('option'); o.value=d;
+      var dt=new Date(d);
       o.textContent=d+' ('+['일','월','화','수','목','금','토'][dt.getDay()]+')';
       dateSel.appendChild(o);
     });
-    // 디폴트: 가장 최근 날짜 또는 직전 일요일
-    const sun=getLastSunday();
-    let found=false;
-    for(let i=0;i<dateSel.options.length;i++){
-      if(dateSel.options[i].value===sun){dateSel.selectedIndex=i;found=true;break;}
-    }
-    if(!found&&dateSel.options.length>1) dateSel.selectedIndex=1;
+    // 기본: 가장 최근 날짜
+    if(dateSel.options.length>1) dateSel.selectedIndex=1;
   }
-  // 헌금구분 셀렉트 – 실제 온라인 데이터에 있는 종류만
-  const typeSel=document.getElementById('online-ftype');
-  if(typeSel){
-    const offs=getOfferings().filter(isOnlinePayment);
-    const types=[...new Set(offs.map(function(e){return e.type;}).filter(Boolean))].sort();
-    typeSel.innerHTML='<option value="">전체</option>';
-    types.forEach(function(t){
-      const o=document.createElement('option');o.value=t;o.textContent=t;typeSel.appendChild(o);
-    });
-  }
-  // 자동 조회
   doOnlineSearch();
 };
 
 window.doOnlineSearch=function(){
-  const dt=document.getElementById('online-fdate')?.value||'';
-  const type=document.getElementById('online-ftype')?.value||'';
-  const name=(document.getElementById('online-fname')?.value||'').trim();
+  var dt=document.getElementById('online-fdate')?.value||'';
+  var name=(document.getElementById('online-fname')?.value||'').trim();
+  var allOnline=getOfferings().filter(isOnlinePayment);
+  if(dt) allOnline=allOnline.filter(function(e){return e.date===dt;});
+  if(name) allOnline=allOnline.filter(function(e){return (e.name||'').includes(name);});
 
-  // 온라인입금 데이터만 추출
-  let books=getOfferings().filter(isOnlinePayment);
-  if(dt)   books=books.filter(function(e){return e.date===dt;});
-  if(type) books=books.filter(function(e){return e.type===type;});
-  if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
-  books=books.sort(function(a,b){
-    const dc=(b.date||'').localeCompare(a.date||'');
-    return dc!==0?dc:(a.type||'').localeCompare(b.type||'');
-  });
+  var splitWrap=document.getElementById('online-split-wrap');
+  if(!splitWrap) return;
 
-  const total=books.reduce(function(s,e){return s+(e.amount||0);},0);
-  const memberSet=new Set(books.map(function(e){return e.name;}));
-
-  // ── 통계 카드 ──
-  // 헌금유형별 소계 계산
-  const typeMap={};
-  books.forEach(function(e){
-    typeMap[e.type]=(typeMap[e.type]||0)+(e.amount||0);
-  });
-  const typeKeys=Object.keys(typeMap).sort();
-  const statColors=['navy','blue','green','gold','red'];
-  const sw=document.getElementById('online-stats-wrap');
-  if(sw){
-    let statsHtml='<div class="stat navy"><div class="stat-lbl">온라인합계</div>'
-      +'<div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원 / '+books.length+'건</div></div>'
-      +'<div class="stat gold"><div class="stat-lbl">성도수</div>'
-      +'<div class="stat-val">'+memberSet.size+'</div><div class="stat-sub">명</div></div>';
-    typeKeys.forEach(function(t,i){
-      const col=statColors[(i+1)%statColors.length];
-      statsHtml+='<div class="stat '+col+'"><div class="stat-lbl">'+t+'</div>'
-        +'<div class="stat-val">'+fmtN(typeMap[t])+'</div><div class="stat-sub">원</div></div>';
-    });
-    sw.innerHTML=statsHtml;
-  }
-
-  // ── 통합 테이블 (컬럼: #, 날짜, 헌금구분, 성도명, 금액, 비고) ──
-  const tbAll=document.getElementById('online-tbody');
-  if(tbAll){
-    tbAll.innerHTML=books.map(function(e,i){
-      const ci=getTypeColorIdx(e.type);
-      return '<tr class="off-color-'+ci+'">'
-        +'<td style="text-align:center;color:var(--g3);font-size:11px">'+(i+1)+'</td>'
-        +'<td style="text-align:center">'+e.date+'</td>'
-        +'<td style="text-align:center"><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
-        +'<td style="text-align:center">'+(e.name||'')+'</td>'
-        +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
-        +'<td style="font-size:11px;text-align:left">'+(e.memo||'')+'</td>'
-        +'</tr>';
-    }).join('')||'<tr><td colspan="6" class="tbl-empty">조회된 내역이 없습니다</td></tr>';
-  }
-
-  const ct=document.getElementById('online-count');
-  if(ct) ct.textContent=books.length+'건';
-  const ot=document.getElementById('online-total');
-  if(ot) ot.textContent=fmtN(total)+'원';
-  const ft=document.getElementById('online-foot-total');
-  if(ft) ft.textContent=fmtN(total)+'원';
-
-  // ── 헌금유형별 분리 테이블 (각 유형 = 카드 1개) ──
-  // 세부카드: 십일조헌금만 표시 (감사헌금 등 기타 헌금 제외)
-  const ONLINE_SPLIT_TYPES=['십일조헌금','십일조'];
-  const splitKeys=typeKeys.filter(function(t){ return ONLINE_SPLIT_TYPES.some(function(x){ return t.includes(x); }); });
-  const splitWrap=document.getElementById('online-split-wrap');
-  if(splitWrap){
-    if(splitKeys.length===0){
-      splitWrap.innerHTML='';
-    } else {
-      splitWrap.innerHTML=splitKeys.map(function(t){
-        const rows=books.filter(function(e){return e.type===t;});
-        const sub=rows.reduce(function(s,e){return s+(e.amount||0);},0);
-        const ci=getTypeColorIdx(t);
-        return '<div class="card">'
-          +'<div class="card-hd"><div class="card-title">'+t+' <span class="badge b-blue" style="margin-left:6px">온라인입금</span></div>'
-          +'<span style="font-family:var(--fnum);font-size:13px;font-weight:700;color:var(--navy)">'+fmtN(sub)+'원</span></div>'
-          +'<div class="tbl-wrap"><table class="tbl">'
-          +'<thead><tr><th style="width:32px">#</th><th>날짜</th><th>성도명</th><th class="nc">금액(원)</th><th>비고</th></tr></thead>'
+  splitWrap.innerHTML=ONLINE_DISPLAY_TYPES.map(function(t){
+    var rows=allOnline.filter(function(e){return e.type===t;});
+    var sub=rows.reduce(function(s,e){return s+(e.amount||0);},0);
+    var ci=getTypeColorIdx(t);
+    return '<div class="card">'
+      +'<div class="card-hd">'
+      +'<div class="card-title"><span class="off-color-badge off-color-'+ci+'">'+t+'</span>'
+      +' <span class="badge b-blue" style="margin-left:6px">온라인입금</span></div>'
+      +'<span style="font-family:var(--fnum);font-size:14px;font-weight:700;color:var(--navy)">'+fmtN(sub)+'원</span>'
+      +'</div>'
+      +(rows.length===0
+        ? '<div class="tbl-empty" style="padding:16px">해당 내역 없음</div>'
+        : '<div class="tbl-wrap"><table class="tbl">'
+          +'<thead><tr>'
+          +'<th style="width:32px">#</th>'
+          +'<th>날짜</th>'
+          +'<th>성도명</th>'
+          +'<th class="nc">금액(원)</th>'
+          +'<th>비고</th>'
+          +'</tr></thead>'
           +'<tbody>'
-          +rows.map(function(e,i){
+          +rows.sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).map(function(e,i){
             return '<tr class="off-color-'+ci+'">'
               +'<td style="text-align:center;color:var(--g3);font-size:11px">'+(i+1)+'</td>'
               +'<td style="text-align:center">'+e.date+'</td>'
-              +'<td style="text-align:center">'+(e.name||'')+'</td>'
+              +'<td style="text-align:center;font-weight:700">'+(e.name||'')+'</td>'
               +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
-              +'<td style="font-size:11px;text-align:left">'+(e.memo||'')+'</td>'
+              +'<td style="font-size:11px">'+(e.memo||'')+'</td>'
               +'</tr>';
           }).join('')
           +'</tbody>'
@@ -3875,17 +3756,16 @@ window.doOnlineSearch=function(){
           +'<td></td>'
           +'</tr></tfoot>'
           +'</table></div>'
-          +'</div>';
-      }).join('');
-    }
-  }
+      )
+      +'</div>';
+  }).join('');
+
   showResult('online-result');
 };
 
 window.resetOnlineSearch=function(){
-  const d=document.getElementById('online-fdate');if(d) d.selectedIndex=0;
-  const t=document.getElementById('online-ftype');if(t) t.selectedIndex=0;
-  const n=document.getElementById('online-fname');if(n) n.value='';
+  var d=document.getElementById('online-fdate'); if(d) d.selectedIndex=0;
+  var n=document.getElementById('online-fname'); if(n) n.value='';
   doOnlineSearch();
 };
 
@@ -4172,10 +4052,6 @@ window.renderReceipt=function(){
       +'<td class="amt-cell" style="font-size:10px;color:#2471a3">'+(onl?fmtN(onl):'—')+'</td>'
       +'<td class="amt-cell" style="font-size:10px;font-weight:'+(tot?'700':'400')+'">'+(tot?fmtN(tot):'—')+'</td>';
   }
-  // 지출 주요내역 — 금액 기준 바 차트 방식
-  const expDetailItems=expenses.filter(function(e){return e.amount>0;})
-    .sort(function(a,b){return b.amount-a.amount;}).slice(0,10);
-  const expMaxAmt=expDetailItems.length?expDetailItems[0].amount:1;
 
   const el=document.getElementById('receipt-content');
   el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
@@ -4229,35 +4105,9 @@ window.renderReceipt=function(){
     +'</table></div></div>'
     +'<div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅲ. 수입 - 지출</div>'
     +'<table class="rct-tbl" style="margin-bottom:8px;width:100%">'
-    +'<colgroup><col style="width:80px"><col style="width:100px"><col style="width:100px"><col></colgroup>'
+    +'<colgroup><col style="width:80px"><col style="width:120px"><col style="width:120px"></colgroup>'
     +'<tbody>'
     +'<tr><td style="font-weight:800;font-size:10px">수입 총계</td><td style="font-size:10px">현금 '+fmtN(cashInc)+'</td><td class="rc-n" style="font-size:11px;font-weight:800;color:var(--blue)">'+fmtN(totInc)+'</td>'
-    +'<td style="padding:5px 6px;vertical-align:top" rowspan="4">'
-    +'<div style="font-weight:900;color:var(--navy);margin-bottom:5px;font-size:9px;letter-spacing:.5px;border-bottom:1.5px solid var(--navy);padding-bottom:2px">▶ 지출 주요내역</div>'
-    +(expDetailItems.length===0
-      ? '<div style="color:#aaa;font-size:9px">지출 없음</div>'
-      : expDetailItems.map(function(e){
-          var isCash=e.paytype==='현금지급'||e.transfer==='현금';
-          var barPct=Math.round((e.amount/expMaxAmt)*100);
-          var barColor=isCash?'#c0732b':'#1a6fa8';
-          var tagBg=isCash?'#fef0e4':'#e4f0fb';
-          var tagCol=isCash?'#a04000':'#1a5276';
-          var tag=isCash?'현금':'송금';
-          var note=e.content?' · '+e.content:'';
-          return '<div style="margin-bottom:4px">'
-            +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1px">'
-            +'<div style="display:flex;align-items:center;gap:3px;min-width:0">'
-            +'<span style="flex-shrink:0;font-size:7px;font-weight:900;padding:1px 4px;border-radius:3px;background:'+tagBg+';color:'+tagCol+';border:1px solid '+barColor+'22">'+tag+'</span>'
-            +'<span style="font-size:8px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.dept+note+'</span>'
-            +'</div>'
-            +'<span style="flex-shrink:0;font-family:var(--fnum);font-size:9px;font-weight:900;color:'+barColor+';margin-left:4px">'+fmtN(e.amount)+'</span>'
-            +'</div>'
-            +'<div style="background:#edf1f5;border-radius:2px;height:6px;overflow:hidden">'
-            +'<div style="background:linear-gradient(90deg,'+barColor+','+barColor+'99);width:'+barPct+'%;height:100%;border-radius:2px"></div>'
-            +'</div>'
-            +'</div>';
-        }).join('')
-    )
     +'</td></tr>'
     +'<tr><td style="font-size:10px;color:#2471a3">온라인입금</td><td style="font-size:10px;color:#2471a3">'+fmtN(bankInc)+'</td><td></td></tr>'
     +'<tr><td rowspan="2" style="font-size:10px;font-weight:700">지출 총계</td><td style="font-size:10px;color:#2471a3">└송금 '+fmtN(remitOut)+'</td><td class="rc-n" style="font-size:11px;color:var(--red);font-weight:800">'+fmtN(totOut)+'</td></tr>'
@@ -4478,7 +4328,8 @@ window.renderFinSearch=function(){
       return '<tr><td>'+e[0]+'</td><td class="nc">'+fmtN(e[1])+'</td></tr>';
     }).join('')
     +'</tbody></table></div>'
-    +'<div class="card"><div class="card-title mb8">지출 부서별</div>'
+    +'<div id="spon-edu-print-area">
+      <div class="card"><div class="card-title mb8">지출 부서별</div>'
     +'<table class="tbl"><thead><tr><th>부서</th><th class="nc">금액</th></tr></thead><tbody>'
     +Object.entries(byDept).sort(function(a,b){return b[1]-a[1];}).map(function(e){
       return '<tr><td>'+e[0]+'</td><td class="nc" style="color:var(--red)">'+fmtN(e[1])+'</td></tr>';
@@ -4519,16 +4370,68 @@ window.renderDeptReport=function(){
   const EXCLUDE=['건축헌금','전도헌금','사회봉사'];
   const depts=getDeptTypes().filter(function(d){return !EXCLUDE.includes(d);});
   const allExp=getExpenses();
+  // skpc_monthly.html에서 저장된 데이터 읽기
+  const officers=ST.get('deptOfficers',{});
   let html='';
   depts.forEach(function(dept){
     const moExp=allExp.filter(function(e){return e.dept===dept&&monthOf(e.date)===ym;});
-    if(!moExp.length) return;
+    // topRows: 교회예산 포함 수입행
+    const topRows=ST.get('deptTopRows_'+ym+'_'+dept,[]);
+    // deptView: 지출행 보기 데이터 (content, income, amount, memo)
+    const viewData=ST.get('deptView_'+ym+'_'+dept,{});
+    // footView: 월계/연누계 저장값
+    const footView=ST.get('deptFootView_'+ym+'_'+dept,{});
+    if(!moExp.length && !topRows.length && Object.keys(viewData).length===0) return;
     const total=moExp.reduce(function(s,e){return s+(e.amount||0);},0);
-    html+='<div class="rpt-section" style="margin-bottom:22px;border:1.5px solid #c8d8e8;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(26,58,110,.08)">'
+    const budgetRow=topRows.find(function(r){return r.isBudget;});
+    const budgetAmt=budgetRow?parseInt(budgetRow.income||0):0;
+    const off=officers[dept]||{};
+    const moInc=footView.moInc!==undefined?footView.moInc:topRows.reduce(function(s,r){return s+(parseInt(r.income||0));},0);
+    const moExp_saved=footView.moExp!==undefined?footView.moExp:total;
+    const moBal=moInc-moExp_saved;
+    // 연누계
+    const [yr]=ym.split('-');
+    let yearInc=0,yearExp=0;
+    for(let m=1;m<=parseInt(ym.split('-')[1]);m++){
+      const mym=yr+'-'+String(m).padStart(2,'0');
+      const mTop=ST.get('deptTopRows_'+mym+'_'+dept,[]);
+      const mFoot=ST.get('deptFootView_'+mym+'_'+dept,{});
+      const mExp=allExp.filter(function(e){return e.dept===dept&&monthOf(e.date)===mym;});
+      yearInc+=mFoot.moInc!==undefined?mFoot.moInc:mTop.reduce(function(s,r){return s+parseInt(r.income||0);},0);
+      yearExp+=mFoot.moExp!==undefined?mFoot.moExp:mExp.reduce(function(s,e){return s+(e.amount||0);},0);
+    }
+    html+='<div class="rpt-section" style="margin-bottom:24px;border:1.5px solid #c8d8e8;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(26,58,110,.08)">'
+      // 부서 헤더
       +'<div style="background:linear-gradient(90deg,#1e3a5f,#2a4f80);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">'
-      +'<strong style="color:#fff;font-size:14px;letter-spacing:.3px">'+dept+'</strong>'
-      +'<span style="color:rgba(255,255,255,.8);font-size:12px;font-family:var(--fnum)">'+ym+' &nbsp;|&nbsp; 합계 <strong>'+fmtN(total)+'원</strong></span>'
-      +'</div>'
+      +'<strong style="color:#fff;font-size:15px;letter-spacing:.5px">'+dept+'</strong>'
+      +'<div style="display:flex;gap:12px;align-items:center">'
+      +(off.head?'<span style="color:rgba(255,255,255,.8);font-size:11px">부장: <strong style="color:#fff">'+off.head+'</strong></span>':'')
+      +(off.deputy?'<span style="color:rgba(255,255,255,.8);font-size:11px">차장: <strong style="color:#fff">'+off.deputy+'</strong></span>':'')
+      +(off.acct?'<span style="color:rgba(255,255,255,.8);font-size:11px">회계: <strong style="color:#fff">'+off.acct+'</strong></span>':'')
+      +'<span style="color:rgba(255,255,255,.6);font-size:11px">'+ym+'</span>'
+      +'</div></div>'
+      // 요약 행 (교회예산 / 월계 / 연누계)
+      +(budgetAmt||footView.moInc!==undefined
+        ?'<div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0">'
+          +(budgetAmt?'<div style="flex:1;padding:8px 14px;border-right:1px solid #e2e8f0;background:#f0f6ff"><div style="font-size:10px;color:#64748b;font-weight:600">교회예산</div><div style="font-family:var(--fnum);font-size:14px;font-weight:700;color:#1d4ed8">'+fmtN(budgetAmt)+'원</div></div>':'')
+          +'<div style="flex:1;padding:8px 14px;border-right:1px solid #e2e8f0;background:#f0fff4"><div style="font-size:10px;color:#64748b;font-weight:600">월 계 (수입−지출)</div><div style="font-family:var(--fnum);font-size:14px;font-weight:700;color:'+(moBal>=0?'#1d4ed8':'#dc2626')+'">'+(moInc?fmtN(moInc)+'→':'')+'<span style="color:#dc2626">'+fmtN(moExp_saved)+'</span> = '+fmtN(moBal)+'원</div></div>'
+          +'<div style="flex:1;padding:8px 14px;background:#fff8f0"><div style="font-size:10px;color:#64748b;font-weight:600">연 누 계</div><div style="font-family:var(--fnum);font-size:14px;font-weight:700;color:#92400e">'+fmtN(yearExp)+'원</div></div>'
+          +'</div>'
+        :'')
+      // 수입 행 (교회예산 외 topRows)
+      +(topRows.filter(function(r){return !r.isBudget&&(parseInt(r.income||0)>0);}).length
+        ?'<div style="padding:8px 14px;background:#eff6ff;border-bottom:1px solid #e2e8f0">'
+          +'<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-bottom:4px">▶ 수 입</div>'
+          +topRows.filter(function(r){return !r.isBudget&&parseInt(r.income||0)>0;}).map(function(r){
+            return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0">'
+              +'<span style="color:#1e3a5f">'+(r.date||'')+'&nbsp;&nbsp;'+(r.content||'')+'</span>'
+              +'<span style="font-family:var(--fnum);font-weight:700;color:#1d4ed8">'+fmtN(parseInt(r.income||0))+'원</span>'
+              +'</div>';
+          }).join('')
+          +'</div>'
+        :'')
+      // 지출 테이블
+      +'<div style="padding:8px 14px 0;font-size:11px;font-weight:700;color:#dc2626">▶ 지 출</div>'
       +'<div class="tbl-wrap"><table class="tbl" style="table-layout:fixed;width:100%">'
       +'<colgroup><col style="width:100px"><col><col style="width:110px"><col style="width:80px"><col style="width:150px"></colgroup>'
       +'<thead><tr>'
@@ -4538,27 +4441,31 @@ window.renderDeptReport=function(){
       +'<th style="text-align:center">요청자</th>'
       +'<th style="text-align:left;padding-left:8px">수취자</th>'
       +'</tr></thead><tbody>'
-      +moExp.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).map(function(e,ri){
-        var bg=ri%2===0?'#fff':'#f8faff';
-        return '<tr style="background:'+bg+'">'
-          +'<td style="text-align:center;font-family:var(--fnum);font-size:12px;color:var(--g2)">'+e.date+'</td>'
-          +'<td style="text-align:left;padding-left:10px;font-weight:500">'+(e.content||e.item||'')+'</td>'
-          +'<td style="text-align:right;padding-right:12px;font-family:var(--fnum);color:var(--red);font-weight:700">'+fmtN(e.amount)+'</td>'
-          +'<td style="text-align:center;font-size:12px">'+(e.requester||'')+'</td>'
-          +'<td style="text-align:left;padding-left:8px;font-size:12px;color:var(--g2)">'+(e.recipient||e.recip||'')+'</td>'
-          +'</tr>';
-      }).join('')
+      +(moExp.length
+        ? moExp.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).map(function(e,ri){
+            const vd=viewData[e.id]||{};
+            const dispContent=vd.content!==undefined?vd.content:(e.content||e.item||'');
+            const bg=ri%2===0?'#fff':'#f8faff';
+            return '<tr style="background:'+bg+'">'
+              +'<td style="text-align:center;font-family:var(--fnum);font-size:12px;color:var(--g2)">'+e.date+'</td>'
+              +'<td style="text-align:left;padding-left:10px;font-weight:500">'+dispContent+'</td>'
+              +'<td style="text-align:right;padding-right:12px;font-family:var(--fnum);color:var(--red);font-weight:700">'+fmtN(e.amount)+'</td>'
+              +'<td style="text-align:center;font-size:12px">'+(e.requester||'')+'</td>'
+              +'<td style="text-align:left;padding-left:8px;font-size:12px;color:var(--g2)">'+(e.recipient||e.recip||'')+'</td>'
+              +'</tr>';
+          }).join('')
+        : '<tr><td colspan="5" class="tbl-empty">지출 내역 없음</td></tr>'
+      )
       +'</tbody><tfoot><tr style="background:#e8f0f8;border-top:2px solid #c8d8e8">'
-      +'<td colspan="2" style="text-align:center;font-weight:900;color:var(--navy);font-size:13px">합 계</td>'
+      +'<td colspan="2" style="text-align:center;font-weight:900;color:var(--navy)">합 계</td>'
       +'<td style="text-align:right;padding-right:12px;font-family:var(--fnum);font-weight:900;color:var(--red);font-size:13px">'+fmtN(total)+'원</td>'
       +'<td colspan="2"></td>'
       +'</tr></tfoot></table></div>'
       +'</div>';
   });
-  el.innerHTML=html||'<div class="tbl-empty" style="padding:30px;text-align:center">해당 월 지출 데이터가 없습니다</div>';
+  el.innerHTML=html||'<div class="tbl-empty" style="padding:30px;text-align:center">해당 월 데이터가 없습니다<br><small style="color:#aaa">부서보고서 입력 페이지에서 저장 후 Firebase 동기화가 필요합니다</small></div>';
   showResult('deptreport-result');
 };
-
 
 window.saveBudget=function(){
   const budget={};
@@ -5208,6 +5115,7 @@ window.printSection=function(areaId){
     'qry-print-area':'헌금내역 조회',
     'wky-print-area':'주보용 헌금내역',
     'spon-print-area':'찬조내역',
+    'spon-edu-print-area':'교육부찬조 배분현황',
     'monthly-print-area':'월간 수입지출 보고',
     'deptreport-print-area':'부서별 예산집행보고서',
     'finsearch-content':'재정현황 검색결과'
@@ -5278,7 +5186,6 @@ function _runInit(){
   try{ buildInputSheet(1); buildInputSheet(2); buildInputSheet(3); }catch(e){ console.warn('buildInputSheet:',e); }
   try{ initMonthSel('monthly-month','monthly-badge'); }catch(e){}
   try{ initMonthSel('dept-month','dept-badge'); }catch(e){}
-  try{ initMonthSel('bank-month','bank-badge'); }catch(e){}
   // 초기 화면: 헌금입력 1
   selectInputSheet(1);
 }
