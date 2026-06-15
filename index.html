@@ -4683,6 +4683,46 @@ window.renderDeptReport=function(){
       sumrow.appendChild(dc);
     });
     body.appendChild(sumrow);
+
+    // ── 연누계 행 (당해년 1월부터 해당 월까지 누계) ──
+    const yr=ym.split('-')[0];
+    let yearInc=0, yearExp=0;
+    for(var m2=1; m2<=parseInt(ym.split('-')[1]); m2++){
+      const mym=yr+'-'+String(m2).padStart(2,'0');
+      // 상단 행 수입 (교회예산 포함)
+      const mTop=ST.get('deptTopRows_'+mym+'_'+dept,[]);
+      yearInc+=mTop.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+      yearExp+=mTop.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+      // 원 지출DB
+      const mExp=allExp.filter(function(e){
+        return e.dept===dept && e.date && e.date.slice(0,7)===mym;
+      });
+      const mView=ST.get('deptView_'+mym+'_'+dept,{});
+      mExp.forEach(function(e){
+        const sv=mView[e.id]||{};
+        yearInc+=parseInt(sv.income)||0;
+        yearExp+=sv.amount!==undefined?(parseInt(sv.amount)||0):(e.amount||0);
+      });
+      // 커스텀 행
+      const mCust=ST.get('deptCustomRows_'+mym+'_'+dept,[]);
+      mCust.forEach(function(r){
+        yearInc+=parseInt(r.income)||0;
+        yearExp+=parseInt(r.amount)||0;
+      });
+    }
+    const yearBal=yearInc-yearExp;
+    const yearrow=document.createElement('div');
+    yearrow.style.cssText='display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;padding:9px 10px;background:#0f3460;font-weight:900;font-size:12px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact';
+    ['','연 누 계',yearInc>0?fmtN(yearInc):'',fmtN(yearExp),fmtN(yearBal),''].forEach(function(v,i){
+      const dc=document.createElement('div');
+      dc.textContent=v;
+      if(i>=2&&i<=4){dc.style.textAlign='right';dc.style.fontFamily='Arial,sans-serif';}
+      if(i===3){dc.style.color='#fca5a5';}
+      if(i===4){dc.style.color=yearBal>=0?'#67e8f9':'#fca5a5';dc.style.fontWeight='900';}
+      yearrow.appendChild(dc);
+    });
+    body.appendChild(yearrow);
+
     card.appendChild(body);
     container.appendChild(card);
   });
