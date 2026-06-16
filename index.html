@@ -2945,7 +2945,8 @@ function renderMonthlyGeneral(ym){
   // ── 지출 항목: 지출내역DB의 getDeptTypes()에서 특별3개 제외 → 자동계산 ──
   // ── 헌금·지출 구분 MAP 기준 ──────────────────────────────────
   // 특별회계 지출 (일반회계 지출에서 제외)
-  const SPECIAL_EXP_DEPT=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'];
+  // 교육부찬조는 합계 아래 '교육부찬조 전체' 행으로 별도 표기 → outTypes 제외
+  const SPECIAL_EXP_DEPT=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사','교육부찬조'];
   // 일반회계 지출: getDeptTypes()에서 특별회계 제외 → 나머지 전부
   // 건축대출금상환적금, 대출금이자, 친교부, 교육부찬조 등 포함
   const outTypes=getDeptTypes().filter(function(d){
@@ -2957,9 +2958,10 @@ function renderMonthlyGeneral(ym){
   // 지출 집계: expenseDB + deptView_ 오버라이드 + deptTopRows 지출행 + deptCustomRows
   const byDeptCu={};
   const byDeptMo={};
-  // allDepts2: 일반회계 지출 부서 목록 (MAP 기준)
+  // allDepts2: 집계 대상 부서 (교육부찬조는 전체행에서 별도 표기되지만 집계는 포함)
+  const DISP_EXCLUDE=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사']; // outTypes 제외
   const allDepts2=getDeptTypes().filter(function(d){
-    return !SPECIAL_EXP_DEPT.includes(d);
+    return !DISP_EXCLUDE.includes(d); // 교육부찬조는 집계에 포함 (표시에서만 제외)
   });
 
   // 지출 집계 함수: renderDeptReport와 완전 동일한 로직
@@ -2969,16 +2971,15 @@ function renderMonthlyGeneral(ym){
     var moE=allExpDB.filter(function(e){ return e.dept===dept && monthOf(e.date)===targetYm; });
     var topR=ST.get('deptTopRows_'+targetYm+'_'+dept,[])||[];
     var custR=ST.get('deptCustomRows_'+targetYm+'_'+dept,[])||[];
-    // expenseDB 금액 (viewData 오버라이드 우선)
+    // expenseDB 금액 (viewData 오버라이드 우선) - 순수 지출내역DB 기반
     var fromDB=moE.reduce(function(s,e){
       var sv=vd[e.id]||{};
       return s+(sv.amount!==undefined?Number(sv.amount||0):Number(e.amount||0));
     },0);
-    // topRows 지출 (isBudget 행의 amount도 포함 - 실제 지출로 기록된 경우)
-    var fromTop=topR.reduce(function(s,r){ return s+(parseInt(r.amount)||0); },0);
-    // customRows
-    var fromCust=custR.reduce(function(s,r){ return s+(parseInt(r.amount)||0); },0);
-    return fromDB+fromTop+fromCust;
+    // topRows: 비예산 지출행만 포함 (isBudget 제외, amount>0인 경우만)
+    // 단, expenseDB에 이미 포함된 항목은 제외하기 위해 topRows는 참고용으로만 사용
+    // → 월간보고는 expenseDB 기반, deptTopRows는 부서보고서에서만 표시
+    return fromDB;
   }
 
   // 누계: 1월~해당월 합산
@@ -3019,9 +3020,12 @@ function renderMonthlyGeneral(ym){
   const eduSponExp_cu=byDeptCu['교육부찬조']||0;
   // 월계(C): 지출내역DB - 교육부찬조 부서 당월 지출
   const eduSponExp_mo=byDeptMo['교육부찬조']||0;
-  // 당년예산(A): 헌금내역DB에서 type='기타' + spon에 '교육부찬조' 포함 - 1월~해당월 누계
-  const eduSponBudget=cumOff.filter(function(e){
-    return String(e.spon||'').includes('교육부찬조');
+  // 당년예산(A): 찬조내역DB(sponsorBook) → 교육부찬조 유형 1월~해당월 누계 수취액
+  // 변동비 성격: 연간예산 없이 찬조 수취액이 곧 예산 (찬조내역 조회 화면과 동일값)
+  const allSpons=getSponsors();
+  const eduSponBudget=allSpons.filter(function(e){
+    return e.date && e.date.slice(0,4)===String(yr) && monthOf(e.date)<=ym
+      && String(e.type||'').includes('교육부찬조');
   }).reduce(function(s,e){return s+Number(e.amount||0);},0);
   // 수입 총계용 (교육부찬조는 지출항목, 수입에 미포함)
   const eduSponInc_cu=0;
