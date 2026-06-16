@@ -5655,6 +5655,15 @@ function initBankBalTab(){
 }
 
 // 월별 수입/지출 계산
+// ── MAP 기준 calcMonthly ──────────────────────────────────
+// 헌금내역 구분 MAP:
+//  일반: 감사,교회학교,기타,부활절,비전,십일조,월정,장학,주일 (특별3개 제외 전부)
+//  건축특별: 건축헌금 / 전도특별: 전도헌금 / 지역봉사특별: 지역봉사헌금
+// 지출내역 구분 MAP:
+//  일반: 건축대출금상환적금,경조,관리,교육,교육부찬조,대출금이자,미화,선교,영상,예배,장학위원회,재정,차량,총무,친교
+//  건축특별: 건축대출금상환, 건축헌금사용
+//  전도특별: 친교부(새신자)
+//  지역봉사특별: 사회봉사
 function calcMonthly(yr, acct, offs, exps){
   var rows = [];
   var carryKey = 'bankbal_carry_' + acct.id + '_' + yr;
@@ -5663,20 +5672,26 @@ function calcMonthly(yr, acct, offs, exps){
   for(var m = 1; m <= 12; m++){
     var ym = yr + '-' + String(m).padStart(2,'0');
     var moInc = 0, moExp = 0;
+    // 수입: 헌금내역DB
     offs.forEach(function(e){
       if(!e.date || e.date.slice(0,7) !== ym) return;
       if(acct.incTypes === null){
+        // 일반회계: 특별3개 제외 전부
         if(!SPECIAL_INC_TYPES.includes(e.type)) moInc += (e.amount||0);
       } else {
-        if(acct.incTypes.some(function(t){ return e.type === t; })) moInc += (e.amount||0);
+        // 특별회계: 정확한 유형 매칭 (exact match)
+        if(acct.incTypes.indexOf(e.type) >= 0) moInc += (e.amount||0);
       }
     });
+    // 지출: 지출내역DB
     exps.forEach(function(e){
       if(!e.date || e.date.slice(0,7) !== ym) return;
       if(acct.expTypes === null){
-        if(!SPECIAL_EXP_TYPES.some(function(t){ return e.dept === t; })) moExp += (e.amount||0);
+        // 일반회계: SPECIAL_EXP_TYPES 제외 전부 (정확한 dept 매칭)
+        if(!SPECIAL_EXP_TYPES.includes(e.dept)) moExp += (e.amount||0);
       } else {
-        if(acct.expTypes.some(function(t){ return e.dept && (e.dept === t || e.dept.startsWith(t)); })) moExp += (e.amount||0);
+        // 특별회계: 정확한 dept 매칭 (startsWith 제거 → 건축대출금상환적금 오매칭 방지)
+        if(e.dept && acct.expTypes.indexOf(e.dept) >= 0) moExp += (e.amount||0);
       }
     });
     // 통장간 잔고이동 반영
