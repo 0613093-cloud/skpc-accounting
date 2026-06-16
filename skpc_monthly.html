@@ -520,6 +520,16 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 
   // ── 실시간 리스너 ──
   function setupListeners() {
+    // DEPT_DOC 실시간 리스너 추가 - 부서보고서 데이터 변경 즉시 반영
+    onSnapshot(DEPT_DOC, (dSnap) => {
+      if(!dSnap.exists()) return;
+      const dData = dSnap.data();
+      Object.keys(dData).forEach(function(k){
+        try{ localStorage.setItem(k, JSON.stringify(dData[k])); }catch(e){}
+      });
+      window._fbLiveRefresh && window._fbLiveRefresh('deptReport');
+    }, (err) => console.warn('[Firebase] DEPT 리스너:', err.message));
+
     onSnapshot(MAIN_DOC, (snap) => {
       if(!snap.exists()) return;
       const data = snap.data();
@@ -572,6 +582,14 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       await setDoc(targetDoc, { [key]: value }, { merge: true });
       window._fbStatus && window._fbStatus('saved');
     } catch(e) { console.error('[FB] config 저장 실패:', e.message); }
+  };
+
+  // 여러 키를 한 번에 DEPT_DOC에 저장
+  window._fbSaveAll = async function(dataObj) {
+    try {
+      await setDoc(DEPT_DOC, dataObj, { merge: true });
+      window._fbStatus && window._fbStatus('saved');
+    } catch(e) { console.error('[FB] 전체 저장 실패:', e.message); }
   };
 
   window._fbSaveConfigMulti = async function(obj) {
@@ -2778,11 +2796,25 @@ function updateMonthBadge(selId,badgeId){
 const deptEditState={};
 window.saveDeptNow=function(dept,ym){
   const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  const k='deptSavedAt_'+dept+'_'+ym;
-  ST.set(k,now);
-  if(window._fbSaveConfig) window._fbSaveConfig(k,now);
+  // 타임스탬프
+  const stKey='deptSavedAt_'+dept+'_'+ym;
+  ST.set(stKey,now);
+  // 부서 전체 데이터를 한 번에 DEPT_DOC에 저장
+  const saveAll={
+    [stKey]: now,
+    ['deptTopRows_'+ym+'_'+dept]: ST.get('deptTopRows_'+ym+'_'+dept,[]),
+    ['deptExpRows_'+ym+'_'+dept]: ST.get('deptExpRows_'+ym+'_'+dept,[]),
+    ['deptCustomRows_'+ym+'_'+dept]: ST.get('deptCustomRows_'+ym+'_'+dept,[]),
+    ['deptView_'+ym+'_'+dept]: ST.get('deptView_'+ym+'_'+dept,{}),
+    ['deptFootView_'+ym+'_'+dept]: ST.get('deptFootView_'+ym+'_'+dept,{}),
+    ['deptYearView_'+ym+'_'+dept]: ST.get('deptYearView_'+ym+'_'+dept,{}),
+    ['deptOfficers']: ST.get('deptOfficers',{})
+  };
+  if(window._fbSaveAll) window._fbSaveAll(saveAll);
+  else if(window._fbSaveConfig){
+    Object.keys(saveAll).forEach(function(k){window._fbSaveConfig(k,saveAll[k]);});
+  }
   renderDeptStatusBar(dept);
-  // 저장 완료 애니메이션
   const bar=document.getElementById('deptBar_'+CSS.escape(dept));
   if(bar){
     bar.style.background='rgba(39,174,96,.3)';
