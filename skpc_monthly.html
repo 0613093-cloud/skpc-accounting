@@ -1416,9 +1416,8 @@ window.renderDeptReport=function(){
         btnDel.title='이 지출 내역 삭제';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
         btnDel.addEventListener('click',(function(eid){return function(){
-          if(!confirm('이 지출 내역을 삭제하시겠습니까?')) return;
-          setExpenses(getExpenses().filter(function(e){return e.id!==eid;}));
-          renderDeptReport();
+          // 지출내역은 메인시스템(index.html)에서만 수정/삭제 가능
+          alert('⚠️ 지출내역은 메인 회계시스템(index.html)에서 삭제해주세요.\n이 페이지에서는 조회와 부서보고서 입력만 가능합니다.');
         };})(rowInfo.id));
         d5.appendChild(btnDel);
       } else if(!rowInfo.isDB&&!rowInfo.isBudget){
@@ -1699,21 +1698,23 @@ function ensureBudgetRow(dept,ym){
 window.saveDeptOfficer=function(dept){
   const data=ST.get('deptOfficers',{});
   data[dept]={
-    head:document.getElementById(`dr-head-${dept}`)?.value||'',
-    deputy:document.getElementById(`dr-dep-${dept}`)?.value||'',
-    acct:document.getElementById(`dr-acct-${dept}`)?.value||''
+    head:document.getElementById('dr-head-'+dept)?.value||'',
+    deputy:document.getElementById('dr-dep-'+dept)?.value||'',
+    acct:document.getElementById('dr-acct-'+dept)?.value||''
   };
   ST.set('deptOfficers',data);
+  if(window._fbSaveConfig) window._fbSaveConfig('deptOfficers',data);
 };
 
 // ============================================================
 // DEPT REPORT ADD ROW
 // ============================================================
 window.addDeptRow=function(dept,ym){
-  const key=`deptCustomRows_${ym}_${dept}`;
+  const key='deptCustomRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]);
   rows.push({id:uid(),date:ym+'-01',content:'',amount:0,memo:''});
   ST.set(key,rows);
+  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
   renderDeptReport();
   // scroll to this dept
   setTimeout(()=>{
@@ -1728,8 +1729,17 @@ window.updateDeptRow=function(dept,ym,id,field,val){
   if(idx>=0){rows[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;ST.set(key,rows);}
 };
 window.deleteDeptRow=function(dept,ym,id){
-  const key=`deptCustomRows_${ym}_${dept}`;
-  const rows=ST.get(key,[]).filter(r=>r.id!==id);ST.set(key,rows);renderDeptReport();
+  const key='deptCustomRows_'+ym+'_'+dept;
+  const rows=ST.get(key,[]).filter(function(r){return r.id!==id;});
+  ST.set(key,rows);
+  // DEPT_DOC (별도 부서보고DB)에 저장 - expenseBook 영향 없음
+  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+  // 저장시각 갱신
+  const stKey='deptSavedAt_'+dept+'_'+ym;
+  const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  ST.set(stKey,now);
+  if(window._fbSaveConfig) window._fbSaveConfig(stKey,now);
+  renderDeptReport();
 };
 
 // ============================================================
@@ -2590,9 +2600,8 @@ window.dmUpdateExp=function(id,field,val){
   if(idx>=0){arr[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;setExpenses(arr);}
 };
 window.dmDeleteExp=function(id){
-  if(!confirm('지출 항목을 삭제하시겠습니까?')) return;
-  setExpenses(getExpenses().filter(e=>e.id!==id));
-  dmLoadExpenses();
+  // 지출내역DB는 메인시스템(index.html)에서만 수정/삭제 가능
+  alert('⚠️ 지출내역은 메인 회계시스템(index.html)에서 삭제해주세요.');
 };
 
 function renderOffTypeList(){
@@ -2721,9 +2730,8 @@ function renderDeptStatusBar(dept){
 
 // 지출 삭제 (부서보고서 전용)
 window.deleteExpenseFromDept=function(id){
-  if(!confirm('이 지출 내역을 삭제하시겠습니까?'))return;
-  setExpenses(getExpenses().filter(e=>e.id!==id));
-  renderDeptReport();
+  // 지출내역DB는 메인시스템에서만 수정 가능
+  alert('⚠️ 지출내역은 메인 회계시스템(index.html)에서 삭제해주세요.\n이 페이지에서는 부서보고서 입력만 가능합니다.');
 };
 
 window.renderDeptReport=function(){
@@ -3026,9 +3034,8 @@ window.renderDeptReport=function(){
         btnDel.title='이 지출 내역 삭제';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
         btnDel.addEventListener('click',(function(eid){return function(){
-          if(!confirm('이 지출 내역을 삭제하시겠습니까?')) return;
-          setExpenses(getExpenses().filter(function(e){return e.id!==eid;}));
-          renderDeptReport();
+          // 지출내역은 메인시스템(index.html)에서만 수정/삭제 가능
+          alert('⚠️ 지출내역은 메인 회계시스템(index.html)에서 삭제해주세요.\n이 페이지에서는 조회와 부서보고서 입력만 가능합니다.');
         };})(rowInfo.id));
         d5.appendChild(btnDel);
       } else if(!rowInfo.isDB&&!rowInfo.isBudget){
@@ -3316,11 +3323,12 @@ function ensureBudgetRow(dept,ym){
 window.saveDeptOfficer=function(dept){
   const data=ST.get('deptOfficers',{});
   data[dept]={
-    head:document.getElementById(`dr-head-${dept}`)?.value||'',
-    deputy:document.getElementById(`dr-dep-${dept}`)?.value||'',
-    acct:document.getElementById(`dr-acct-${dept}`)?.value||''
+    head:document.getElementById('dr-head-'+dept)?.value||'',
+    deputy:document.getElementById('dr-dep-'+dept)?.value||'',
+    acct:document.getElementById('dr-acct-'+dept)?.value||''
   };
   ST.set('deptOfficers',data);
+  if(window._fbSaveConfig) window._fbSaveConfig('deptOfficers',data);
 };
 
 // ============================================================
@@ -4206,9 +4214,8 @@ window.dmUpdateExp=function(id,field,val){
   if(idx>=0){arr[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;setExpenses(arr);}
 };
 window.dmDeleteExp=function(id){
-  if(!confirm('지출 항목을 삭제하시겠습니까?')) return;
-  setExpenses(getExpenses().filter(e=>e.id!==id));
-  dmLoadExpenses();
+  // 지출내역DB는 메인시스템(index.html)에서만 수정/삭제 가능
+  alert('⚠️ 지출내역은 메인 회계시스템(index.html)에서 삭제해주세요.');
 };
 
 function renderOffTypeList(){
