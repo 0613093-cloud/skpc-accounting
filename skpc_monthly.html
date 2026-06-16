@@ -1189,16 +1189,22 @@ window.renderDeptReport=function(){
     const isHidden=hiddenDepts.indexOf(dept)!==-1;
     if(isHidden) return; // 숨긴 부서 건너뜀
 
-    // 별도DB에서 로드 (최초: expenseBook 스냅샷 생성)
+    // 별도DB에서 로드
     const expRows=getOrInitDeptExpRows(ym,dept);
-    // 연누계용: 1월~해당월 별도DB 합산
-    var cuT=0;
+    // 장부상 월계/연누계: expenseBook 기준 (정확한 누계)
+    const dbMoExp=expenses.filter(function(e){
+      return e.dept===dept && e.date && monthOf(e.date)===ym;
+    }).reduce(function(s,e){return s+Number(e.amount||0);},0);
+    var cuT=0; // 장부상 연누계
     for(var _m2=1;_m2<=mo;_m2++){
       var _mym=yr+'-'+String(_m2).padStart(2,'0');
-      var _rows=ST.get('deptExpRows_'+_mym+'_'+dept,[]);
-      cuT+=_rows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+      var _mExp=expenses.filter(function(e){
+        return e.dept===dept && e.date && monthOf(e.date)===_mym;
+      });
+      cuT+=_mExp.reduce(function(s,e){return s+Number(e.amount||0);},0);
     }
-    const dMo=expRows; // 이제 별도DB 기준
+    const dbCuExp=cuT; // 장부상 연누계 (expenseBook 기준)
+    const dMo=expRows; // 별도DB 기준 표시
     const moT=expRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
     const officers=officerData[dept]||{head:'',deputy:'',acct:''};
     const customKey='deptCustomRows_'+ym+'_'+dept;
@@ -1593,14 +1599,19 @@ window.renderDeptReport=function(){
     const fdc4=document.createElement('div');fdc4.className='dc';
     fdc4.style.cssText='text-align:right;font-weight:700;color:'+moBalColor;
     fdc4.textContent=fmtN(moInc_saved-moExp_saved);foot.appendChild(fdc4);
-    // 비고
-    const fdc5=document.createElement('div');fdc5.className='dc';foot.appendChild(fdc5);
+    // 비고 - 장부상 월계 (참고)
+    const fdc5=document.createElement('div');fdc5.className='dc';
+    fdc5.style.cssText='font-size:11px;text-align:right;line-height:1.4;padding:2px 4px';
+    fdc5.innerHTML='<div style="color:var(--g3);font-size:9px;font-weight:600">장부상 월계</div>'
+      +'<div style="color:var(--navy);font-weight:800;font-family:var(--fnum);font-size:12px">'
+      +(dbMoExp?fmtN(dbMoExp):'—')+'</div>';
+    foot.appendChild(fdc5);
     body.appendChild(foot);
 
     // Footer 연누계 (해당 연도 1월~해당월 전체)
     // 연누계 수입: 해당 연도 deptTopRows + deptCustomRows + viewData income 합산
     var yearIncTotal=0;
-    var yearExpTotal=cuTall; // DB 지출 연누계 (기존 cuTall)
+    var yearExpTotal=dbCuExp; // 장부상 연누계 (expenseBook 기준)
     // 연도 내 모든 월 viewData 수입 합산
     for(var mi=1;mi<=mo;mi++){
       const mym=yr+'-'+(mi<10?'0':'')+mi;
@@ -1658,7 +1669,13 @@ window.renderDeptReport=function(){
     y4.style.cssText='text-align:right;font-weight:800;color:'+cuBalColor2;
     y4.textContent=fmtN(yBal);foot2.appendChild(y4);
     // 비고
-    const y5=document.createElement('div');y5.className='dc';foot2.appendChild(y5);
+    // 연누계 비고 - 장부상 연누계 (참고)
+    const y5=document.createElement('div');y5.className='dc';
+    y5.style.cssText='font-size:11px;text-align:right;line-height:1.4;padding:2px 4px';
+    y5.innerHTML='<div style="color:rgba(255,255,255,.6);font-size:9px;font-weight:600">장부상 연누계</div>'
+      +'<div style="color:#7fffb8;font-weight:800;font-family:var(--fnum);font-size:12px">'
+      +(dbCuExp?fmtN(dbCuExp):'—')+'</div>';
+    foot2.appendChild(y5);
     body.appendChild(foot2);
     card.appendChild(body);
     container.appendChild(card);
