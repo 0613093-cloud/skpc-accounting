@@ -3022,9 +3022,9 @@ function renderMonthlyGeneral(ym){
   const eduSponExp_mo=byDeptMo['교육부찬조']||0;
   // 당년예산(A): 헌금내역DB(accountBook) → spon(찬조구분)에 교육부찬조 포함된 항목 1월~해당월 누계
   // cumOff = 해당 연도 1월~해당월 헌금 (이미 위에서 계산됨)
-  const eduSponBudget=cumOff.filter(function(e){
-    return String(e.spon||'').includes('교육부찬조');
-  }).reduce(function(s,e){return s+Number(e.amount||0);},0);
+  // 당년예산(A): 연간예산 폼 입력값 (관리→연간예산→교육부찬조)
+  // DEF_BUDGET 기본값 7,950,000 또는 사용자 입력값
+  const eduSponBudget=parseN(budget['out_교육부찬조'])||0;
   // 수입 총계용 (교육부찬조는 지출항목, 수입에 미포함)
   const eduSponInc_cu=0;
   const eduSponInc_mo=0;
