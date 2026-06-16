@@ -4112,7 +4112,7 @@ function renderBudgetForm(){
     const v=parseN(budget['out_'+d])||0;
     html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
       +'<label style="font-size:12px;min-width:120px">'+d+'</label>'
-      +'<input class="finp" id="bgt-out-'+d+'" type="text" value="'+(v?fmtN(v):'')+'" placeholder="0"'
+      +'<input class="finp" id="bgt-out-'+d+'" data-key="out_'+d+'" type="text" value="'+(v?fmtN(v):'')+'" placeholder="0"'
       +' style="max-width:130px;text-align:right"'
       +' oninput="this.value=this.value.replace(/[^0-9]/g,\'\')"></div>';
   });
@@ -4848,9 +4848,24 @@ window.renderDeptReport=function(){
 
 window.saveBudget=function(){
   const budget={};
-  ['십일조헌금','월정헌금','감사헌금','주일헌금','헌신예배','교회학교','장학헌금','부활절','맥추감사헌금','추수감사헌금','성탄절','일천번제','선교헌금','비전헌금','기타'].forEach(t=>{budget['in_'+t]=parseN(document.getElementById(`bud-in-${t}`)?.value)||0;});
-  ['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','대출금이자','건축대출금상환적금','건축대출금 상환(일반회계)'].forEach(d=>{budget['out_'+d]=parseN(document.getElementById('bud-out-'+d.replace(/[()\s]/g,'_'))?.value)||0;});
-  ST.set('annualBudget',budget);alert('예산이 저장되었습니다.');
+  // 수입: getOffTypes() 동적 목록 + 올바른 ID (bgt-in-) 읽기
+  const iTypes=getOffTypes().filter(function(t){return !['건축헌금','전도헌금','지역봉사헌금'].includes(t);});
+  iTypes.forEach(function(t){
+    var el=document.getElementById('bgt-in-'+t);
+    budget['in_'+t]=parseN(el?.value||'0')||0;
+  });
+  // 지출: getDeptTypes() 동적 목록 + 올바른 ID (bgt-out-) 읽기
+  var EXCL_MAP=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'];
+  var oTypes=getDeptTypes().filter(function(d){return !EXCL_MAP.includes(d);});
+  oTypes.forEach(function(d){
+    // ID에 공백·괄호 포함 가능 → querySelector 사용
+    var el=document.getElementById('bgt-out-'+d)||document.querySelector('[data-key="out_'+d+'"]');
+    budget['out_'+d]=parseN(el?.value||'0')||0;
+  });
+  // localStorage + Firebase 저장
+  ST.set('annualBudget',budget);
+  if(window._fbSaveConfig) window._fbSaveConfig('annualBudget',budget);
+  alert('예산이 저장되었습니다.');
 };
 
 window.exportData=function(){
