@@ -3392,7 +3392,7 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     // 수입/지출 2단 표
     +'<div style="display:grid;grid-template-columns:1fr 1fr">'
     +'<div style="border-right:1px solid #e2e8f0">'
-    +'<div style="background:linear-gradient(90deg,#1e3a5f,#1d4ed8);padding:7px 12px">'
+    +'<div style="background:linear-gradient(90deg,#1e3a5f,#1d4ed8);padding:7px 12px;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
     +'<span style="font-size:12px;font-weight:800;color:#fff;letter-spacing:.3px">② 수 입</span>'
     +'</div>'
     +'<table class="rpt-tbl" style="border-radius:0">'
@@ -3431,9 +3431,15 @@ function renderMonthlySpecialAll(ym){
   const [yr,mo]=ym.split('-').map(Number);
   const el=document.getElementById('monthly-content');
   if(!el) return;
-  const sections=Object.entries(SPECIAL_CONF).map(function(entry,i){
-    return buildSpecialSection(entry[1],entry[0],ym,i+1);
-  }).join('');
+  // 인쇄 레이아웃: 1장=건축+전도, 2장=지역봉사
+  const entries=Object.entries(SPECIAL_CONF);
+  const page1=entries.filter(function(e){return e[0]==='special_build'||e[0]==='special_mission';});
+  const page2=entries.filter(function(e){return e[0]==='special_local';});
+  const sect1=page1.map(function(e,i){return buildSpecialSection(e[1],e[0],ym,i+1);}).join('');
+  const sect2=page2.map(function(e,i){return buildSpecialSection(e[1],e[0],ym,page1.length+i+1);}).join('');
+  const sections=sect1
+    +'<div style="page-break-before:always;break-before:page;padding-top:16px"></div>'
+    +sect2;
   el.innerHTML='<div class="rpt-wrap">'
     +'<div style="text-align:center;margin-bottom:20px">'
     +'<div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">'+yr+'년 '+mo+'월 특별 회계보고</div>'
@@ -4247,7 +4253,9 @@ window.printMonthly=function(){
     +'\u003cstyle>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;font-size:12px;padding:16px;color:#1e293b}'
     +'.rpt-section-title{background:#1e3a5f!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'table{border-collapse:collapse;width:100%}th,td{border:1px solid #d1d5db;padding:6px 10px}'
-    +'th{background:#1e3a5f!important;color:#fff!important;-webkit-print-color-adjust:exact}'
+    +'th{background:#1e3a5f!important;color:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'div[style*="background:linear-gradient"]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'@media print{th,thead,div[style*=gradient]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}th{background:#1e3a5f!important;color:#fff!important}}'
     +'@media print{@page{margin:10mm}}<\/style>'
     +'<\/head>\u003cbody>'+el.innerHTML+'<\/body><\/html>');
   w.document.close();
