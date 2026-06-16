@@ -1427,13 +1427,8 @@ window.renderDeptReport=function(){
         btnDel.title='이 지출 내역 삭제';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
         btnDel.addEventListener('click',(function(eid){return function(){
-          // 별도DB에서 삭제 (expenseBook 영향 없음)
-          if(!confirm('이 행을 삭제하시겠습니까?\n(메인 지출DB에는 영향 없음)')) return;
-          if(rowInfo._isExpSnap){
-            window.deleteDeptExpRow(dept,ym,eid);
-          } else {
-            alert('이 행은 삭제할 수 없습니다.');
-          }
+          // 별도DB에서 즉시 삭제 (expenseBook 영향 없음)
+          window.deleteDeptExpRow(dept,ym,eid);
         };})(rowInfo.id));
         d5.appendChild(btnDel);
       } else if(!rowInfo.isDB&&!rowInfo.isBudget){
@@ -1556,7 +1551,7 @@ window.renderDeptReport=function(){
     const addBtnBottom=document.createElement('div');
     addBtnBottom.className='dr-add-btn no-print';
     addBtnBottom.textContent='+ 하단에 행 추가';
-    addBtnBottom.addEventListener('click',function(){addDeptRow(dept,ym);});
+    addBtnBottom.addEventListener('click',function(){addDeptExpRowBtn(dept,ym);});
     body.appendChild(addBtnBottom);
 
     // Footer 월계 (편집 가능)
@@ -1727,21 +1722,10 @@ function ensureBudgetRow(dept,ym){
 
 // 해당 월/부서의 별도 지출 행 로드 (없으면 expenseBook에서 1회 스냅샷)
 function getOrInitDeptExpRows(ym, dept){
+  // 별도DB(deptExpRows_)에서만 로드 - expenseBook 자동 스냅샷 없음
+  // 저장내역 없으면 빈 배열 반환 (사용자가 직접 행 추가)
   const key='deptExpRows_'+ym+'_'+dept;
-  const saved=ST.get(key, null);
-  if(saved !== null) return saved; // 별도DB에 이미 있으면 그대로 반환
-  // 최초: expenseBook에서 스냅샷 생성 후 별도DB에 저장
-  const all=getExpenses();
-  const snap=all.filter(function(e){
-    return e.dept===dept && e.date && e.date.slice(0,7)===ym;
-  }).map(function(e){
-    return {id:e.id, date:e.date, content:e.content||e.item||'',
-            amount:Number(e.amount||0), income:0, memo:e.memo||'',
-            _fromDB:true}; // 스냅샷 출처 표시
-  }).sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
-  ST.set(key, snap);
-  if(window._fbSaveConfig) window._fbSaveConfig(key, snap);
-  return snap;
+  return ST.get(key, []);
 }
 
 // 별도DB 행 수정
@@ -1763,6 +1747,7 @@ window.updateDeptExpRow=function(dept,ym,id,field,val){
 
 // 별도DB 행 삭제 (expenseBook 영향 없음)
 window.deleteDeptExpRow=function(dept,ym,id){
+  // 별도DB에서만 삭제 - expenseBook 영향 없음, 확인 불필요
   const key='deptExpRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]).filter(function(r){return r.id!==id;});
   ST.set(key,rows);
@@ -1788,6 +1773,15 @@ window.saveDeptOfficer=function(dept){
 // ============================================================
 // DEPT REPORT ADD ROW
 // ============================================================
+// 하단에 행 추가 - deptExpRows_ (별도DB)에 추가
+window.addDeptExpRowBtn=function(dept,ym){
+  const key='deptExpRows_'+ym+'_'+dept;
+  const rows=ST.get(key,[]);
+  rows.push({id:uid(),date:ym+'-01',content:'',amount:0,income:0,memo:'',_isExpSnap:false});
+  ST.set(key,rows);
+  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+  renderDeptReport();
+};
 window.addDeptRow=function(dept,ym){
   const key='deptCustomRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]);
@@ -2679,8 +2673,8 @@ window.dmUpdateExp=function(id,field,val){
   if(idx>=0){arr[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;setExpenses(arr);}
 };
 window.dmDeleteExp=function(id){
-  // 지출내역DB는 메인시스템(index.html)에서만 수정/삭제 가능
-  alert('⚠️ 지출내역은 메인 회계시스템(index.html)에서 삭제해주세요.');
+  // 지출내역DB는 메인시스템에서 관리, 이 페이지에서는 수정 불가
+  alert('지출내역은 메인 회계시스템(index.html)에서 수정/삭제하세요.');
 };
 
 function renderOffTypeList(){
@@ -3117,13 +3111,8 @@ window.renderDeptReport=function(){
         btnDel.title='이 지출 내역 삭제';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
         btnDel.addEventListener('click',(function(eid){return function(){
-          // 별도DB에서 삭제 (expenseBook 영향 없음)
-          if(!confirm('이 행을 삭제하시겠습니까?\n(메인 지출DB에는 영향 없음)')) return;
-          if(rowInfo._isExpSnap){
-            window.deleteDeptExpRow(dept,ym,eid);
-          } else {
-            alert('이 행은 삭제할 수 없습니다.');
-          }
+          // 별도DB에서 즉시 삭제 (expenseBook 영향 없음)
+          window.deleteDeptExpRow(dept,ym,eid);
         };})(rowInfo.id));
         d5.appendChild(btnDel);
       } else if(!rowInfo.isDB&&!rowInfo.isBudget){
@@ -3243,7 +3232,7 @@ window.renderDeptReport=function(){
     const addBtnBottom=document.createElement('div');
     addBtnBottom.className='dr-add-btn no-print';
     addBtnBottom.textContent='+ 하단에 행 추가';
-    addBtnBottom.addEventListener('click',function(){addDeptRow(dept,ym);});
+    addBtnBottom.addEventListener('click',function(){addDeptExpRowBtn(dept,ym);});
     body.appendChild(addBtnBottom);
 
     // Footer 월계 (편집 가능)
@@ -4302,8 +4291,8 @@ window.dmUpdateExp=function(id,field,val){
   if(idx>=0){arr[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;setExpenses(arr);}
 };
 window.dmDeleteExp=function(id){
-  // 지출내역DB는 메인시스템(index.html)에서만 수정/삭제 가능
-  alert('⚠️ 지출내역은 메인 회계시스템(index.html)에서 삭제해주세요.');
+  // 지출내역DB는 메인시스템에서 관리, 이 페이지에서는 수정 불가
+  alert('지출내역은 메인 회계시스템(index.html)에서 수정/삭제하세요.');
 };
 
 function renderOffTypeList(){
