@@ -1631,7 +1631,7 @@ window.renderDeptReport=function(){
     const yearBal=yearIncTotal-yearExpTotal;
     const cuBalColor=yearBal>=0?'#7fffb8':'#ffb3b3';
     const foot2=document.createElement('div');foot2.className='dr-foot2';
-    const yearViewKey='deptYearView_'+yr+'_'+dept;
+    const yearViewKey='deptYearView_'+ym+'_'+dept; // 월별 독립 저장
     const yearView=ST.get(yearViewKey,{});
     const yInc=yearView.inc!==undefined?yearView.inc:yearIncTotal;
     const yExp=yearView.exp!==undefined?yearView.exp:yearExpTotal;
