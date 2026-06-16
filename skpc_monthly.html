@@ -566,7 +566,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   // ── 저장 함수들 ──
   window._fbSaveConfig = async function(key, value) {
     try {
-      const DPFX=['deptTopRows_','deptView_','deptFootView_','deptYearView_','deptSavedAt_','deptCustomRows_'];
+      const DPFX=['deptTopRows_','deptView_','deptFootView_','deptYearView_','deptSavedAt_','deptCustomRows_','deptExpRows_'];
       const isDK=DPFX.some(function(p){return String(key).startsWith(p);})||(key==='deptOfficers');
       const targetDoc=isDK?DEPT_DOC:MAIN_DOC;
       await setDoc(targetDoc, { [key]: value }, { merge: true });
@@ -1696,9 +1696,9 @@ window.updateDeptTopRow=function(dept,ym,rowId,field,value){
 window.deleteDeptTopRow=function(dept,ym,rowId){
   const key='deptTopRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]).filter(function(r){return r.id!==rowId;});
-  ST.set(key,rows);
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-  renderDeptReport();
+  ST.set(key,rows); // localStorage 즉시 삭제
+  renderDeptReport(); // 즉시 반영
+  if(window._fbSaveConfig) window._fbSaveConfig(key,rows); // Firebase 비동기 저장
 };
 
 window.toggleDeptVisibility=function(dept,ym){
@@ -1763,16 +1763,15 @@ window.updateDeptExpRow=function(dept,ym,id,field,val){
 
 // 별도DB 행 삭제 (expenseBook 영향 없음)
 window.deleteDeptExpRow=function(dept,ym,id){
-  // 별도DB에서만 삭제 - expenseBook 영향 없음, 확인 불필요
   const key='deptExpRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]).filter(function(r){return r.id!==id;});
-  ST.set(key,rows);
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+  ST.set(key,rows); // localStorage 즉시 삭제
+  if(window._fbSaveConfig) window._fbSaveConfig(key,rows); // Firebase 비동기 저장
   const stKey='deptSavedAt_'+dept+'_'+ym;
   const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   ST.set(stKey,now);
   if(window._fbSaveConfig) window._fbSaveConfig(stKey,now);
-  renderDeptReport();
+  renderDeptReport(); // localStorage 기준 1회만 렌더
 };
 
 window.saveDeptOfficer=function(dept){
@@ -1823,7 +1822,6 @@ window.deleteDeptRow=function(dept,ym,id){
   ST.set(key,rows);
   // DEPT_DOC (별도 부서보고DB)에 저장 - expenseBook 영향 없음
   if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-  // 저장시각 갱신
   const stKey='deptSavedAt_'+dept+'_'+ym;
   const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   ST.set(stKey,now);
