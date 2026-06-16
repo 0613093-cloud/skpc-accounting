@@ -2011,7 +2011,7 @@ window.toggleDmResult=function(resultId,btnId){
     el.classList.add('show');     // display:block!important 적용
     btn.textContent='▲ 숨기기';
     btn.style.color='';
-    btn.style.fontWeight='';
+    btn.style.fontWeight='400';
   }
 };
 
@@ -3252,8 +3252,13 @@ function getSpecialCarryBase(rptType,yr,mo,allOff,allExp){
   const moKey=rptType+'_month_'+yr+'_'+String(mo).padStart(2,'0');
   if(co[moKey]!==undefined&&co[moKey]!==''&&co[moKey]!==null) return parseN(co[moKey]);
   // 2. 없으면 자동 계산: 전년도이월금 + 전월까지 수입누계 - 전월까지 지출누계
-  // 전년도이월금 = co[rptType_년도] (관리→이월금 설정에서 입력)
-  const yearBase=parseN(co[rptType+'_'+yr]||'0');
+  // 당해년 이월금 미설정시 → 전년도 이월금(prevYrBal) 기준으로 계산
+  const setYearBase=parseN(co[rptType+'_'+yr]||'0');
+  const prevYearBase=parseN(co[rptType+'_'+(yr-1)]||'0');
+  // 당해년 이월금이 명시적으로 설정된 경우만 사용, 아니면 전년도이월금
+  const yearBase = (co[rptType+'_'+yr]!==undefined && co[rptType+'_'+yr]!=='' && setYearBase!==0)
+    ? setYearBase
+    : prevYearBase;
   if(mo===1) return yearBase; // 1월이면 전년도이월금 그대로
   // 전월까지(1월~mo-1월) 누계
   const prevYm=yr+'-'+String(mo-1).padStart(2,'0');
@@ -3355,27 +3360,31 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<tbody>'
     // 이월금 / 전년도이월금 (입력)
     +'<tr>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb">이 월 금</td>'    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f">'+(prevBal?fmtN(prevBal):'0')+'</td>'    +'<td style="'+tdL+'color:#374151;background:#f9fafb">전년도이월금</td>'    +'<td style="'+tdR+'font-weight:700;color:#334155">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'    +'</tr>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:42px" title="전년도이월금 + 1월~전월 수입 - 1월~전월 지출">전월이월금</td>'
+    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f;height:42px">'+(prevBal?fmtN(prevBal):'0')+'</td>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:42px">전년도이월금</td>'
+    +'<td style="'+tdR+'font-weight:700;color:#334155;height:42px">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'
+    +'</tr>'
     // N월 수입 / 수입누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff">'+mo+'월 수 입</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8">'+(moInc?fmtN(moInc):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff">수입 누계</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8">'+fmtN(cuInc)+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:42px">'+mo+'월 수 입</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:42px">'+(moInc?fmtN(moInc):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:42px">수입 누계</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:42px">'+fmtN(cuInc)+'</td>'
     +'</tr>'
     // N월 지출 / 지출누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2">'+mo+'월 지 출</td>'
-    +'<td style="'+tdRB+'color:#dc2626">'+(moExpT?fmtN(moExpT):'0')+'</td>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2">지출 누계</td>'
-    +'<td style="'+tdRB+'color:#dc2626">'+fmtN(cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:42px">'+mo+'월 지 출</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:42px">'+(moExpT?fmtN(moExpT):'0')+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:42px">지출 누계</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:42px">'+fmtN(cuExpT)+'</td>'
     +'</tr>'
     // N월 결산 / 잔액
     +'<tr>'
-    +'<td style="'+tdL+'color:#92400e;background:#fffbeb">'+mo+'월 결 산</td>'
-    +'<td style="'+tdRB+'color:#92400e">'+(moResult?fmtN(moResult):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe"><strong>잔 액</strong><br><span style="font-size:9px;font-weight:400;color:#1e40af">전년이월+수입누계-지출누계</span></td>'
-    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#92400e;background:#fffbeb;height:42px">'+mo+'월 결 산</td>'
+    +'<td style="'+tdRB+'color:#92400e;height:42px">'+(moResult?fmtN(moResult):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe;height:42px"><strong>잔 액</strong></td>'
+    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe;height:42px">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
     +'</tr>'
     +'</tbody></table>'
     +'</div>'
@@ -4411,9 +4420,11 @@ window.dmLoadOfferings=function(){
   }).join('')||'<tr><td colspan="9" class="tbl-empty">데이터 없음</td></tr>';
   const ft=document.getElementById('dm-off-total');
   if(ft) ft.textContent=fmtN(total)+'원 ('+books.length+'건)';
-  showResult('dm-off-result');
-  var tb=document.getElementById('dm-off-toggle');
-  if(tb){tb.style.display='';tb.textContent='▲ 숨기기';}
+  // 데이터 로드 완료 → 숨긴 상태, "▼ 펼치기" 버튼 표시 (디폴트)
+  var elOff=document.getElementById('dm-off-result');
+  var tbOff=document.getElementById('dm-off-toggle');
+  if(elOff) elOff.classList.remove('show'); // 항상 숨김 상태로
+  if(tbOff){ tbOff.style.display=''; tbOff.textContent='▼ 펼치기'; tbOff.style.fontWeight='700'; }
 };
 
 window.dmSaveOffering=function(id){
@@ -4501,9 +4512,11 @@ window.dmLoadExpenses=function(){
   }).join('')||'<tr><td colspan="11" class="tbl-empty">데이터 없음</td></tr>';
   const ft=document.getElementById('dm-exp-total');
   if(ft) ft.textContent=fmtN(total)+'원 ('+books.length+'건)';
-  showResult('dm-exp-result');
-  var tb=document.getElementById('dm-exp-toggle');
-  if(tb){tb.style.display='';tb.textContent='▲ 숨기기';}
+  // 데이터 로드 완료 → 숨긴 상태, "▼ 펼치기" 버튼 표시 (디폴트)
+  var elExp=document.getElementById('dm-exp-result');
+  var tbExp=document.getElementById('dm-exp-toggle');
+  if(elExp) elExp.classList.remove('show'); // 항상 숨김 상태로
+  if(tbExp){ tbExp.style.display=''; tbExp.textContent='▼ 펼치기'; tbExp.style.fontWeight='700'; }
 };
 
 window.dmSaveExpense=function(id){
