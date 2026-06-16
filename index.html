@@ -3014,13 +3014,8 @@ function renderMonthlyGeneral(ym){
   const cuExpT=cumExp.filter(function(e){return !SPECIAL_EXP_DEPT.includes(e.dept);}).reduce((s,e)=>s+Number(e.amount||0),0);
   const bal=carryBase+cuInc-cuExpT;
 
-  // ── 교육부찬조 전체: 찬조내역DB(sponsorBook) 자동계산 ──────
-  // 수입: 헌금내역에서 교육부찬조 타입 합산 (수입 측면)
-  const eduSponInc_cu=cumOff.filter(function(e){return String(e.type||'').includes('교육부찬조');})
-    .reduce(function(s,e){return s+Number(e.amount||0);},0);
-  const eduSponInc_mo=moOff.filter(function(e){return String(e.type||'').includes('교육부찬조');})
-    .reduce(function(s,e){return s+Number(e.amount||0);},0);
-  // 지출: 찬조내역DB(sponsorBook)에서 교육부찬조 타입 조회 (조회연도 1월~해당월 누계)
+  // ── 교육부찬조 전체 ────────────────────────────────────────
+  // 누계(B): 찬조내역DB(sponsorBook) → 교육부찬조 유형 수취액 1월~해당월 누계
   const allSpons=getSponsors();
   const cumSpons=allSpons.filter(function(e){
     return e.date && e.date.slice(0,4)===String(yr) && monthOf(e.date)<=ym
@@ -3030,17 +3025,26 @@ function renderMonthlyGeneral(ym){
     return e.date && monthOf(e.date)===ym
       && String(e.type||'').includes('교육부찬조');
   });
+  // 누계(B) = 찬조내역 누계 수취액
   const eduSponExp_cu=cumSpons.reduce(function(s,e){return s+Number(e.amount||0);},0);
-  const eduSponExp_mo=moSpons.reduce(function(s,e){return s+Number(e.amount||0);},0);
-  // 저장된 예산값 로드 (누계/월계는 이제 자동계산)
-  // 교육부찬조 예산
-  // 교육부찬조 당년예산: 입력값 기준 (입력 전 기본값 0)
-  const eduSponBudget=0; // 사용자가 직접 입력
+  // 헌금내역 기반 수입 측면 (총계 계산용)
+  const eduSponInc_cu=cumOff.filter(function(e){return String(e.type||'').includes('교육부찬조');})
+    .reduce(function(s,e){return s+Number(e.amount||0);},0);
+  const eduSponInc_mo=moOff.filter(function(e){return String(e.type||'').includes('교육부찬조');})
+    .reduce(function(s,e){return s+Number(e.amount||0);},0);
+  // 월계(C): 지출내역DB → '교육부찬조' 부서 당월 지출 (지출내역 기반)
+  // byDeptMo['교육부찬조']는 이미 위에서 calcDeptExp로 계산됨
+  const eduSponExp_mo=byDeptMo['교육부찬조']||0;
+  // 교육부찬조 예산 (당년예산A: 관리 예산폼 입력값)
+  const eduSponBudget=parseN(budget['out_교육부찬조'])||0;
   // 합계2
   const tot2CuInc=cuIncTable+eduSponInc_cu;
   const tot2MoInc=moIncTable+eduSponInc_mo;
-  const tot2CuExp=cuExpTable+eduSponExp_cu;
-  const tot2MoExp=moExpTable+eduSponExp_mo;
+  // 합계2: 교육부찬조 전체 행은 표시용
+  // - 누계(B)=찬조수취누계(sponsorBook)는 별도 집계이므로 합계2에 추가
+  // - 월계(C)=교육부찬조 지출은 outTypes의 byDeptMo에 이미 포함 → 중복추가 안 함
+  const tot2CuExp=cuExpTable+eduSponExp_cu;  // 찬조수취누계 추가
+  const tot2MoExp=moExpTable;               // 월계는 이미 포함 (이중계산 방지)
 
   const budTotIn=incTypes.reduce((s,t)=>s+(parseN(budget['in_'+t])||0),0);
   const budTotOut=outTypes.reduce((s,d)=>s+(parseN(budget['out_'+d])||0),0);
@@ -3178,19 +3182,19 @@ function renderMonthlyGeneral(ym){
         <tr class="edu" id="rpt-edu-row">
           <td class="rpt-item" style="color:#92400e;font-weight:700">교육부찬조 전체</td>
           <td class="rpt-num">
-            <input id="edu-bud-inp" type="text" value="${ST.get('eduSponBud_'+ym,eduSponBudget)?fmtN(ST.get('eduSponBud_'+ym,eduSponBudget)):''}"
+            <input id="edu-bud-inp" type="text" value="${eduSponBudget?fmtN(eduSponBudget):ST.get('eduSponBud_'+ym)?fmtN(ST.get('eduSponBud_'+ym)):''}"
               data-ym="${ym}" placeholder="—" oninput="fmtAmt(this)" onchange="updateEduSponRow()"
               style="width:100%;text-align:right;border:none;border-bottom:2px dashed #f59e0b;background:transparent;font-size:12px;font-family:var(--fnum);color:#b45309;font-weight:700"></td>
           <td class="rpt-num">
             <input id="edu-cu-inp" type="text" value="${fmtN(eduSponExp_cu)}"
               data-ym="${ym}" placeholder="—" readonly
               style="width:100%;text-align:right;border:none;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700;cursor:default"
-              title="찬조내역DB에서 자동계산"></td>
+              title="찬조내역DB 누계 수취액 자동계산"></td>
           <td class="rpt-num">
             <input id="edu-mo-inp" type="text" value="${eduSponExp_mo?fmtN(eduSponExp_mo):''}"
               placeholder="—" readonly
               style="width:100%;text-align:right;border:none;background:transparent;font-size:12px;font-family:var(--fnum);color:#dc2626;font-weight:700;cursor:default"
-              title="찬조내역DB에서 자동계산"></td>
+              title="지출내역DB 교육부찬조 당월 사용금액 자동계산"></td>
           <td class="rpt-num" id="edu-pct-cell">${eduPct}</td>
           <td class="rpt-note">변동비</td>
         </tr>
