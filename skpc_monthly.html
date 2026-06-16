@@ -1420,14 +1420,13 @@ window.renderDeptReport=function(){
       iMemo.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iMemo.blur();}});
       d5.appendChild(iMemo);
       // 교회예산 행: × 없음 / 일반 상단행: × 표시
-      if(rowInfo.isDB&&!rowInfo.isBudget){
-        // DB 행 삭제 버튼 (지출내역 직접 삭제)
+      if((rowInfo.isDB||rowInfo._isExpSnap)&&!rowInfo.isBudget){
+        // 별도DB 행 삭제 버튼 (deptExpRows_ 에서만 삭제, expenseBook 영향 없음)
         const btnDel=document.createElement('button');
         btnDel.className='no-print';btnDel.textContent='×';
-        btnDel.title='이 지출 내역 삭제';
+        btnDel.title='이 행 삭제 (별도DB에서만)';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
         btnDel.addEventListener('click',(function(eid){return function(){
-          // 별도DB에서 즉시 삭제 (expenseBook 영향 없음)
           window.deleteDeptExpRow(dept,ym,eid);
         };})(rowInfo.id));
         d5.appendChild(btnDel);
@@ -3104,14 +3103,13 @@ window.renderDeptReport=function(){
       iMemo.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iMemo.blur();}});
       d5.appendChild(iMemo);
       // 교회예산 행: × 없음 / 일반 상단행: × 표시
-      if(rowInfo.isDB&&!rowInfo.isBudget){
-        // DB 행 삭제 버튼 (지출내역 직접 삭제)
+      if((rowInfo.isDB||rowInfo._isExpSnap)&&!rowInfo.isBudget){
+        // 별도DB 행 삭제 버튼 (deptExpRows_ 에서만 삭제, expenseBook 영향 없음)
         const btnDel=document.createElement('button');
         btnDel.className='no-print';btnDel.textContent='×';
-        btnDel.title='이 지출 내역 삭제';
+        btnDel.title='이 행 삭제 (별도DB에서만)';
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
         btnDel.addEventListener('click',(function(eid){return function(){
-          // 별도DB에서 즉시 삭제 (expenseBook 영향 없음)
           window.deleteDeptExpRow(dept,ym,eid);
         };})(rowInfo.id));
         d5.appendChild(btnDel);
