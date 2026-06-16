@@ -3020,12 +3020,10 @@ function renderMonthlyGeneral(ym){
   const eduSponExp_cu=byDeptCu['교육부찬조']||0;
   // 월계(C): 지출내역DB - 교육부찬조 부서 당월 지출
   const eduSponExp_mo=byDeptMo['교육부찬조']||0;
-  // 당년예산(A): 찬조내역DB(sponsorBook) → 교육부찬조 유형 1월~해당월 누계 수취액
-  // 변동비 성격: 연간예산 없이 찬조 수취액이 곧 예산 (찬조내역 조회 화면과 동일값)
-  const allSpons=getSponsors();
-  const eduSponBudget=allSpons.filter(function(e){
-    return e.date && e.date.slice(0,4)===String(yr) && monthOf(e.date)<=ym
-      && String(e.type||'').includes('교육부찬조');
+  // 당년예산(A): 헌금내역DB(accountBook) → spon(찬조구분)에 교육부찬조 포함된 항목 1월~해당월 누계
+  // cumOff = 해당 연도 1월~해당월 헌금 (이미 위에서 계산됨)
+  const eduSponBudget=cumOff.filter(function(e){
+    return String(e.spon||'').includes('교육부찬조');
   }).reduce(function(s,e){return s+Number(e.amount||0);},0);
   // 수입 총계용 (교육부찬조는 지출항목, 수입에 미포함)
   const eduSponInc_cu=0;
