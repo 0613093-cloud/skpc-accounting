@@ -2948,15 +2948,27 @@ function renderMonthlyGeneral(ym){
   const cumOff=offerings.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=ym);
   const cumExp=expenses.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=ym);
 
-  // 이전 달 잔액
+  // 이전 달 잔액 (일반회계 기준 - 특별헌금 제외)
   const prevYm=mo===1?`${yr-1}-12`:`${yr}-${String(mo-1).padStart(2,'0')}`;
-  const prevCumOff=offerings.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm);
-  const prevCumExp=expenses.filter(e=>e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm);
+  const _SPEC_INC=['건축헌금','전도헌금','지역봉사헌금'];
+  const _SPEC_EXP=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'];
+  // 전월까지 일반회계 수입 누계 (특별헌금 제외)
+  const prevCumOff=offerings.filter(function(e){
+    return e.date&&e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm
+      &&!_SPEC_INC.includes(e.type);
+  });
+  // 전월까지 일반회계 지출 누계 (특별지출 제외)
+  const prevCumExp=expenses.filter(function(e){
+    return e.date&&e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm
+      &&!_SPEC_EXP.includes(e.dept);
+  });
   const carryBase=getCarryoverForYear(yr);
   // 월별 직접 입력 이월금이 있으면 우선 사용 (이월금 설정에서 입력)
   const monthCarry=getCarryoverForMonth(yr,mo);
+  // 이월금 = 전월 잔액 = 전년도이월금 + 전월까지수입 - 전월까지지출
   const prevBal=monthCarry!==null ? monthCarry
-    : carryBase+prevCumOff.reduce((s,e)=>s+Number(e.amount||0),0)-prevCumExp.reduce((s,e)=>s+Number(e.amount||0),0);
+    : carryBase+prevCumOff.reduce(function(s,e){return s+Number(e.amount||0);},0)
+               -prevCumExp.reduce(function(s,e){return s+Number(e.amount||0);},0);
 
   // 수입 헌금유형 목록
   // ── 수입 항목: 헌금내역DB의 getOffTypes()에서 특별3개 제외 → 자동계산 ──
@@ -3034,9 +3046,13 @@ function renderMonthlyGeneral(ym){
   const eduSponExp_mo=byDeptMo['교육부찬조']||0;
   // 당년예산(A): 헌금내역DB(accountBook) → spon(찬조구분)에 교육부찬조 포함된 항목 1월~해당월 누계
   // cumOff = 해당 연도 1월~해당월 헌금 (이미 위에서 계산됨)
-  // 당년예산(A): 연간예산 폼 입력값 (관리→연간예산→교육부찬조)
-  // DEF_BUDGET 기본값 7,950,000 또는 사용자 입력값
-  const eduSponBudget=parseN(budget['out_교육부찬조'])||0;
+  // 당년예산(A): 헌금내역DB에서 교육부찬조 유형의 조회월까지 누적 금액
+  // (찬조구분명 '교육부찬조'가 포함된 모든 헌금항목 1월~해당월 합산)
+  const _allSpons=getSponsors();
+  const eduSponBudget=_allSpons.filter(function(e){
+    return e.date && e.date.slice(0,4)===String(yr) && monthOf(e.date)<=ym
+      && String(e.type||'').includes('교육부찬조');
+  }).reduce(function(s,e){return s+Number(e.amount||0);},0);
   // 수입 총계용 (교육부찬조는 지출항목, 수입에 미포함)
   const eduSponInc_cu=0;
   const eduSponInc_mo=0;
