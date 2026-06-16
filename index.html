@@ -4259,26 +4259,27 @@ window.printMonthly=function(){
     /* ── th: 배경유지 + 흰글자 ── */
     +'th{background:#1e3a5f!important;color:#fff!important;text-align:center;font-weight:900}'
     /* ── td: 텍스트 가운데, 숫자 우측 ── */
-    +'td{text-align:center;color:#1e293b!important}'
-    +'.rpt-num{text-align:right!important;font-family:Arial,sans-serif}'
-    /* ── 헤더 div: 배경 + 글자색 강제 ── */
+    +'td{text-align:center;color:#000!important}'
+    +'.rpt-num{text-align:right!important;font-family:Arial,sans-serif;color:#000!important}'
+    /* ── 모든 텍스트 검은색 (회색 포함) ── */
+    +'td *,span,p,div{color:#000!important}'
+    /* ── 헤더 div: 배경 + 흰글자 (헤더만 예외) ── */
     +'div[style*="background:linear-gradient"]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
-    +'div[style*="background:linear-gradient"] *{color:#fff!important}'
-    +'div[style*="background:#1e3a5f"]{-webkit-print-color-adjust:exact!important;color:#fff!important}'
-    +'div[style*="background:#1e3a5f"] *{color:#fff!important}'
-    /* ── 총계 박스 흰글자 셀 → 배경 유지시 글자유지 ── */
+    +'div[style*="background:linear-gradient"] span{color:#fff!important}'
+    +'div[style*="background:#1e3a5f"]{-webkit-print-color-adjust:exact!important}'
+    +'div[style*="background:#1e3a5f"] span{color:#fff!important}'
+    /* ── 총계 박스 ── */
     +'.rpt-section-title{background:#1e3a5f!important;color:#fff!important}'
-    /* ── 잔액/결산 강조 셀 ── */
-    +'td[style*="background:#dbeafe"]{background:#dbeafe!important;color:#1e3a5f!important}'
-    +'td[style*="background:#fffbeb"]{background:#fffbeb!important;color:#92400e!important}'
-    +'td[style*="background:#eff6ff"]{background:#eff6ff!important;color:#1d4ed8!important}'
-    +'td[style*="background:#fff1f2"]{background:#fff1f2!important;color:#dc2626!important}'
-    +'td[style*="background:#f9fafb"]{background:#f9fafb!important;color:#374151!important}'
-    /* ── 수입/지출 헤더 배경 ── */
+    /* ── 강조 셀 배경유지 + 글자 검은색 ── */
+    +'td[style*="background:#dbeafe"]{background:#dbeafe!important}'
+    +'td[style*="background:#fffbeb"]{background:#fffbeb!important}'
+    +'td[style*="background:#eff6ff"]{background:#eff6ff!important}'
+    +'td[style*="background:#fff1f2"]{background:#fff1f2!important}'
+    +'td[style*="background:#f9fafb"]{background:#f9fafb!important}'
     +'@media print{@page{margin:10mm;size:A4}'
     +'th{background:#1e3a5f!important;color:#fff!important}'
-    +'td{text-align:center;color:#1e293b!important}'
-    +'.rpt-num{text-align:right!important}}'
+    +'td,td *,span,div{color:#000!important}'
+    +'.rpt-num{text-align:right!important;color:#000!important}}'
     +'<\/style>'
     +'<\/head>\u003cbody>'+el.innerHTML+'<\/body><\/html>');
   w.document.close();
