@@ -1465,6 +1465,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
           <button class="btn btn-navy" onclick="dmLoadOfferings()">🔍 조회</button>
           <button class="btn btn-outline" onclick="dmResetOff()">초기화</button>
           <button class="btn btn-outline btn-sm" onclick="printSection('dm-off-print')">🖨️ 인쇄</button>
+          <button class="btn btn-outline btn-sm" id="dm-off-toggle" onclick="toggleDmResult('dm-off-result','dm-off-toggle')" style="display:none">▲ 숨기기</button>
         </div>
         <div id="dm-off-result" class="result-section"><div id="dm-off-print">
           <div class="tbl-wrap"><table class="tbl" id="dm-off-table">
@@ -1513,6 +1514,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
           <button class="btn btn-navy" onclick="dmLoadExpenses()">🔍 조회</button>
           <button class="btn btn-outline" onclick="dmResetExp()">초기화</button>
           <button class="btn btn-outline btn-sm" onclick="printSection('dm-exp-print')">🖨️ 인쇄</button>
+          <button class="btn btn-outline btn-sm" id="dm-exp-toggle" onclick="toggleDmResult('dm-exp-result','dm-exp-toggle')" style="display:none">▲ 숨기기</button>
         </div>
         <div id="dm-exp-result" class="result-section"><div id="dm-exp-print">
           <div class="tbl-wrap"><table class="tbl" id="dm-exp-table">
@@ -1993,6 +1995,22 @@ function onTabActivate(tab){
   if(tab==='finsearch'){const today=nowKST();const first=new Date(today.getUTCFullYear(),today.getUTCMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
 }
 function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');el.style.display='block';}}
+
+// 데이터 세부내역 토글 (접기/펼치기)
+window.toggleDmResult=function(resultId,btnId){
+  var el=document.getElementById(resultId);
+  var btn=document.getElementById(btnId);
+  if(!el||!btn) return;
+  if(el.style.display==='none'){
+    el.style.display='block';
+    btn.textContent='▲ 숨기기';
+    btn.style.background='';
+  } else {
+    el.style.display='none';
+    btn.textContent='▼ 펼치기';
+    btn.style.background='#e2e8f0';
+  }
+};
 
 function initMonthSel(selId,badgeId){
   const sel=document.getElementById(selId);if(!sel||sel.options.length>0) return;
@@ -3035,8 +3053,9 @@ function renderMonthlyGeneral(ym){
   // - 누계(B)=찬조수취누계(sponsorBook)는 별도 집계이므로 합계2에 추가
   // - 월계(C)=교육부찬조 지출은 outTypes의 byDeptMo에 이미 포함 → 중복추가 안 함
   // 교육부찬조는 outTypes byDeptCu에 이미 포함 → 이중계산 방지
-  const tot2CuExp=cuExpTable; // byDeptCu['교육부찬조'] 포함됨  // 찬조수취누계 추가
-  const tot2MoExp=moExpTable; // byDeptMo['교육부찬조'] 포함됨
+  // 합계2 = 합계 + 교육부찬조 전체 (누계B, 월계C 모두 반영)
+  const tot2CuExp=cuExpTable+eduSponExp_cu;
+  const tot2MoExp=moExpTable+eduSponExp_mo;
 
   const budTotIn=incTypes.reduce((s,t)=>s+(parseN(budget['in_'+t])||0),0);
   const budTotOut=outTypes.reduce((s,d)=>s+(parseN(budget['out_'+d])||0),0);
@@ -4388,6 +4407,8 @@ window.dmLoadOfferings=function(){
   const ft=document.getElementById('dm-off-total');
   if(ft) ft.textContent=fmtN(total)+'원 ('+books.length+'건)';
   showResult('dm-off-result');
+  var tb=document.getElementById('dm-off-toggle');
+  if(tb){tb.style.display='';tb.textContent='▲ 숨기기';}
 };
 
 window.dmSaveOffering=function(id){
@@ -4476,6 +4497,8 @@ window.dmLoadExpenses=function(){
   const ft=document.getElementById('dm-exp-total');
   if(ft) ft.textContent=fmtN(total)+'원 ('+books.length+'건)';
   showResult('dm-exp-result');
+  var tb=document.getElementById('dm-exp-toggle');
+  if(tb){tb.style.display='';tb.textContent='▲ 숨기기';}
 };
 
 window.dmSaveExpense=function(id){
