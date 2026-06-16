@@ -1270,6 +1270,11 @@ window.renderDeptReport=function(){
       vd[rid][field]=val;
       ST.set(viewKey,vd);
       if(window._fbSaveConfig) window._fbSaveConfig(viewKey,vd);
+      // 자동 저장시각 갱신
+      const stKey='deptSavedAt_'+dept+'_'+ym;
+      const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+      ST.set(stKey,now);
+      if(window._fbSaveConfig) window._fbSaveConfig(stKey,now);
     }
 
     function renderEditableRow(rowInfo){
@@ -1451,15 +1456,8 @@ window.renderDeptReport=function(){
       if(amtDiff!==0) return amtDiff;
       return (b.date||'').localeCompare(a.date||'');
     });
-    sortedDMo.forEach(function(e){
-      renderEditableRow({
-        id:e.id,
-        date:e.date,
-        content:e.content||e.item||'',
-        isDB:true,
-        dbObj:e
-      });
-    });
+    // 지출내역DB 세부행은 표시 안 함 (월계/연누계는 DB 기준으로 계산됨)
+    // sortedDMo → 숨김 처리
 
     // Custom rows (하단 추가 행)
     customRows.forEach(function(r){
