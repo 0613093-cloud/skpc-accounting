@@ -1997,18 +1997,21 @@ function onTabActivate(tab){
 function showResult(id){const el=document.getElementById(id);if(el){el.classList.add('show');el.style.display='block';}}
 
 // 데이터 세부내역 토글 (접기/펼치기)
+// .result-section에 !important CSS 있어 style.display 대신 classList 사용
 window.toggleDmResult=function(resultId,btnId){
   var el=document.getElementById(resultId);
   var btn=document.getElementById(btnId);
   if(!el||!btn) return;
-  if(el.style.display==='none'){
-    el.style.display='block';
-    btn.textContent='▲ 숨기기';
-    btn.style.background='';
-  } else {
-    el.style.display='none';
+  if(el.classList.contains('show')){
+    el.classList.remove('show');  // display:none!important 적용
     btn.textContent='▼ 펼치기';
-    btn.style.background='#e2e8f0';
+    btn.style.color='var(--navy)';
+    btn.style.fontWeight='700';
+  } else {
+    el.classList.add('show');     // display:block!important 적용
+    btn.textContent='▲ 숨기기';
+    btn.style.color='';
+    btn.style.fontWeight='';
   }
 };
 
@@ -3245,15 +3248,21 @@ function setSpecialMemo(rptType,ym,key,val){
 // 특별회계 월별 이월금 (관리>이월금설정에서 입력한 값 우선, 없으면 계산)
 function getSpecialCarryBase(rptType,yr,mo,allOff,allExp){
   const co=getCarryover();
-  // 월별 직접 입력값 우선
+  // 1. 해당월 직접 입력값 최우선
   const moKey=rptType+'_month_'+yr+'_'+String(mo).padStart(2,'0');
-  if(co[moKey]!==undefined) return parseN(co[moKey]);
-  // 연도 이월금 기준 누계 계산
+  if(co[moKey]!==undefined&&co[moKey]!==''&&co[moKey]!==null) return parseN(co[moKey]);
+  // 2. 없으면 자동 계산: 전년도이월금 + 전월까지 수입누계 - 전월까지 지출누계
+  // 전년도이월금 = co[rptType_년도] (관리→이월금 설정에서 입력)
   const yearBase=parseN(co[rptType+'_'+yr]||'0');
-  if(mo===1) return yearBase;
+  if(mo===1) return yearBase; // 1월이면 전년도이월금 그대로
+  // 전월까지(1월~mo-1월) 누계
   const prevYm=yr+'-'+String(mo-1).padStart(2,'0');
-  const prevOff=allOff.filter(function(e){return e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm;});
-  const prevExp=allExp.filter(function(e){return e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm;});
+  const prevOff=allOff.filter(function(e){
+    return e.date&&e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm;
+  });
+  const prevExp=allExp.filter(function(e){
+    return e.date&&e.date.slice(0,4)===String(yr)&&monthOf(e.date)<=prevYm;
+  });
   return yearBase
     +prevOff.reduce(function(s,e){return s+Number(e.amount||0);},0)
     -prevExp.reduce(function(s,e){return s+Number(e.amount||0);},0);
@@ -3346,11 +3355,7 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<tbody>'
     // 이월금 / 전년도이월금 (입력)
     +'<tr>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb">이 월 금</td>'
-    +'<td style="'+tdR+'">'+ni(yrCarryKey,'ni-cur-'+rptType,'이월금 입력')+'</td>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb">전년도이월금</td>'
-    +'<td style="'+tdR+'">'+ni(prevYrKey,'ni-prev-'+rptType,'전년도이월금')+'</td>'
-    +'</tr>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb">이 월 금</td>'    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f">'+(prevBal?fmtN(prevBal):'0')+'</td>'    +'<td style="'+tdL+'color:#374151;background:#f9fafb">전년도이월금</td>'    +'<td style="'+tdR+'font-weight:700;color:#334155">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'    +'</tr>'
     // N월 수입 / 수입누계
     +'<tr>'
     +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff">'+mo+'월 수 입</td>'
