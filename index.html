@@ -2987,20 +2987,11 @@ function renderMonthlyGeneral(ym){
 
   // 지출 집계 함수: renderDeptReport와 완전 동일한 로직
   // = expenseDB(viewData오버라이드) + topRows(비예산 지출) + customRows
+  // 월간보고용 지출 집계 - 순수 지출내역DB(expenseBook)만 사용
+  // skpc_monthly.html의 deptView_/topRows/customRows는 별도 DB → 월간보고에 미반영
   function calcDeptExp(dept, targetYm, allExpDB){
-    var vd=ST.get('deptView_'+targetYm+'_'+dept,{})||{};
     var moE=allExpDB.filter(function(e){ return e.dept===dept && monthOf(e.date)===targetYm; });
-    var topR=ST.get('deptTopRows_'+targetYm+'_'+dept,[])||[];
-    var custR=ST.get('deptCustomRows_'+targetYm+'_'+dept,[])||[];
-    // expenseDB 금액 (viewData 오버라이드 우선) - 순수 지출내역DB 기반
-    var fromDB=moE.reduce(function(s,e){
-      var sv=vd[e.id]||{};
-      return s+(sv.amount!==undefined?Number(sv.amount||0):Number(e.amount||0));
-    },0);
-    // topRows: 비예산 지출행만 포함 (isBudget 제외, amount>0인 경우만)
-    // 단, expenseDB에 이미 포함된 항목은 제외하기 위해 topRows는 참고용으로만 사용
-    // → 월간보고는 expenseDB 기반, deptTopRows는 부서보고서에서만 표시
-    return fromDB;
+    return moE.reduce(function(s,e){ return s+Number(e.amount||0); },0);
   }
 
   // 누계: 1월~해당월 합산
