@@ -2943,25 +2943,23 @@ function renderMonthlyGeneral(ym){
   const incTypes=getOffTypes().filter(function(t){ return !SPECIAL_INC.includes(t); });
 
   // ── 지출 항목: 지출내역DB의 getDeptTypes()에서 특별3개 제외 → 자동계산 ──
-  // 특별회계 제외 목록 (건축 관련 전체 제외)
-  const SPECIAL_EXP_DEPT=['건축헌금사용','건축헌금','전도헌금','사회봉사',
-    '건축대출금상환','건축대출금상환적금','대출금이자'];
-  const outTypes=(function(){
-    var base=getDeptTypes().filter(function(d){
-      return !SPECIAL_EXP_DEPT.includes(d);
-    });
-    // '건축대출금상환적금'을 일반회계에 포함 (건축적금 상환분)
-    if(!base.includes('건축대출금상환적금')) base.push('건축대출금상환적금');
-    return base;
-  })();
+  // ── 헌금·지출 구분 MAP 기준 ──────────────────────────────────
+  // 특별회계 지출 (일반회계 지출에서 제외)
+  const SPECIAL_EXP_DEPT=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'];
+  // 일반회계 지출: getDeptTypes()에서 특별회계 제외 → 나머지 전부
+  // 건축대출금상환적금, 대출금이자, 친교부, 교육부찬조 등 포함
+  const outTypes=getDeptTypes().filter(function(d){
+    return !SPECIAL_EXP_DEPT.includes(d);
+  });
 
   const byTypeInc={};cumOff.forEach(e=>{byTypeInc[e.type]=(byTypeInc[e.type]||0)+Number(e.amount||0);});
   const byTypeMo={};moOff.forEach(e=>{byTypeMo[e.type]=(byTypeMo[e.type]||0)+Number(e.amount||0);});
   // 지출 집계: expenseDB + deptView_ 오버라이드 + deptTopRows 지출행 + deptCustomRows
   const byDeptCu={};
   const byDeptMo={};
+  // allDepts2: 일반회계 지출 부서 목록 (MAP 기준)
   const allDepts2=getDeptTypes().filter(function(d){
-    return !['건축헌금사용','전도헌금','사회봉사'].includes(d)&&d!=='건축대출금상환';
+    return !SPECIAL_EXP_DEPT.includes(d);
   });
 
   // 지출 집계 함수: renderDeptReport와 완전 동일한 로직
@@ -3008,12 +3006,12 @@ function renderMonthlyGeneral(ym){
   // ★ 지출 합계 = outTypes 목록 항목들의 합산
   //   '건축대출금 상환(일반회계)'는 DB의 '건축대출금상환' 부서 데이터를 제외하고 별도 입력값만 반영
   //   '건축대출금상환' 부서 실제 데이터는 합계에서 제외
-  const EXCLUDE_DEPT='건축대출금상환'; // DB에서 이 부서는 합계 제외
+  // MAP 기준: 일반회계 지출합계 = outTypes 집계
   const cuExpTable=outTypes.reduce(function(s,d){ return s+(byDeptCu[d]||0); },0);
   const moExpTable=outTypes.reduce(function(s,d){ return s+(byDeptMo[d]||0); },0);
-  // 총계용 지출 = 전체 - '건축대출금상환' 제외
-  const moExpT=moExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
-  const cuExpT=cumExp.filter(e=>e.dept!==EXCLUDE_DEPT).reduce((s,e)=>s+Number(e.amount||0),0);
+  // 총계용: 특별회계 지출 제외
+  const moExpT=moExp.filter(function(e){return !SPECIAL_EXP_DEPT.includes(e.dept);}).reduce((s,e)=>s+Number(e.amount||0),0);
+  const cuExpT=cumExp.filter(function(e){return !SPECIAL_EXP_DEPT.includes(e.dept);}).reduce((s,e)=>s+Number(e.amount||0),0);
   const bal=carryBase+cuInc-cuExpT;
 
   // ── 교육부찬조 전체: 찬조내역DB(sponsorBook) 자동계산 ──────
@@ -4097,7 +4095,8 @@ function renderBudgetForm(){
   if(!el) return;
   const budget=getBudget();
   const incTypes=getOffTypes().filter(function(t){return !['건축헌금','전도헌금','지역봉사헌금'].includes(t);});
-  const outTypes=getDeptTypes().filter(function(d){return !['건축헌금','전도헌금','사회봉사'].includes(d);});
+  // MAP 기준: 특별회계 지출 부서 제외
+  const outTypes=getDeptTypes().filter(function(d){return !['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'].includes(d);});
   let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
   html+='<div><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">수입 예산</div>';
   incTypes.forEach(function(t){
@@ -4638,7 +4637,8 @@ window.renderDeptReport=function(){
   if(!container||!ym){ alert('월을 선택해주세요.'); return; }
   container.innerHTML='';
 
-  const EXCLUDE=['건축헌금','전도헌금','사회봉사'];
+  // MAP 기준: 특별회계 지출 부서 제외
+  const EXCLUDE=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'];
   const allDepts=getDeptTypes().filter(function(d){ return !EXCLUDE.includes(d); });
   const allExp=getExpenses(); // 원 지출DB - 읽기 전용
   const officerData=ST.get('deptOfficers',{});
@@ -5586,13 +5586,14 @@ function init(){
 // ════════════════════════════════════════════════════════════
 
 // 계정 설정
+// ── 헌금·지출 구분 MAP (확정) ──────────────────────────────
 var BANKBAL_ACCOUNTS = [
   {
     id: 'general',
     label: '일반회계',
     acctNo: '3583',
-    incTypes: null,   // null = 특별3개 제외 전부
-    expTypes: null,   // null = 특별 제외 전부
+    incTypes: null,   // 특별3개(건축/전도/지역봉사) 제외 전부
+    expTypes: null,   // SPECIAL_EXP_TYPES 제외 전부
     carryKey: 'general'
   },
   {
@@ -5600,7 +5601,8 @@ var BANKBAL_ACCOUNTS = [
     label: '건축회계',
     acctNo: '3486',
     incTypes: ['건축헌금'],
-    expTypes: ['건축헌금사용','건축대출금상환','건축대출금상환적금','대출금이자','건축대출금 상환(일반회계)'],
+    // MAP: 건축대출금상환, 건축헌금사용만 (건축대출금상환적금·대출금이자는 일반회계)
+    expTypes: ['건축대출금상환','건축헌금사용'],
     carryKey: 'construction'
   },
   {
@@ -5608,7 +5610,8 @@ var BANKBAL_ACCOUNTS = [
     label: '전도헌금',
     acctNo: '4364',
     incTypes: ['전도헌금'],
-    expTypes: ['전도헌금'],   // 친교부는 일반회계에 포함
+    // MAP: 친교부(새신자)만 전도헌금 계정 지출 (친교부는 일반회계)
+    expTypes: ['친교부(새신자)'],
     carryKey: 'mission'
   },
   {
@@ -5622,8 +5625,8 @@ var BANKBAL_ACCOUNTS = [
 ];
 
 var SPECIAL_INC_TYPES = ['건축헌금','전도헌금','지역봉사헌금'];
-var SPECIAL_EXP_TYPES = ['건축헌금사용','건축대출금상환','건축대출금상환적금','대출금이자',
-  '건축대출금 상환(일반회계)','전도헌금','사회봉사']; // 친교부는 일반회계
+// 특별회계 지출 목록 (일반회계 통장 계산에서 제외)
+var SPECIAL_EXP_TYPES = ['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'];
 
 function initBankBalTab(){
   var sel = document.getElementById('bankbal-year');
