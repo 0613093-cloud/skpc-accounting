@@ -412,14 +412,32 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       <select id="dept-month"></select>
       <span class="m-badge" id="dept-badge">-</span>
       <button class="btn btn-navy" onclick="renderDeptReport()">🔍 조회</button>
+      <button class="btn btn-outline" onclick="openDeptDiag()" style="font-size:12px">🔧 데이터 정리</button>
     </div>
+  </div>
+  <!-- 데이터 진단/정리 패널 -->
+  <div id="dept-diag-panel" style="display:none;background:#fff;border:2px solid #dc2626;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(0,0,0,.12)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <strong style="color:#dc2626;font-size:14px">🔧 데이터 진단 / 강제 삭제</strong>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('dept-diag-panel').style.display='none'">닫기</button>
+    </div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:10px">
+      선택한 월/부서에 저장된 <strong>모든 데이터 키</strong>를 직접 확인하고 삭제할 수 있습니다.
+      (메인 지출DB는 영향 없음)
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+      <select id="diag-dept" style="height:32px;padding:0 8px;border:1px solid #cbd5e1;border-radius:6px"></select>
+      <button class="btn btn-navy btn-sm" onclick="runDeptDiag()">🔍 진단</button>
+      <button class="btn btn-red btn-sm" onclick="nukeDeptData()" style="background:#dc2626;color:#fff">⚠️ 이 부서 전체 삭제</button>
+    </div>
+    <div id="diag-result" style="font-size:12px;font-family:monospace;background:#f8fafc;border-radius:6px;padding:10px;max-height:300px;overflow:auto"></div>
   </div>
   <div id="deptreport-content"></div>
 </main>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getFirestore, doc, setDoc, getDoc, onSnapshot,
+    getFirestore, doc, setDoc, getDoc, onSnapshot, deleteField,
     collection, getDocs, deleteDoc, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -600,6 +618,18 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
       await setDoc(DEPT_DOC, dataObj, { merge: true });
       window._fbStatus && window._fbStatus('saved');
     } catch(e) { console.error('[FB] 전체 저장 실패:', e.message); }
+  };
+
+  // 특정 키를 Firebase 문서에서 완전히 제거 (deleteField)
+  window._fbDeleteKey = async function(key) {
+    try {
+      window._lastLocalWrite=Date.now();
+      const DPFX=['deptTopRows_','deptView_','deptFootView_','deptYearView_','deptSavedAt_','deptCustomRows_','deptExpRows_'];
+      const isDK=DPFX.some(function(p){return String(key).startsWith(p);})||(key==='deptOfficers');
+      const targetDoc=isDK?DEPT_DOC:MAIN_DOC;
+      await setDoc(targetDoc, { [key]: deleteField() }, { merge: true });
+      console.log('[FB] 키 삭제 완료:', key);
+    } catch(e) { console.error('[FB] 키 삭제 실패:', e.message); }
   };
 
   window._fbSaveConfigMulti = async function(obj) {
@@ -1740,6 +1770,77 @@ window.updateDeptTopRow=function(dept,ym,rowId,field,value){
   // 로컬 우선: 저장시각 갱신 + Firebase 비동기
   window._lastLocalWrite=Date.now();
   if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+};
+
+// ════════════════════════════════════════════════════════════
+// 데이터 진단 / 강제 삭제 도구
+// ════════════════════════════════════════════════════════════
+window.openDeptDiag=function(){
+  const panel=document.getElementById('dept-diag-panel');
+  const sel=document.getElementById('diag-dept');
+  if(sel && sel.options.length===0){
+    getDeptTypes().forEach(function(d){
+      const o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);
+    });
+  }
+  panel.style.display='block';
+  document.getElementById('diag-result').innerHTML='<span style="color:#94a3b8">부서를 선택하고 진단 버튼을 누르세요.</span>';
+};
+
+// 해당 월/부서의 모든 저장 키 진단
+window.runDeptDiag=function(){
+  const ym=document.getElementById('dept-month').value;
+  const dept=document.getElementById('diag-dept').value;
+  const prefixes=['deptTopRows_','deptExpRows_','deptCustomRows_','deptView_','deptFootView_','deptYearView_','deptSavedAt_'];
+  let html='<div style="font-weight:700;color:#1e3a5f;margin-bottom:8px">📋 '+ym+' / '+dept+' 저장 데이터</div>';
+  let foundAny=false;
+  prefixes.forEach(function(pfx){
+    const key= pfx==='deptSavedAt_' ? (pfx+dept+'_'+ym) : (pfx+ym+'_'+dept);
+    const val=ST.get(key,null);
+    if(val!==null){
+      const str=JSON.stringify(val);
+      if(str!=='[]'&&str!=='{}'&&str!=='""'){
+        foundAny=true;
+        html+='<div style="margin-bottom:8px;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px">';
+        html+='<div style="font-weight:700;color:#0369a1;word-break:break-all">'+key+'</div>';
+        html+='<div style="color:#475569;margin:4px 0;word-break:break-all;max-height:80px;overflow:auto">'+str.replace(/</g,'&lt;')+'</div>';
+        html+='<button onclick="deleteRawKey(\''+key+'\')" style="background:#dc2626;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px">이 키 삭제</button>';
+        html+='</div>';
+      }
+    }
+  });
+  if(!foundAny) html+='<div style="color:#16a34a">✅ 저장된 데이터가 없습니다 (깨끗함)</div>';
+  document.getElementById('diag-result').innerHTML=html;
+};
+
+// 특정 키 완전 삭제 (localStorage + Firebase)
+window.deleteRawKey=function(key){
+  if(!confirm('['+key+']\n이 데이터를 완전히 삭제하시겠습니까?\n(메인 지출DB는 영향 없음)')) return;
+  // localStorage 삭제
+  try{ localStorage.removeItem(key); }catch(e){}
+  // Firebase에서도 삭제 (빈 값으로 덮어쓰기 → deleteField 사용)
+  window._lastLocalWrite=Date.now();
+  if(window._fbDeleteKey) window._fbDeleteKey(key);
+  alert('삭제 완료: '+key);
+  runDeptDiag();
+  renderDeptReport();
+};
+
+// 부서 전체 데이터 삭제
+window.nukeDeptData=function(){
+  const ym=document.getElementById('dept-month').value;
+  const dept=document.getElementById('diag-dept').value;
+  if(!confirm(ym+' / '+dept+'\n이 부서의 모든 입력 데이터를 삭제하시겠습니까?\n(메인 지출DB는 영향 없음)')) return;
+  const prefixes=['deptTopRows_','deptExpRows_','deptCustomRows_','deptView_','deptFootView_','deptYearView_','deptSavedAt_'];
+  prefixes.forEach(function(pfx){
+    const key= pfx==='deptSavedAt_' ? (pfx+dept+'_'+ym) : (pfx+ym+'_'+dept);
+    try{ localStorage.removeItem(key); }catch(e){}
+    window._lastLocalWrite=Date.now();
+    if(window._fbDeleteKey) window._fbDeleteKey(key);
+  });
+  alert('삭제 완료: '+dept+' '+ym);
+  runDeptDiag();
+  renderDeptReport();
 };
 
 // 부서 전체 데이터를 DEPT_DOC에 확정 저장 (삭제/수정 반영 보장)
