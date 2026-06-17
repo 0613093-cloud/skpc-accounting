@@ -5787,14 +5787,21 @@ function initBankBalTab(){
 function calcMonthly(yr, acct, offs, exps){
   var rows = [];
   // 이월금 우선순위:
-  // 1) 통장잔고 화면에서 직접 입력한 값 (bankbal_carry_)
-  // 2) 관리화면 이월금 설정값 (carryover 키: construction_yr, mission_yr, welfare_yr, year_yr)
+  // 1) 통장잔고 화면 직접 입력값 (bankbal_carry_)
+  // 2) 관리설정 전년도이월금 (일반:year_ / 특별:special_build·mission·local_)
   var carryKey = 'bankbal_carry_' + acct.id + '_' + yr;
   var directCarry = ST.get(carryKey, null);
   var co = getCarryover();
-  var mgmtKey = (acct.id === 'general') ? 'year_' + (yr-1) : acct.id + '_' + (yr-1);
-  var mgmtCarry = parseN(co[mgmtKey] || '0');
-  // 직접 입력값 우선, 없으면 관리화면 전년도이월금 사용
+  // 계정ID → 관리설정 키 매핑
+  var MGMT_KEY_MAP = {
+    general: 'year',
+    construction: 'special_build',
+    mission: 'special_mission',
+    welfare: 'special_local'
+  };
+  var mgmtPrefix = MGMT_KEY_MAP[acct.id] || acct.id;
+  var mgmtCarry = parseN(co[mgmtPrefix + '_' + (yr-1)] || '0');
+  // 직접 입력값 우선, 없으면 관리설정 전년도이월금 자동 사용
   var carry = (directCarry !== null && directCarry !== '') ? parseN(directCarry) : mgmtCarry;
   var cumInc = 0, cumExp = 0;
   for(var m = 1; m <= 12; m++){
@@ -5879,9 +5886,9 @@ window.renderBankBal = function(){
       + ' <span style="font-size:11px;color:var(--g2);font-weight:400">(통장 ' + acct.acctNo + ')</span>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:8px;font-size:12px">'
-      + '<label style="font-weight:700;color:var(--g2)">이월금</label>'
+      + '<label style="font-weight:700;color:var(--g2)">전년도이월금</label>'
       + '<input type="text" id="carry-' + acct.id + '" value="' + fmtN(carry) + '"'
-      + ' placeholder="이월금 입력" oninput="fmtAmt(this)"'
+      + ' placeholder="전년도이월금 입력" oninput="fmtAmt(this)"'
       + ' data-id="' + acct.id + '" data-yr="' + yr + '" onchange="saveBankBalCarry(this.dataset.id,this.dataset.yr)"'
       + ' style="width:120px;height:30px;padding:0 8px;border:1.5px solid var(--blue);border-radius:6px;font-family:var(--fnum);text-align:right;font-size:12px;font-weight:700;color:var(--navy)">'
       + '<button class="btn btn-outline btn-sm" onclick="renderBankBal()">🔄</button>'
@@ -5898,7 +5905,7 @@ window.renderBankBal = function(){
       + '</tr></thead>'
       + '<tbody>'
       + '<tr style="background:#f0f6ff">'
-      + '<td style="text-align:center;font-weight:700;color:var(--g2)">이월금</td>'
+      + '<td style="text-align:center;font-weight:700;color:var(--g2)">전년도이월금</td>'
       + '<td colspan="5" class="nc" style="font-weight:700;color:var(--navy)">' + (carry ? fmtN(carry) : '—') + '</td>'
       + '</tr>'
       + trs
