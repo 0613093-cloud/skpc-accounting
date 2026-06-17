@@ -1473,6 +1473,14 @@ window.renderDeptReport=function(){
         btnDel.style.cssText='height:20px;width:20px;border:none;background:var(--red);color:#fff;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0';
         btnDel.addEventListener('click',function(){deleteDeptTopRow(dept,ym,rowInfo.id);});
         d5.appendChild(btnDel);
+      } else if(rowInfo.isBudget){
+        // 교회예산 행: 초기화(0) 버튼 - 행은 유지, 금액만 0으로
+        const btnReset=document.createElement('button');
+        btnReset.className='no-print';btnReset.textContent='↺';
+        btnReset.title='교회예산 금액 초기화 (0원)';
+        btnReset.style.cssText='height:20px;width:20px;border:none;background:var(--g3);color:#fff;border-radius:3px;cursor:pointer;font-size:11px;flex-shrink:0';
+        btnReset.addEventListener('click',function(){resetBudgetRow(dept,ym,rowInfo.id);});
+        d5.appendChild(btnReset);
       }
       row.appendChild(d5);
       body.appendChild(row);
@@ -1728,6 +1736,25 @@ window.updateDeptTopRow=function(dept,ym,rowId,field,value){
   // 로컬 우선: 저장시각 갱신 + Firebase 비동기
   window._lastLocalWrite=Date.now();
   if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+};
+
+// 교회예산 행 금액 초기화 (income/amount → 0, 행은 유지)
+window.resetBudgetRow=function(dept,ym,rowId){
+  const key='deptTopRows_'+ym+'_'+dept;
+  const rows=ST.get(key,[]);
+  const idx=rows.findIndex(function(r){return r.id===rowId;});
+  if(idx>=0){
+    rows[idx].income=0;
+    rows[idx].amount=0;
+    ST.set(key,rows);
+    window._lastLocalWrite=Date.now();
+    if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+    // viewData 오버라이드도 제거
+    var vk='deptView_'+ym+'_'+dept;
+    var vd=ST.get(vk,{});
+    if(vd[rowId]){ delete vd[rowId]; ST.set(vk,vd); if(window._fbSaveConfig) window._fbSaveConfig(vk,vd); }
+    renderDeptReport();
+  }
 };
 
 window.deleteDeptTopRow=function(dept,ym,rowId){
