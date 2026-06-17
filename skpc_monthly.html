@@ -656,15 +656,13 @@ const ST={
   get(k,d=null){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}},
   set(k,v){
     try{localStorage.setItem(k,JSON.stringify(v));}catch{}
-    // Firebase 동기화 (설정값)
+    // Firebase 동기화 (설정값만)
     const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers'];
     if(configKeys.includes(k) && window._fbSaveConfig){
       window._fbSaveConfig(k,v);
     }
-    // deptCustomRows / deptTopRows / deptView (동적 키 - Firebase 직접 저장)
-    if(k.startsWith('deptCustomRows_')||k.startsWith('deptTopRows_')||k.startsWith('deptView_')){
-      if(window._fbSaveConfig) window._fbSaveConfig(k,v);
-    }
+    // ★ 부서보고서 키는 ST.set 자동저장 안 함 (race condition 방지)
+    //   → 명시적 함수(saveDeptToFirebase/updateDeptExpRow/deleteDept* 등)에서만 Firebase 저장
   }
 };
 
@@ -1897,10 +1895,15 @@ window.addDeptRow=function(dept,ym){
   },100);
 };
 window.updateDeptRow=function(dept,ym,id,field,val){
-  const key=`deptCustomRows_${ym}_${dept}`;
+  const key='deptCustomRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]);
-  const idx=rows.findIndex(r=>r.id===id);
-  if(idx>=0){rows[idx][field]=field==='amount'?parseInt((val+'').replace(/,/g,''))||0:val;ST.set(key,rows);}
+  const idx=rows.findIndex(function(r){return r.id===id;});
+  if(idx>=0){
+    rows[idx][field]=(field==='amount'||field==='income')?parseInt((val+'').replace(/,/g,''))||0:val;
+    ST.set(key,rows);
+    window._lastLocalWrite=Date.now();
+    if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
+  }
 };
 window.deleteDeptRow=function(dept,ym,id){
   const key='deptCustomRows_'+ym+'_'+dept;
