@@ -2848,55 +2848,6 @@ function renderDeptStatusBar(dept){
 }
 
 
-window.updateDeptTopRow=function(dept,ym,rowId,field,value){
-  const key='deptTopRows_'+ym+'_'+dept;
-  const rows=ST.get(key,[]);
-  const idx=rows.findIndex(function(r){return r.id===rowId;});
-  if(idx<0) return;
-  rows[idx][field]=value;
-  ST.set(key,rows);
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-};
-
-window.deleteDeptTopRow=function(dept,ym,rowId){
-  const key='deptTopRows_'+ym+'_'+dept;
-  const rows=ST.get(key,[]).filter(function(r){return r.id!==rowId;});
-  ST.set(key,rows);
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-  renderDeptReport();
-};
-
-window.toggleDeptVisibility=function(dept,ym){
-  const key='hiddenDepts_'+ym;
-  const hidden=ST.get(key,[]);
-  const idx=hidden.indexOf(dept);
-  if(idx===-1) hidden.push(dept);
-  else hidden.splice(idx,1);
-  ST.set(key,hidden);
-  renderDeptReport();
-};
-
-window.addDeptRowTop=function(dept,ym){
-  const key='deptTopRows_'+ym+'_'+dept;
-  const rows=ST.get(key,[]);
-  rows.push({id:uid(),date:ym+'-01',content:'',income:0,amount:0,memo:''});
-  ST.set(key,rows);
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-  renderDeptReport();
-};
-
-// 부서별 '교회예산' 행 자동 생성 (최초 1회)
-function ensureBudgetRow(dept,ym){
-  const key='deptTopRows_'+ym+'_'+dept;
-  const rows=ST.get(key,[]);
-  const hasBudget=rows.some(function(r){return r.isBudget===true;});
-  if(!hasBudget){
-    rows.unshift({id:'budget_'+dept+'_'+ym,date:ym+'-01',content:'교회예산',income:0,amount:0,memo:'',isBudget:true});
-    ST.set(key,rows);
-    if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-  }
-}
-
 window.saveDeptOfficer=function(dept){
   const data=ST.get('deptOfficers',{});
   data[dept]={

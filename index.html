@@ -4739,7 +4739,7 @@ window.renderDeptReport=function(){
   // MAP 기준: 특별회계 지출 부서 제외
   const EXCLUDE=['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'];
   const allDepts=getDeptTypes().filter(function(d){ return !EXCLUDE.includes(d); });
-  const allExp=getExpenses(); // 원 지출DB - 읽기 전용
+  // 부서보고서는 expenseBook(지출DB)을 사용하지 않음 → skpc_monthly.html 입력 별도DB만 사용
   const officerData=ST.get('deptOfficers',{});
 
   // skpc_monthly.html에서 저장된 별도 DB 읽기
@@ -4747,21 +4747,20 @@ window.renderDeptReport=function(){
   let hasAny=false;
 
   allDepts.forEach(function(dept){
-    // 당월 지출 (원 DB, 읽기 전용)
-    const dMoExp=allExp.filter(function(e){
-      return e.dept===dept && e.date && e.date.slice(0,7)===ym;
-    }).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+    // ★ 지출DB(expenseBook)가 아닌, skpc_monthly.html에서 입력/저장한 별도DB에서 읽기 ★
+    const dMoExp=ST.get('deptExpRows_'+ym+'_'+dept,[]).slice()
+      .sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
 
     // 별도 저장 DB 읽기
     const topRowKey='deptTopRows_'+ym+'_'+dept;
     const viewKey='deptView_'+ym+'_'+dept;
     const topRows=ST.get(topRowKey,[]);    // 교회예산 등 상단 행
-    const viewData=ST.get(viewKey,{});     // 지출행 표시 오버라이드
+    const viewData=ST.get(viewKey,{});     // 표시 오버라이드 (있으면 적용)
     const customRows=ST.get('deptCustomRows_'+ym+'_'+dept,[]); // 추가 행
     const officers=officerData[dept]||{head:'',deputy:'',acct:''};
     const savedAt=ST.get('deptSavedAt_'+ym+'_'+dept,'');
 
-    // 표시할 데이터가 있는 부서만
+    // 표시할 데이터가 있는 부서만 (별도DB 기준)
     const hasTopData=topRows.length>0;
     const hasExpData=dMoExp.length>0;
     const hasViewData=Object.keys(viewData).length>0;
@@ -4856,14 +4855,14 @@ window.renderDeptReport=function(){
       ));
     });
 
-    // ── 원 지출DB 행 (읽기 전용, viewData 오버라이드 적용) ──
+    // ── 별도DB 지출행 (skpc_monthly.html에서 입력/저장한 내역) ──
     dMoExp.forEach(function(e){
       const sv=viewData[e.id]||{};
       const dateV=sv.date!==undefined?sv.date:(e.date||'');
       const contV=sv.content!==undefined?sv.content:(e.content||e.item||'');
-      const incV=sv.income!==undefined?sv.income:0;
-      const expV=sv.amount!==undefined?sv.amount:e.amount||0;
-      const memoV=sv.memo!==undefined?sv.memo:(e.memo||'요청:' +(e.requester||''));
+      const incV=sv.income!==undefined?sv.income:(e.income||0);
+      const expV=sv.amount!==undefined?sv.amount:(e.amount||0);
+      const memoV=sv.memo!==undefined?sv.memo:(e.memo||'');
       body.appendChild(makeRow(dateV,contV,incV,expV,memoV,''));
     });
 
@@ -4874,10 +4873,10 @@ window.renderDeptReport=function(){
 
     // ── 합계 행 ──
     const totalExp=topRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0)
-      +dMoExp.reduce(function(s,e){const sv=viewData[e.id]||{};return s+(sv.amount!==undefined?parseInt(sv.amount)||0:e.amount||0);},0)
+      +dMoExp.reduce(function(s,e){const sv=viewData[e.id]||{};return s+(sv.amount!==undefined?parseInt(sv.amount)||0:parseInt(e.amount)||0);},0)
       +customRows.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
     const totalInc=topRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0)
-      +dMoExp.reduce(function(s,e){const sv=viewData[e.id]||{};return s+(parseInt(sv.income)||0);},0)
+      +dMoExp.reduce(function(s,e){const sv=viewData[e.id]||{};return s+(sv.income!==undefined?parseInt(sv.income)||0:parseInt(e.income)||0);},0)
       +customRows.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
     const sumrow=document.createElement('div');
     sumrow.style.cssText='display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;padding:8px 10px;background:#e8f0f8;font-weight:900;font-size:12px;border-top:2px solid #c8d8e8;color:#1a3a6e';
@@ -4900,15 +4899,13 @@ window.renderDeptReport=function(){
       const mTop=ST.get('deptTopRows_'+mym+'_'+dept,[]);
       yearInc+=mTop.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
       yearExp+=mTop.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
-      // 원 지출DB
-      const mExp=allExp.filter(function(e){
-        return e.dept===dept && e.date && e.date.slice(0,7)===mym;
-      });
+      // ★ 별도DB 지출행 (deptExpRows_) ★
+      const mExp=ST.get('deptExpRows_'+mym+'_'+dept,[]);
       const mView=ST.get('deptView_'+mym+'_'+dept,{});
       mExp.forEach(function(e){
         const sv=mView[e.id]||{};
-        yearInc+=parseInt(sv.income)||0;
-        yearExp+=sv.amount!==undefined?(parseInt(sv.amount)||0):(e.amount||0);
+        yearInc+=sv.income!==undefined?(parseInt(sv.income)||0):(parseInt(e.income)||0);
+        yearExp+=sv.amount!==undefined?(parseInt(sv.amount)||0):(parseInt(e.amount)||0);
       });
       // 커스텀 행
       const mCust=ST.get('deptCustomRows_'+mym+'_'+dept,[]);
