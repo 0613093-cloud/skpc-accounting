@@ -2791,15 +2791,28 @@ updateHeaderDate();setInterval(updateHeaderDate,60000);
 
 function initMonthSel(selId,badgeId){
   const sel=document.getElementById(selId);if(!sel||sel.options.length>0) return;
-  for(let y=CUR_YEAR;y>=CUR_YEAR-2;y--){
-    for(let m=12;m>=1;m--){
-      const val=`${y}-${String(m).padStart(2,'0')}`;
-      const opt=document.createElement('option');opt.value=val;
-      opt.textContent=`${y}년 ${m}월`;
-      if(y===CUR_YEAR&&m===CUR_MONTH) opt.selected=true;
-      sel.appendChild(opt);
-    }
+  // 시작 연도(2026)부터 당월 +1개월까지 표시
+  // - 2026년 이전(2025 등)은 제외
+  // - 당월 다음달까지 표시 (12월이면 다음해 1월로 넘어감)
+  // - 연도가 바뀌어도 시작연도(2026)부터 계속 누적 표시
+  const START_YEAR=2026;
+  // 마지막 표시 시점 = 당월 +1개월 (연/월 계산)
+  let endY=CUR_YEAR, endM=CUR_MONTH+1;
+  if(endM>12){ endM=1; endY=CUR_YEAR+1; }
+  // 시작(START_YEAR-01) ~ 끝(endY-endM)까지 월 목록 생성 (최신이 위로)
+  const months=[];
+  for(let y=START_YEAR; y<=endY; y++){
+    const mEnd=(y===endY)?endM:12;
+    for(let m=1; m<=mEnd; m++){ months.push({y:y,m:m}); }
   }
+  months.reverse(); // 최신 월이 맨 위
+  months.forEach(function(mm){
+    const val=mm.y+'-'+String(mm.m).padStart(2,'0');
+    const opt=document.createElement('option');opt.value=val;
+    opt.textContent=mm.y+'년 '+mm.m+'월';
+    if(mm.y===CUR_YEAR&&mm.m===CUR_MONTH) opt.selected=true; // 당월 기본 선택
+    sel.appendChild(opt);
+  });
   updateMonthBadge(selId,badgeId);
   sel.onchange=()=>updateMonthBadge(selId,badgeId);
 }
