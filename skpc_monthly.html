@@ -497,11 +497,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
             try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
           }
         });
-        if(data.deptCustomRows) {
-          Object.entries(data.deptCustomRows).forEach(([k,v]) => {
-            try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
-          });
-        }
+        // [제거됨] 레거시 data.deptCustomRows 복원 → 660,000 부활 원인
+        //   부서보고서 키는 DEPT_DOC에서만 복원 (개별 키 방식)
         // 부서보고서 키는 DEPT_DOC에서 별도 복원됨 (위 deptSnap 처리)
       }
 
@@ -565,11 +562,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
           try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
         }
       });
-      if(data.deptCustomRows) {
-        Object.entries(data.deptCustomRows).forEach(([k,v]) => {
-          try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
-        });
-      }
+      // [제거됨] 레거시 data.deptCustomRows 복원 → 660,000 부활 원인
       window._fbLiveRefresh && window._fbLiveRefresh('config');
     }, (err) => {
       console.warn('[Firebase] config 리스너 오류:', err.message);
@@ -1848,15 +1841,27 @@ window.saveDeptToFirebase=function(dept,ym){
   const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   const stKey='deptSavedAt_'+dept+'_'+ym;
   ST.set(stKey,now);
+  const keys=[
+    'deptTopRows_'+ym+'_'+dept,
+    'deptExpRows_'+ym+'_'+dept,
+    'deptCustomRows_'+ym+'_'+dept,
+    'deptView_'+ym+'_'+dept,
+    'deptFootView_'+ym+'_'+dept,
+    'deptYearView_'+ym+'_'+dept
+  ];
   const saveAll={};
   saveAll[stKey]=now;
-  saveAll['deptTopRows_'+ym+'_'+dept]=ST.get('deptTopRows_'+ym+'_'+dept,[]);
-  saveAll['deptExpRows_'+ym+'_'+dept]=ST.get('deptExpRows_'+ym+'_'+dept,[]);
-  saveAll['deptCustomRows_'+ym+'_'+dept]=ST.get('deptCustomRows_'+ym+'_'+dept,[]);
-  saveAll['deptView_'+ym+'_'+dept]=ST.get('deptView_'+ym+'_'+dept,{});
-  saveAll['deptFootView_'+ym+'_'+dept]=ST.get('deptFootView_'+ym+'_'+dept,{});
-  saveAll['deptYearView_'+ym+'_'+dept]=ST.get('deptYearView_'+ym+'_'+dept,{});
   window._lastLocalWrite=Date.now();
+  keys.forEach(function(k){
+    const v=ST.get(k,null);
+    const str=v===null?null:JSON.stringify(v);
+    // 빈 배열/객체/null → Firebase에서 키 완전 제거 (deleteField), 부활 방지
+    if(v===null||str==='[]'||str==='{}'){
+      if(window._fbDeleteKey) window._fbDeleteKey(k);
+    } else {
+      saveAll[k]=v;
+    }
+  });
   if(window._fbSaveAll) window._fbSaveAll(saveAll);
   else if(window._fbSaveConfig){
     Object.keys(saveAll).forEach(function(k){window._fbSaveConfig(k,saveAll[k]);});

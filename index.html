@@ -649,11 +649,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
             try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
           }
         });
-        if(data.deptCustomRows) {
-          Object.entries(data.deptCustomRows).forEach(([k,v]) => {
-            try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
-          });
-        }
+        // [제거됨] 레거시 data.deptCustomRows 복원 → 660,000 부활 원인
+        //   부서보고서 키는 DEPT_DOC에서만 복원 (개별 키 방식)
         // 부서보고서 키는 DEPT_DOC에서 별도 복원됨
       }
 
@@ -698,6 +695,20 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 
   // ── 실시간 리스너 ──
   function setupListeners() {
+    // 부서보고서 전용 DB(DEPT_DOC) 실시간 리스너 - 입력 페이지 변경 즉시 반영
+    onSnapshot(DEPT_DOC, (dSnap) => {
+      if(!dSnap.exists()) return;
+      const dData = dSnap.data();
+      Object.keys(dData).forEach(function(k){
+        try{ localStorage.setItem(k, JSON.stringify(dData[k])); }catch(e){}
+      });
+      // 부서보고서 탭이 열려있으면 자동 갱신
+      const activeTab=document.querySelector('.nav-item.active')?.dataset?.tab;
+      if(activeTab==='deptreport' && typeof renderDeptReport==='function'){
+        try{ renderDeptReport(); }catch(e){}
+      }
+    }, (err) => console.warn('[Firebase] DEPT 리스너:', err.message));
+
     onSnapshot(MAIN_DOC, (snap) => {
       if(!snap.exists()) return;
       const data = snap.data();
@@ -707,11 +718,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
           try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
         }
       });
-      if(data.deptCustomRows) {
-        Object.entries(data.deptCustomRows).forEach(([k,v]) => {
-          try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
-        });
-      }
+      // [제거됨] 레거시 data.deptCustomRows 복원 → 660,000 부활 원인
       window._fbLiveRefresh && window._fbLiveRefresh('config');
     }, (err) => {
       console.warn('[Firebase] config 리스너 오류:', err.message);
@@ -5007,7 +5014,7 @@ window.doImport=function(ev){
     if(data.annualBudget) ST.set('annualBudget',data.annualBudget);
     if(data.bankActual) ST.set('bankActual',data.bankActual);
     if(data.deptOfficers) ST.set('deptOfficers',data.deptOfficers);
-    if(data.deptCustomRows){Object.entries(data.deptCustomRows).forEach(([k,v])=>ST.set(k,v));}
+    // [제거됨] 레거시 data.deptCustomRows 복원 → 660,000 부활 원인
     // Firebase에 전체 업로드
     if(window._fbSaveAll){
       const off=JSON.parse(localStorage.getItem('accountBook')||'[]');
