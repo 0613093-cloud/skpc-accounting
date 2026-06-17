@@ -523,11 +523,13 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
     // DEPT_DOC 실시간 리스너 추가 - 부서보고서 데이터 변경 즉시 반영
     onSnapshot(DEPT_DOC, (dSnap) => {
       if(!dSnap.exists()) return;
+      // 로컬 쓰기 직후 2초간은 서버 스냅샷 무시 (방금 쓴 데이터 덮어쓰기 방지)
+      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 2000)) return;
       const dData = dSnap.data();
       Object.keys(dData).forEach(function(k){
         try{ localStorage.setItem(k, JSON.stringify(dData[k])); }catch(e){}
       });
-      window._fbLiveRefresh && window._fbLiveRefresh('deptReport');
+      window._fbLiveRefreshDept && window._fbLiveRefreshDept();
     }, (err) => console.warn('[Firebase] DEPT 리스너:', err.message));
 
     onSnapshot(MAIN_DOC, (snap) => {
@@ -576,6 +578,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   // ── 저장 함수들 ──
   window._fbSaveConfig = async function(key, value) {
     try {
+      window._lastLocalWrite=Date.now(); // 로컬 쓰기 시각 기록 (onSnapshot race 방지)
       const DPFX=['deptTopRows_','deptView_','deptFootView_','deptYearView_','deptSavedAt_','deptCustomRows_','deptExpRows_'];
       const isDK=DPFX.some(function(p){return String(key).startsWith(p);})||(key==='deptOfficers');
       const targetDoc=isDK?DEPT_DOC:MAIN_DOC;
@@ -587,6 +590,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   // 여러 키를 한 번에 DEPT_DOC에 저장
   window._fbSaveAll = async function(dataObj) {
     try {
+      window._lastLocalWrite=Date.now();
       await setDoc(DEPT_DOC, dataObj, { merge: true });
       window._fbStatus && window._fbStatus('saved');
     } catch(e) { console.error('[FB] 전체 저장 실패:', e.message); }
@@ -812,6 +816,12 @@ window._fbStatus = function(status){
 };
 
 // 실시간 데이터 갱신 시 현재 탭 refresh
+window._fbLiveRefreshDept = function(){
+  const activeTab=document.querySelector('.nav-item.active')?.dataset?.tab;
+  if(activeTab==='deptreport' && typeof renderDeptReport==='function'){
+    try{ renderDeptReport(); }catch(e){}
+  }
+};
 window._fbLiveRefresh = function(key){
   const activeTab = document.querySelector('.nav-item.active')?.dataset?.tab;
   if(!activeTab) return;
@@ -1708,8 +1718,15 @@ window.updateDeptTopRow=function(dept,ym,rowId,field,value){
   const rows=ST.get(key,[]);
   const idx=rows.findIndex(function(r){return r.id===rowId;});
   if(idx<0) return;
-  rows[idx][field]=value;
+  // 금액 필드는 숫자로 변환 (문자열 혼용 방지)
+  if(field==='income'||field==='amount'){
+    rows[idx][field]=parseInt((value+'').replace(/,/g,''))||0;
+  } else {
+    rows[idx][field]=value;
+  }
   ST.set(key,rows);
+  // 로컬 우선: 저장시각 갱신 + Firebase 비동기
+  window._lastLocalWrite=Date.now();
   if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
 };
 
