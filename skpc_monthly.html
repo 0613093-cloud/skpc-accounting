@@ -1315,8 +1315,9 @@ window.renderDeptReport=function(){
                                 : (parseInt(rowInfo.income)||0);
       const exp  = rowInfo.isDB ? (savedView.amount  !== undefined ? savedView.amount  : Number(rowInfo.dbObj.amount||0))
                                 : (parseInt(rowInfo.amount)||0);
-      const memo = rowInfo.isDB ? (savedView.memo    !== undefined ? savedView.memo    : rowInfo.dbObj.memo||'')
-                                : (rowInfo.memo||'');
+      const memo = rowInfo._isExpSnap ? (savedView.memo!==undefined?savedView.memo:(rowInfo.memo||''))
+                : rowInfo.isDB ? (savedView.memo!==undefined?savedView.memo:(rowInfo.dbObj?rowInfo.dbObj.memo||'':''))
+                : (rowInfo.memo||'');
       const dateV= rowInfo.isDB ? (savedView.date    !== undefined ? savedView.date    : rowInfo.date)
                                 : rowInfo.date;
       const contV= rowInfo.isDB ? (savedView.content !== undefined ? savedView.content : rowInfo.content)
@@ -1434,13 +1435,14 @@ window.renderDeptReport=function(){
       d5.style.display='flex';d5.style.gap='4px';d5.style.alignItems='center';
       const iMemo=document.createElement('input');iMemo.value=memo;iMemo.placeholder='비고';
       iMemo.style.cssText='flex:1;border:none;border-bottom:1px dashed var(--g4);background:transparent;font-size:11px;font-family:var(--fn);padding:2px 0';
-      iMemo.addEventListener('change',(function(rid,isDB,isBudget){
+      iMemo.addEventListener('change',(function(rid,isDB,isBudget,isExpSnap){
         return function(){
           const v=this.value;
-          if(isDB){saveViewField(rid,'memo',v);}
+          if(isExpSnap){updateDeptExpRow(dept,ym,rid,'memo',v);}
+          else if(isDB){saveViewField(rid,'memo',v);}
           else{updateDeptTopRow(dept,ym,rid,'memo',v);}
         };
-      })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget));
+      })(rowInfo.id,rowInfo.isDB,rowInfo.isBudget,rowInfo._isExpSnap));
       iMemo.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();iMemo.blur();}});
       d5.appendChild(iMemo);
       // 교회예산 행: × 없음 / 일반 상단행: × 표시

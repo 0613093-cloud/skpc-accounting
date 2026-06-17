@@ -4811,6 +4811,7 @@ window.renderDeptReport=function(){
       dc.textContent=h;
       if(i===0) dc.style.textAlign='center';
       if(i>=2&&i<=4) dc.style.textAlign='right';
+      if(i===5) dc.style.textAlign='center'; // 비고 가운데
       dc.style.fontWeight='900';
       hrow.appendChild(dc);
     });
@@ -4832,7 +4833,7 @@ window.renderDeptReport=function(){
         {txt:incV>0?fmtN(incV):'',st:'text-align:right;font-family:Arial,sans-serif;color:#1d4ed8;font-weight:700'},
         {txt:expV>0?fmtN(expV):'',st:'text-align:right;font-family:Arial,sans-serif;color:#dc2626;font-weight:700'},
         {txt:fmtN(runBal),st:'text-align:right;font-family:Arial,sans-serif;font-weight:800;color:'+balColor},
-        {txt:memoV,st:'font-size:11px;color:#546e8a'},
+        {txt:memoV,st:'font-size:11px;color:#546e8a;text-align:center'}, // 비고 가운데
       ];
       cols.forEach(function(col){
         const dc=document.createElement('div');
