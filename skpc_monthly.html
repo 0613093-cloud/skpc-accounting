@@ -161,6 +161,11 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
 /* MONTH BAR */
 .month-bar{background:#fff;border:1px solid var(--g4);border-radius:var(--rl);padding:12px 18px;
   margin-bottom:16px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh);flex-wrap:wrap}
+/* 보고 기준 월 영역 상단 고정 (스크롤해도 계속 보임) */
+.dept-sticky-hd{position:sticky;top:0;z-index:50;background:var(--bg,#f0f4f8);
+  padding-top:8px;margin:-8px -4px 0;padding-left:4px;padding-right:4px;
+  box-shadow:0 4px 12px -6px rgba(0,0,0,.15)}
+.dept-sticky-hd .month-bar{margin-bottom:10px}
 .month-bar label{font-size:12px;font-weight:800;color:var(--g2)}
 .month-bar select{height:34px;padding:0 10px;border:1.5px solid var(--blue);border-radius:var(--r);
   font-family:var(--fn);font-size:13px;font-weight:700;color:var(--navy);background:var(--blue-xp)}
@@ -400,13 +405,14 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   <div style="background:#e3f2fd;border:1.5px solid #90caf9;border-radius:8px;padding:9px 14px;margin-bottom:12px;font-size:12px;color:#1565c0;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <span>📋 이 화면은 <strong>부서 담당자 전용</strong> 입력/수정 페이지입니다. 재정 전체 내역은 이 페이지에서 볼 수 없습니다.</span>
   </div>
-  <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
-  <div class="month-bar">
-    <label>보고 기준 월</label>
-    <select id="dept-month"></select>
-    <span class="m-badge" id="dept-badge">-</span>
-    <button class="btn btn-navy" onclick="renderDeptReport()">🔍 조회</button>
-    
+  <div class="dept-sticky-hd">
+    <div class="pg-hd"><div class="pg-title">🏢 부서별 예산집행보고서</div></div>
+    <div class="month-bar">
+      <label>보고 기준 월</label>
+      <select id="dept-month"></select>
+      <span class="m-badge" id="dept-badge">-</span>
+      <button class="btn btn-navy" onclick="renderDeptReport()">🔍 조회</button>
+    </div>
   </div>
   <div id="deptreport-content"></div>
 </main>
@@ -1738,6 +1744,27 @@ window.updateDeptTopRow=function(dept,ym,rowId,field,value){
   if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
 };
 
+// 부서 전체 데이터를 DEPT_DOC에 확정 저장 (삭제/수정 반영 보장)
+window.saveDeptToFirebase=function(dept,ym){
+  const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const stKey='deptSavedAt_'+dept+'_'+ym;
+  ST.set(stKey,now);
+  const saveAll={};
+  saveAll[stKey]=now;
+  saveAll['deptTopRows_'+ym+'_'+dept]=ST.get('deptTopRows_'+ym+'_'+dept,[]);
+  saveAll['deptExpRows_'+ym+'_'+dept]=ST.get('deptExpRows_'+ym+'_'+dept,[]);
+  saveAll['deptCustomRows_'+ym+'_'+dept]=ST.get('deptCustomRows_'+ym+'_'+dept,[]);
+  saveAll['deptView_'+ym+'_'+dept]=ST.get('deptView_'+ym+'_'+dept,{});
+  saveAll['deptFootView_'+ym+'_'+dept]=ST.get('deptFootView_'+ym+'_'+dept,{});
+  saveAll['deptYearView_'+ym+'_'+dept]=ST.get('deptYearView_'+ym+'_'+dept,{});
+  window._lastLocalWrite=Date.now();
+  if(window._fbSaveAll) window._fbSaveAll(saveAll);
+  else if(window._fbSaveConfig){
+    Object.keys(saveAll).forEach(function(k){window._fbSaveConfig(k,saveAll[k]);});
+  }
+  renderDeptStatusBar && renderDeptStatusBar(dept);
+};
+
 // 교회예산 행 금액 초기화 (income/amount → 0, 행은 유지)
 window.resetBudgetRow=function(dept,ym,rowId){
   const key='deptTopRows_'+ym+'_'+dept;
@@ -1748,12 +1775,11 @@ window.resetBudgetRow=function(dept,ym,rowId){
     rows[idx].amount=0;
     ST.set(key,rows);
     window._lastLocalWrite=Date.now();
-    if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-    // viewData 오버라이드도 제거
     var vk='deptView_'+ym+'_'+dept;
     var vd=ST.get(vk,{});
-    if(vd[rowId]){ delete vd[rowId]; ST.set(vk,vd); if(window._fbSaveConfig) window._fbSaveConfig(vk,vd); }
+    if(vd[rowId]){ delete vd[rowId]; ST.set(vk,vd); }
     renderDeptReport();
+    saveDeptToFirebase(dept,ym);
   }
 };
 
@@ -1762,7 +1788,7 @@ window.deleteDeptTopRow=function(dept,ym,rowId){
   const rows=ST.get(key,[]).filter(function(r){return r.id!==rowId;});
   ST.set(key,rows); // localStorage 즉시 삭제
   renderDeptReport(); // 즉시 반영
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows); // Firebase 비동기 저장
+  saveDeptToFirebase(dept,ym); // 전체 데이터 Firebase 확정 저장
 };
 
 window.toggleDeptVisibility=function(dept,ym){
@@ -1830,12 +1856,8 @@ window.deleteDeptExpRow=function(dept,ym,id){
   const key='deptExpRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]).filter(function(r){return r.id!==id;});
   ST.set(key,rows); // localStorage 즉시 삭제
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows); // Firebase 비동기 저장
-  const stKey='deptSavedAt_'+dept+'_'+ym;
-  const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  ST.set(stKey,now);
-  if(window._fbSaveConfig) window._fbSaveConfig(stKey,now);
-  renderDeptReport(); // localStorage 기준 1회만 렌더
+  renderDeptReport(); // 즉시 반영
+  saveDeptToFirebase(dept,ym); // 전체 데이터 Firebase 확정 저장
 };
 
 window.saveDeptOfficer=function(dept){
@@ -1884,13 +1906,8 @@ window.deleteDeptRow=function(dept,ym,id){
   const key='deptCustomRows_'+ym+'_'+dept;
   const rows=ST.get(key,[]).filter(function(r){return r.id!==id;});
   ST.set(key,rows);
-  // DEPT_DOC (별도 부서보고DB)에 저장 - expenseBook 영향 없음
-  if(window._fbSaveConfig) window._fbSaveConfig(key,rows);
-  const stKey='deptSavedAt_'+dept+'_'+ym;
-  const now=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  ST.set(stKey,now);
-  if(window._fbSaveConfig) window._fbSaveConfig(stKey,now);
   renderDeptReport();
+  saveDeptToFirebase(dept,ym); // 전체 데이터 Firebase 확정 저장
 };
 
 // ============================================================
