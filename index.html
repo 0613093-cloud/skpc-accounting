@@ -4370,8 +4370,7 @@ window.renderReceipt=function(){
   }
 
   const el=document.getElementById('receipt-content');
-  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
-    +'' // 입금전표 제목 제거 (to-be 디자인)
+  el.innerHTML='<div style="display:flex;justify-content:flex-end;align-items:flex-start;margin-bottom:8px">'
     +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">'
     +'<div class="rct-date">'+dateVal+'</div>'
     +'<table class="approv-tbl"><tr><th>부회계</th><th>회계</th><th>차장</th><th>부장</th></tr><tr><td></td><td></td><td></td><td></td></tr></table>'
