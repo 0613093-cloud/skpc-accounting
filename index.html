@@ -4512,10 +4512,10 @@ window.renderReceipt=function(){
     +'<div class="rct-date">'+dateVal+'</div>'
     +'<table class="approv-tbl"><tr><th>부회계</th><th>회계</th><th>차장</th><th>부장</th></tr><tr><td></td><td></td><td></td><td></td></tr></table>'
     +'</div></div>'
-    +'<div style="display:grid;grid-template-columns:55% 45%;gap:8px;margin-bottom:8px;align-items:stretch">'
+    +'<div style="display:grid;grid-template-columns:50% 50%;gap:6px;margin-bottom:8px;align-items:stretch">'
     +'<div style="display:flex;flex-direction:column"><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅰ. 수입내역</div>'
     +'<table class="rct-tbl" style="width:100%;table-layout:fixed;height:100%">'
-    +'<colgroup><col style="width:28px"><col style="width:78px"><col style="width:70px"><col style="width:70px"><col style="width:74px"></colgroup>'
+    +'<colgroup><col style="width:8%"><col style="width:26%"><col style="width:21%"><col style="width:21%"><col style="width:24%"></colgroup>'
     +'<thead><tr><th style="font-size:9px">구분</th><th style="font-size:9px">항목</th><th style="font-size:9px;color:#27ae60">현금입금</th><th style="font-size:9px;color:#2471a3">온라인</th><th style="font-size:9px">합계(원)</th></tr></thead>'
     +'<tbody>'+genOff.map(function(t,i){
         return '<tr>'+(i===0?'<td class="cat-cell" rowspan="'+genOff.length+'" style="font-size:9px;writing-mode:vertical-rl">일반헌금</td>':'')
@@ -4533,7 +4533,7 @@ window.renderReceipt=function(){
     +'</tfoot></table></div>'
     +'<div style="display:flex;flex-direction:column"><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅱ. 지출내역</div>'
     +'<table class="rct-tbl" style="width:100%;table-layout:fixed;height:100%">'
-    +'<colgroup><col style="width:26px"><col style="width:70px"><col style="width:66px"><col style="width:62px"><col style="width:70px"></colgroup>'
+    +'<colgroup><col style="width:8%"><col style="width:23%"><col style="width:22%"><col style="width:21%"><col style="width:26%"></colgroup>'
     +'<thead><tr><th style="font-size:9px">구분</th><th style="font-size:9px">부서</th><th style="font-size:9px;color:#2471a3">송금</th><th style="font-size:9px;color:#a04000">현금</th><th style="font-size:9px">합계(원)</th></tr></thead>'
     +'<tbody>'+genDept.map(function(d,i){
         return '<tr>'+(i===0?'<td class="cat-cell" rowspan="'+genDept.length+'" style="font-size:9px;writing-mode:vertical-rl">일반회계</td>':'')
@@ -5787,7 +5787,24 @@ window.printSection=function(areaId){
       body{font-family:'Nanum Gothic','Malgun Gothic',sans-serif;font-size:12px;padding:16px;color:#2c3e50}
       @page{margin:8mm;size:${pageOrient}}
       @media print{body{padding:0}}
-      ${isReceipt?'.rct-tbl{font-size:8.5px!important}.rct-tbl th,.rct-tbl td{padding:1.5px 3px!important}.rct-tbl td.rc-n,.rct-tbl .rc-n,.rct-tbl .amt-cell,.rct-tbl .bank-cell,.rct-tbl td.amt-cell,.rct-tbl td.bank-cell{text-align:right!important;font-family:Arial,sans-serif!important}.rct-title{font-size:18px!important}.approv-tbl th,.approv-tbl td{padding:3px 14px!important}.approv-tbl td{height:34px!important}#receipt-content{width:100%}':''}
+      ${isReceipt?`
+        /* 입금전표: A4 세로 가득 채우기 */
+        #receipt-content{width:100%}
+        .rct-tbl{font-size:10px!important;width:100%!important;table-layout:fixed!important}
+        .rct-tbl th{padding:5px 4px!important;font-size:10px!important;border:1px solid #000!important}
+        .rct-tbl td{padding:4.5px 5px!important;font-size:10px!important;border:1px solid #000!important;height:24px!important}
+        /* 숫자 칸 우측정렬 강제 */
+        .rct-tbl td.rc-n,.rct-tbl .rc-n,.rct-tbl .amt-cell,.rct-tbl .bank-cell,.rct-tbl td.amt-cell,.rct-tbl td.bank-cell{text-align:right!important;font-family:Arial,sans-serif!important}
+        /* 구분 세로글자 칸 */
+        .rct-tbl .cat-cell{font-size:9px!important;padding:2px!important}
+        .rct-title{font-size:20px!important}
+        .approv-tbl th,.approv-tbl td{padding:4px 16px!important}
+        .approv-tbl td{height:40px!important}
+        /* 표 내용 잘림 방지 */
+        .rct-tbl td,.rct-tbl th{overflow:visible!important;white-space:nowrap!important;word-break:keep-all!important}
+        /* 하단 푸터 페이지 맨 아래로 */
+        @media print{ .rct-tbl{page-break-inside:avoid} }
+      `:''}
       /* ── 출력물 통일 디자인 ── */
       /* 모든 글자 검은색, 배경음영 제거, 숫자 우측정렬, 통일 폰트 */
       *{color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
