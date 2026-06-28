@@ -571,7 +571,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 .rpt-bud{color:#64748b}
 .rpt-cu{color:#1d4ed8}
 .rpt-mo{color:#0369a1}
-.rpt-note{text-align:left;font-size:10px;color:#94a3b8;padding-left:8px}
+.rpt-note{text-align:center;font-size:10px;color:#94a3b8;padding:2px 4px;width:80px;max-width:80px}
+.rpt-note input{text-align:center!important;width:100%}
 .rpt-tbl tbody tr:hover{background:#f8faff}
 .rpt-tbl tbody tr:nth-child(even){background:#fafbff}
 .rpt-tbl tfoot tr.sum1{background:#dbeafe;font-weight:800}
@@ -1289,6 +1290,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     </select>
     <button class="btn btn-navy" onclick="renderMonthly()">🔍 조회</button>
     <button class="btn btn-outline" onclick="printSection('monthly-print-area')">🖨️ 인쇄</button>
+    <button class="btn btn-blue" onclick="printMonthlyAll()" style="font-weight:700">🖨️ 일반+특별 통합 출력</button>
   </div>
   <div id="monthly-result" class="result-section">
     <div id="monthly-print-area">
@@ -2940,6 +2942,29 @@ window.renderMonthly=function(){
   showResult('monthly-result');
 };
 
+// 일반 월간보고 + 특별헌금 전체 통합 출력
+window.printMonthlyAll=function(){
+  const selEl=document.getElementById('monthly-month');
+  if(!selEl||!selEl.value){alert('월을 선택하세요.');return;}
+  const ym=selEl.value;
+  const el=document.getElementById('monthly-content');
+  if(!el) return;
+  // 1) 일반 월간보고 렌더 → HTML 캡처
+  let generalHTML='';
+  try{ renderMonthlyGeneral(ym); generalHTML=el.innerHTML; }catch(e){console.error(e);}
+  // 2) 특별헌금 전체 렌더 → HTML 캡처
+  let specialHTML='';
+  try{ renderMonthlySpecialAll(ym); specialHTML=el.innerHTML; }catch(e){console.error(e);}
+  // 3) 두 보고서를 페이지 나눔으로 결합하여 임시 컨테이너에 표시 후 인쇄
+  const combined='<div class="print-block">'+generalHTML+'</div>'
+    +'<div style="page-break-before:always;break-before:page"></div>'
+    +'<div class="print-block">'+specialHTML+'</div>';
+  el.innerHTML=combined;
+  showResult('monthly-result');
+  setTimeout(function(){ printSection('monthly-print-area'); },200);
+};
+
+
 // ── 이월금 가져오기 ──────────────────────────────────────────
 function getCarryover(){return ST.get('carryover',{});}
 function getCarryoverForYear(yr){
@@ -3443,6 +3468,7 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px;text-shadow:0 1px 2px rgba(0,0,0,.4)">② 수 입</span>'
     +'</div>'
     +'<table class="rpt-tbl" style="border-radius:0">'
+    +'<colgroup><col><col style="width:90px"><col style="width:90px"><col style="width:80px"></colgroup>'
     +'<thead><tr>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;letter-spacing:.5px;text-shadow:0 1px 2px rgba(0,0,0,.5)">항 목</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">누계(B)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">월계(C)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.5)">비 고</th>'    +'</tr></thead>'
     +'<tbody>'
     +'<tr><td class="rpt-item">'+conf.label+'</td>'
@@ -3460,6 +3486,7 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px;text-shadow:0 1px 2px rgba(0,0,0,.4)">③ 지 출</span>'
     +'</div>'
     +'<table class="rpt-tbl" style="border-radius:0">'
+    +'<colgroup><col><col style="width:90px"><col style="width:90px"><col style="width:80px"></colgroup>'
     +'<thead><tr>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;letter-spacing:.5px;text-shadow:0 1px 2px rgba(0,0,0,.5)">항 목</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">누계(B)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">월계(C)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.5)">비 고</th>'    +'</tr></thead>'
     +'<tbody>'+expRows
     +'<tr><td class="rpt-item" style="color:#94a3b8">기타</td>'
@@ -4376,7 +4403,7 @@ window.renderReceipt=function(){
     +'<div style="display:grid;grid-template-columns:55% 45%;gap:8px;margin-bottom:8px;align-items:stretch">'
     +'<div style="display:flex;flex-direction:column"><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅰ. 수입내역</div>'
     +'<table class="rct-tbl" style="width:100%;table-layout:fixed;height:100%">'
-    +'<colgroup><col style="width:34px"><col><col style="width:64px"><col style="width:64px"><col style="width:64px"></colgroup>'
+    +'<colgroup><col style="width:28px"><col style="width:78px"><col style="width:70px"><col style="width:70px"><col style="width:74px"></colgroup>'
     +'<thead><tr><th style="font-size:9px">구분</th><th style="font-size:9px">항목</th><th style="font-size:9px;color:#27ae60">현금입금</th><th style="font-size:9px;color:#2471a3">온라인</th><th style="font-size:9px">합계(원)</th></tr></thead>'
     +'<tbody>'+genOff.map(function(t,i){
         return '<tr>'+(i===0?'<td class="cat-cell" rowspan="'+genOff.length+'" style="font-size:9px;writing-mode:vertical-rl">일반헌금</td>':'')
@@ -4394,7 +4421,7 @@ window.renderReceipt=function(){
     +'</tfoot></table></div>'
     +'<div style="display:flex;flex-direction:column"><div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅱ. 지출내역</div>'
     +'<table class="rct-tbl" style="width:100%;table-layout:fixed;height:100%">'
-    +'<colgroup><col style="width:30px"><col><col style="width:56px"><col style="width:52px"><col style="width:60px"></colgroup>'
+    +'<colgroup><col style="width:26px"><col style="width:70px"><col style="width:66px"><col style="width:62px"><col style="width:70px"></colgroup>'
     +'<thead><tr><th style="font-size:9px">구분</th><th style="font-size:9px">부서</th><th style="font-size:9px;color:#2471a3">송금</th><th style="font-size:9px;color:#a04000">현금</th><th style="font-size:9px">합계(원)</th></tr></thead>'
     +'<tbody>'+genDept.map(function(d,i){
         return '<tr>'+(i===0?'<td class="cat-cell" rowspan="'+genDept.length+'" style="font-size:9px;writing-mode:vertical-rl">일반회계</td>':'')
@@ -5649,19 +5676,26 @@ window.printSection=function(areaId){
       @page{margin:8mm;size:${pageOrient}}
       @media print{body{padding:0}}
       ${isReceipt?'.rct-tbl{font-size:9px!important}.rct-tbl th,.rct-tbl td{padding:2px 3px!important}':''}
-      h2{font-size:16px;font-weight:800;color:#1a3a6e;text-align:center;margin-bottom:4px;padding-bottom:8px;border-bottom:2px solid #1a3a6e}
-      .print-date{text-align:right;font-size:11px;color:#546e8a;margin-bottom:12px}
-      table{width:100%;border-collapse:collapse;font-size:12px}
-      th{background:#e8eff6;padding:7px 8px;text-align:left;border-bottom:2px solid #c8d8e8;font-weight:800;font-size:11px;color:#546e8a}
-      td{padding:6px 8px;border-bottom:1px solid #e8eff6;color:#2c3e50;vertical-align:middle}
-      .nc{text-align:right;font-family:'Arial','Helvetica Neue',sans-serif}
-      .badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:800}
-      .b-navy{background:#e8f0f8;color:#1a3a6e}
-      .b-blue{background:#e8f2f9;color:#1e5f8a}
-      .b-red{background:#fdf0ef;color:#c0392b}
-      .b-green{background:#eaf5ee;color:#1a7a4a}
-      .b-gray{background:#e8eff6;color:#546e8a}
-      tfoot td{background:#e8eff6;font-weight:800;font-family:'Arial','Helvetica Neue',sans-serif}
+      /* ── 출력물 통일 디자인 ── */
+      /* 모든 글자 검은색, 배경음영 제거, 숫자 우측정렬, 통일 폰트 */
+      *{color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      h2{font-size:17px;font-weight:800;color:#000!important;text-align:center;margin-bottom:4px;padding-bottom:8px;border-bottom:2px solid #000}
+      .print-date{text-align:right;font-size:11px;color:#000!important;margin-bottom:12px}
+      table{width:100%;border-collapse:collapse;font-size:12px;page-break-inside:auto}
+      tr{page-break-inside:avoid;page-break-after:auto}
+      thead{display:table-header-group}
+      th{background:transparent!important;padding:7px 8px;text-align:center;border:1px solid #000;font-weight:800;font-size:12px;color:#000!important}
+      td{padding:6px 8px;border:1px solid #999;color:#000!important;vertical-align:middle}
+      /* 숫자 칸 우측정렬 */
+      .nc,.rpt-num,td.num,.amount{text-align:right!important;font-family:'Nanum Gothic','Malgun Gothic',sans-serif}
+      /* 배지 → 배경제거, 검은 볼드 텍스트만 */
+      .badge,.b-navy,.b-blue,.b-red,.b-green,.b-gray{background:transparent!important;color:#000!important;font-weight:800;padding:0;border-radius:0}
+      tfoot td{background:transparent!important;font-weight:800;font-family:'Nanum Gothic','Malgun Gothic',sans-serif;border-top:2px solid #000}
+      /* 표 내부 모든 배경 그라디언트/색상 제거 */
+      div[style*="background"],span[style*="background"],td[style*="background"],th[style*="background"]{background:transparent!important;background-image:none!important}
+      /* 특별회계 수입/지출 헤더 div → 배경제거 검은글자 */
+      .print-block div[style*="linear-gradient"]{background:transparent!important;border-bottom:2px solid #000}
+      .print-block div[style*="linear-gradient"] *{color:#000!important}
       .tbl-wrap{overflow:visible}
       /* 입금전표 결재칸 */
       .approv-tbl{border-collapse:collapse!important}

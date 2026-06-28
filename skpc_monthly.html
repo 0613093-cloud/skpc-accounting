@@ -1268,7 +1268,11 @@ window.renderDeptReport=function(){
     // 커스텀 행 수입
     // crInc: topRows 정의 이후에 계산 (아래 // <<CRINC>> 위치에서 처리)
     let crInc=0; // placeholder - 실제 계산은 topRows 정의 후
-    const moTall=moT+crT;const cuTall=cuT+crT;
+    // 월계 = 별도DB지출(moT) + 상단행지출(topT) + 하단행지출(crT)
+    const topRowsAll=ST.get('deptTopRows_'+ym+'_'+dept,[]);
+    const topT=topRowsAll.reduce(function(s,r){return s+(parseInt(r.amount)||0);},0);
+    const topIncT=topRowsAll.reduce(function(s,r){return s+(parseInt(r.income)||0);},0);
+    const moTall=moT+crT+topT;const cuTall=cuT+crT+topT;
 
     const card=document.createElement('div');card.className='dr-card';
 
