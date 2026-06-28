@@ -1687,7 +1687,7 @@ const ST={
 // ===== DEFAULT DATA =====
 const DEF_OFF_TYPES=['십일조헌금','월정헌금','감사헌금','주일헌금','비전헌금','맥추감사헌금','헌신예배','교회학교','장학헌금','추수감사헌금','일천번제','선교헌금','부활절','성탄절','신년헌금','기타','건축헌금','전도헌금','지역봉사헌금'];
 const DEF_DEPT_TYPES=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','기타(예비비)','건축헌금','전도헌금','사회봉사'];
-const DEF_SPON_TYPES=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','꽃꽃이찬조','꽃꽂이찬조','기타찬조'];
+const DEF_SPON_TYPES=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','꽃꽂이찬조','기타찬조'];
 const DEF_WRITERS=['이광원','유치주','하태식','김종우'];
 function getWriters(){return ST.get('writers',DEF_WRITERS);}
 
@@ -1819,7 +1819,16 @@ function getTypeColorIdx(type){
 }
 
 const getDeptTypes=()=>ST.get('deptTypes',DEF_DEPT_TYPES);
-const getSponTypes=()=>ST.get('sponsorTypes',DEF_SPON_TYPES);
+const getSponTypes=function(){
+  let types=ST.get('sponsorTypes',DEF_SPON_TYPES);
+  // 꽃꽃이찬조(오타) 제거 + 중복 제거
+  const cleaned=[];
+  types.forEach(function(t){
+    if(t==='꽃꽃이찬조') return; // 오타 버전 제외
+    if(cleaned.indexOf(t)<0) cleaned.push(t);
+  });
+  return cleaned;
+};
 const getRecipients=function(){
   let r=ST.get('recipients',DEF_RECIPIENTS);
   // 딕셔너리 형태({name:acct})를 배열로 변환
@@ -2108,6 +2117,7 @@ function buildInputSheet(num){
     </div>
     <div class="flex gap8">
       <button class="btn btn-navy" onclick="addEntry(${num})">+ 행 추가</button>
+      <button class="btn btn-blue" onclick="addEntryNextWeek(${num})" title="다음 주일 날짜로 입력됩니다">+ 차주 헌금내역에 추가</button>
       <button class="btn btn-outline" onclick="clearEntryForm(${num})">초기화</button>
     </div>
   </div>
@@ -2197,6 +2207,47 @@ window.addEntry=function(num){
   renderEntryTable(num);
 };
 
+// 다음 주일(일요일) 날짜 계산
+function getNextSunday(baseDateStr){
+  var base = baseDateStr ? new Date(baseDateStr+'T00:00:00') : new Date();
+  var day = base.getDay(); // 0=일요일
+  // 다음 일요일까지 일수 (오늘이 일요일이면 +7)
+  var add = day===0 ? 7 : (7-day);
+  base.setDate(base.getDate()+add);
+  var y=base.getFullYear(), m=String(base.getMonth()+1).padStart(2,'0'), d=String(base.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+d;
+}
+
+// 차주(다음 주일) 헌금내역에 추가 - 날짜만 다음 주일로 자동 설정
+window.addEntryNextWeek=function(num){
+  const SK=`istate_${num}`;
+  let st=ST.get(SK,{entries:[],selectedType:getOffTypes()[0]});
+  st.entries=st.entries||[];
+  const nameEl=document.getElementById(`s${num}-name`);
+  const amtEl=document.getElementById(`s${num}-amount`);
+  const name=nameEl.value.trim();
+  const amount=getRaw(amtEl);
+  if(!name||!amount){alert('성도명과 금액을 입력하세요.');nameEl.focus();return;}
+  // ★ 실제 헌금일자(date)는 입력일 → 회계(입금전표/월간보고/통장잔고/누적)에 입력일로 반영
+  // ★ displayWeek(차주 일요일)는 조회 표시 전용 → '지난주 마감이후 헌금입금내역'으로 보임
+  const curDate=document.getElementById(`s${num}-date`)?.value||TODAY;
+  const nextSunday=getNextSunday(curDate);
+  const online=document.getElementById(`s${num}-online`).value;
+  const memo=document.getElementById(`s${num}-memo`).value.trim();
+  const spon=document.getElementById(`s${num}-spon`)?.value||'';
+  const type=st.selectedType||getOffTypes()[0];
+  st.entries.push({id:uid(),date:curDate,type,name,amount,online,memo,spon,sheet:num,nextWeek:true,displayWeek:nextSunday});
+  ST.set(SK,st);
+  nameEl.value='';amtEl.value='';delete amtEl.dataset.raw;
+  document.getElementById(`s${num}-memo`).value='';
+  document.getElementById(`s${num}-name`).focus();
+  renderEntryTable(num);
+  // 안내
+  const msgEl=document.getElementById(`s${num}-msg`);
+  if(msgEl){ msgEl.innerHTML='<span style="color:#1e5f8a;font-size:12px">✅ 입력일('+curDate+') 헌금으로 저장 · 차주('+nextSunday+') 조회 시 표시됩니다.</span>'; setTimeout(function(){msgEl.innerHTML='';},4000); }
+};
+
+
 window.addSponFromSheet=function(num){
   const SK=`istate_${num}`;const st=ST.get(SK,{});
   const nameEl=document.getElementById(`s${num}-name`);
@@ -2246,7 +2297,7 @@ function renderEntryTable(num){
     const sponBadge=e.spon?'<span class="badge b-gold">'+e.spon+'</span>':'—';
     return `<tr id="entry-row-${num}-${e.id}">
       <td>${i+1}</td>
-      <td style="font-family:var(--fnum)">${e.date}</td>
+      <td style="font-family:var(--fnum)">${e.date}${e.nextWeek?' <span style="background:#a05a00;color:#fff;padding:1px 5px;border-radius:6px;font-size:9px;font-weight:700" title="'+(e.displayWeek||'')+' 조회 시 표시">차주표시</span>':''}</td>
       <td><select class="fsel" style="height:26px;font-size:11px;min-width:100px"
           onchange="updateEntry(${num},'${e.id}','type',this.value)">${typeOpts}</select></td>
       <td><input class="entry-edit-inp" value="${e.name}" style="min-width:70px"
@@ -2276,7 +2327,8 @@ function renderEntryTable(num){
 
 window.calcCash=function(num){
   const SK=`istate_${num}`;const st=ST.get(SK,{entries:[]});
-  const total=(st.entries||[]).reduce((s,e)=>s+e.amount,0);
+  // 현금 실물 확인은 '현금 헌금'만 매칭 (온라인입금 제외)
+  const total=(st.entries||[]).reduce((s,e)=>s+(isOnlinePayment(e)?0:e.amount),0);
   const denoms=[50000,10000,5000,1000,500,100];let cashTotal=0;
   denoms.forEach(d=>{
     const qty=parseInt(document.getElementById(`s${num}-c${d}`)?.value||0)||0;
@@ -2708,7 +2760,10 @@ window.doSponSearch=function(){
     return inRange&&typeMatch(e.type,e.memo||'');
   }).map(function(e){return Object.assign({},e,{source:'직접입력'});});
 
-  const combined=[...offeringSpons,...directSpons].sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  // 금액이 없는(0원) 찬조내역은 제외
+  const combined=[...offeringSpons,...directSpons]
+    .filter(function(e){return (e.amount||0)>0;})
+    .sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   const total=combined.reduce(function(s,e){return s+(e.amount||0);},0);
 
   const tbody=document.getElementById('spon-tbody');
@@ -2909,8 +2964,10 @@ window.addSponsor=function(){
   const dept=document.getElementById('spon-dept')?.value.trim();
   const memo=document.getElementById('spon-memo')?.value.trim();
   const date=document.getElementById('spon-date')?.value||TODAY;
+  // 비고(헌금구분자)에 찬조 유형 값을 동일하게 입력 (비어있으면 type, 있으면 사용자값 유지)
+  const finalMemo = memo || type;
   const sBook=getSponsors();
-  sBook.push({id:uid(),date,type,name,amount,dept,reason:'',memo,source:'직접입력'});
+  sBook.push({id:uid(),date,type,name,amount,dept,reason:'',memo:finalMemo,source:'직접입력'});
   setSponsors(sBook);clearSponForm();
 };
 window.clearSponForm=function(){
@@ -3468,8 +3525,8 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px;text-shadow:0 1px 2px rgba(0,0,0,.4)">② 수 입</span>'
     +'</div>'
     +'<table class="rpt-tbl" style="border-radius:0">'
-    +'<colgroup><col><col style="width:90px"><col style="width:90px"><col style="width:80px"></colgroup>'
-    +'<thead><tr>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;letter-spacing:.5px;text-shadow:0 1px 2px rgba(0,0,0,.5)">항 목</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">누계(B)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">월계(C)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.5)">비 고</th>'    +'</tr></thead>'
+    +'<colgroup><col style="width:auto"><col style="width:105px"><col style="width:105px"><col style="width:68px"></colgroup>'
+    +'<thead><tr>'    +'<th style="color:#000;font-weight:600;font-size:12px">항 목</th>'    +'<th style="color:#000;font-weight:600;font-size:12px;text-align:right">누계(B)</th>'    +'<th style="color:#000;font-weight:600;font-size:12px;text-align:right">월계(C)</th>'    +'<th style="color:#000;font-weight:600;font-size:12px;text-align:center">비 고</th>'    +'</tr></thead>'
     +'<tbody>'
     +'<tr><td class="rpt-item">'+conf.label+'</td>'
     +'<td class="rpt-num rpt-cu">'+fmtN(cuInc)+'</td>'
@@ -3486,8 +3543,8 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px;text-shadow:0 1px 2px rgba(0,0,0,.4)">③ 지 출</span>'
     +'</div>'
     +'<table class="rpt-tbl" style="border-radius:0">'
-    +'<colgroup><col><col style="width:90px"><col style="width:90px"><col style="width:80px"></colgroup>'
-    +'<thead><tr>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;letter-spacing:.5px;text-shadow:0 1px 2px rgba(0,0,0,.5)">항 목</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">누계(B)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.5)">월계(C)</th>'    +'<th style="color:#fff!important;font-weight:900;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.5)">비 고</th>'    +'</tr></thead>'
+    +'<colgroup><col style="width:auto"><col style="width:105px"><col style="width:105px"><col style="width:68px"></colgroup>'
+    +'<thead><tr>'    +'<th style="color:#000;font-weight:600;font-size:12px">항 목</th>'    +'<th style="color:#000;font-weight:600;font-size:12px;text-align:right">누계(B)</th>'    +'<th style="color:#000;font-weight:600;font-size:12px;text-align:right">월계(C)</th>'    +'<th style="color:#000;font-weight:600;font-size:12px;text-align:center">비 고</th>'    +'</tr></thead>'
     +'<tbody>'+expRows
     +'<tr><td class="rpt-item" style="color:#94a3b8">기타</td>'
     +'<td class="rpt-num">—</td><td class="rpt-num">—</td>'+memoCell('exp_etc')+'</tr>'
@@ -3892,7 +3949,8 @@ window.doQuerySearch=function(){
   const dt=document.getElementById('qry-date')?.value||TODAY;
   const type=document.getElementById('qry-type')?.value||'';
   const name=(document.getElementById('qry-name')?.value||'').trim();
-  let books=getOfferings().filter(function(e){return e.date===dt;});
+  // 당일헌금내역: 입력일이 조회일과 같고, 차주(nextWeek) 내역은 제외
+  let books=getOfferings().filter(function(e){return e.date===dt && !e.nextWeek;});
   if(type) books=books.filter(function(e){return e.type===type;});
   if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
   books=books.sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||( a.name||'').localeCompare(b.name||'');});
@@ -3911,6 +3969,29 @@ window.doQuerySearch=function(){
       +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
       +'</tr>';
   }).join('')||'<tr><td colspan="8" class="tbl-empty">해당 일자 데이터 없음</td></tr>';
+  // ── 조회일이 '차주 일요일'인 경우: 지난주 마감이후 입금내역 표시 ──
+  // displayWeek(차주 일요일)가 조회일과 같은 항목 = 지난주 입력했지만 이번 주일에 표시할 헌금
+  let nextBooks=getOfferings().filter(function(e){return e.nextWeek && e.displayWeek===dt;});
+  if(type) nextBooks=nextBooks.filter(function(e){return e.type===type;});
+  if(name) nextBooks=nextBooks.filter(function(e){return (e.name||'').includes(name);});
+  if(nextBooks.length && tbody){
+    const nextTotal=nextBooks.reduce(function(s,e){return s+(e.amount||0);},0);
+    tbody.innerHTML += '<tr><td colspan="8" style="background:#fff4e6;font-weight:800;color:#a05a00;text-align:center;padding:6px">📌 지난주 마감이후 헌금입금내역</td></tr>';
+    tbody.innerHTML += nextBooks.sort(function(a,b){return (a.type||'').localeCompare(b.type||'');}).map(function(e,i){
+      const ci=getTypeColorIdx(e.type);
+      return '<tr class="off-color-'+ci+'" style="opacity:.85">'
+        +'<td>'+(books.length+i+1)+'</td>'
+        +'<td style="font-family:var(--fnum)">'+weekOfYear(e.date)+'주차</td>'
+        +'<td style="font-family:var(--fnum)">'+fmtMD(e.date)+'('+dayKor(e.date)+')</td>'
+        +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
+        +'<td>'+(e.name||'')+'</td>'
+        +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
+        +'<td>'+(isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>':'')+'</td>'
+        +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
+        +'</tr>';
+    }).join('');
+    tbody.innerHTML += '<tr><td colspan="5" style="text-align:right;font-weight:700;color:#a05a00">마감이후 합계</td><td class="nc" style="font-weight:800;color:#a05a00">'+fmtN(nextTotal)+'</td><td colspan="2"></td></tr>';
+  }
   const sw=document.getElementById('qry-stats-wrap');
   if(sw){
     sw.innerHTML='<div class="stat navy"><div class="stat-lbl">'+dt+'</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원 ('+books.length+'건)</div></div>';
@@ -3943,7 +4024,8 @@ window.doWeeklySearch=function(){
   const type=document.getElementById('wky-type')?.value||'';
   const name=(document.getElementById('wky-name')?.value||'').trim();
   const showOnline=document.getElementById('wky-online')?.value||'all';
-  let books=getOfferings().filter(function(e){return e.date===dt;});
+  // 주보용: 입력일 조회 시 차주(nextWeek) 내역 제외
+  let books=getOfferings().filter(function(e){return e.date===dt && !e.nextWeek;});
   if(type) books=books.filter(function(e){return e.type===type;});
   if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
   if(showOnline==='online') books=books.filter(isOnlinePayment);
@@ -3964,6 +4046,25 @@ window.doWeeklySearch=function(){
       +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
       +'</tr>';
   }).join('')||'<tr><td colspan="5" class="tbl-empty">해당 일자 데이터 없음</td></tr>';
+  // ── 조회일이 '차주 일요일'인 경우: 지난주 마감이후 입금내역 ──
+  let wNextBooks=getOfferings().filter(function(e){return e.nextWeek && e.displayWeek===dt;});
+  if(type) wNextBooks=wNextBooks.filter(function(e){return e.type===type;});
+  if(name) wNextBooks=wNextBooks.filter(function(e){return (e.name||'').includes(name);});
+  if(showOnline==='online') wNextBooks=wNextBooks.filter(isOnlinePayment);
+  else if(showOnline==='cash') wNextBooks=wNextBooks.filter(function(e){return !isOnlinePayment(e);});
+  if(wNextBooks.length && tbody){
+    tbody.innerHTML += '<tr><td colspan="5" style="background:#fff4e6;font-weight:800;color:#a05a00;text-align:center;padding:6px">📌 지난주 마감이후 헌금입금내역</td></tr>';
+    tbody.innerHTML += wNextBooks.sort(function(a,b){return (a.type||'').localeCompare(b.type||'');}).map(function(e,i){
+      const ci=getTypeColorIdx(e.type);
+      return '<tr class="off-color-'+ci+'" style="opacity:.85">'
+        +'<td style="text-align:center;color:var(--g3);font-size:11px">'+(books.length+i+1)+'</td>'
+        +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
+        +'<td style="font-weight:700">'+(e.name||'')+'</td>'
+        +'<td style="text-align:center">'+(isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>':'')+'</td>'
+        +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
+        +'</tr>';
+    }).join('');
+  }
   const sw=document.getElementById('wky-stats-wrap');
   const total=books.length;
   const onlineCnt=books.filter(isOnlinePayment).length;
@@ -4309,6 +4410,17 @@ window.addSponType=function(){
   types.push(v);ST.set('sponsorTypes',types);
   if(window._fbSaveConfig)window._fbSaveConfig('sponsorTypes',types);
   inp.value='';renderSponTypeList();
+  // 헌금입력 시트 + 찬조내역 드롭다운 즉시 갱신
+  try{ if(typeof initSponsorTab==='function') initSponsorTab(); }catch(e){}
+  [1,2,3].forEach(function(n){
+    const sponSel=document.getElementById('s'+n+'-spon');
+    if(sponSel){
+      const prev=sponSel.value;
+      sponSel.innerHTML='';
+      getSponTypes().forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=t;sponSel.appendChild(o);});
+      if(prev) sponSel.value=prev;
+    }
+  });
 };
 window.removeSponType=function(i){
   const types=getSponTypes();types.splice(i,1);
@@ -5675,7 +5787,7 @@ window.printSection=function(areaId){
       body{font-family:'Nanum Gothic','Malgun Gothic',sans-serif;font-size:12px;padding:16px;color:#2c3e50}
       @page{margin:8mm;size:${pageOrient}}
       @media print{body{padding:0}}
-      ${isReceipt?'.rct-tbl{font-size:9px!important}.rct-tbl th,.rct-tbl td{padding:2px 3px!important}':''}
+      ${isReceipt?'.rct-tbl{font-size:8.5px!important}.rct-tbl th,.rct-tbl td{padding:1.5px 3px!important}.rct-tbl td.rc-n,.rct-tbl .rc-n{text-align:right!important;font-family:Arial,sans-serif!important}.rct-title{font-size:18px!important}.approv-tbl th,.approv-tbl td{padding:3px 14px!important}.approv-tbl td{height:34px!important}#receipt-content{transform:scale(0.96);transform-origin:top center}':''}
       /* ── 출력물 통일 디자인 ── */
       /* 모든 글자 검은색, 배경음영 제거, 숫자 우측정렬, 통일 폰트 */
       *{color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
