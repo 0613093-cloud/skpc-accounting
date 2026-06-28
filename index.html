@@ -340,7 +340,11 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   /* 색상 유지 */
   #monthly-print-area .rpt-num{ color:inherit!important; }
   #monthly-print-area .rpt-tbl td,
-  #monthly-print-area .rpt-tbl th{ border:1px solid #aaa!important; }
+  #monthly-print-area .rpt-tbl th{ border:1px solid #888!important; padding:7px 8px!important; height:30px!important; }
+  /* A4 가득: 표 너비 100%, 셀 높이 확보 */
+  #monthly-print-area .rpt-tbl{ width:100%!important; }
+  #monthly-print-area .rpt-tbl td{ font-size:12px!important; }
+  #monthly-print-area .rpt-tbl th{ font-size:12px!important; }
   /* 수입 섹션 - 페이지 나눔 없음 */
   #monthly-print-area .rpt-inc-section{ page-break-after:always!important; break-after:page!important; }
   /* 지출 섹션 - 별도 페이지 */
@@ -3018,19 +3022,21 @@ window.printMonthlyAll=function(){
     +'<div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">'+yr+'년 '+mo+'월 특별 회계보고</div>'
     +'<div style="font-size:11px;color:#94a3b8;margin-top:3px">서부광성교회 · Seobukwangseong Presbyterian Church</div>'
     +'</div>';
-  const specialKeys=['special_build','special_mission','special_local'];
-  const specialPages=specialKeys.map(function(key){
-    let html='';
-    try{ html=buildSpecialSection(SPECIAL_CONF[key],key,ym,1); }catch(e){console.error(e);}
-    return '<div class="rpt-wrap">'+specialTitle+html+'</div>';
-  });
+  // 특별회계 2페이지 구성: 1장=건축+전도, 2장=지역봉사
+  let buildHTML='', missionHTML='', localHTML='';
+  try{ buildHTML=buildSpecialSection(SPECIAL_CONF['special_build'],'special_build',ym,1); }catch(e){console.error(e);}
+  try{ missionHTML=buildSpecialSection(SPECIAL_CONF['special_mission'],'special_mission',ym,2); }catch(e){console.error(e);}
+  try{ localHTML=buildSpecialSection(SPECIAL_CONF['special_local'],'special_local',ym,1); }catch(e){console.error(e);}
+  // 특별 1장: 건축 + 전도
+  const specialPage1='<div class="rpt-wrap">'+specialTitle+buildHTML+missionHTML+'</div>';
+  // 특별 2장: 지역봉사
+  const specialPage2='<div class="rpt-wrap">'+specialTitle+localHTML+'</div>';
 
-  // 3) 4장 결합 (각 페이지 사이 page-break)
+  // 3) 결합: 일반(2장) + 특별(2장)
   const pageBreak='<div style="page-break-before:always;break-before:page"></div>';
-  let combined='<div class="print-block">'+generalHTML+'</div>';
-  specialPages.forEach(function(p){
-    combined += pageBreak + '<div class="print-block">'+p+'</div>';
-  });
+  let combined='<div class="print-block">'+generalHTML+'</div>'
+    +pageBreak+'<div class="print-block">'+specialPage1+'</div>'
+    +pageBreak+'<div class="print-block">'+specialPage2+'</div>';
 
   el.innerHTML=combined;
   showResult('monthly-result');
