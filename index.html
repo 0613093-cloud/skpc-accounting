@@ -3000,23 +3000,38 @@ window.renderMonthly=function(){
   showResult('monthly-result');
 };
 
-// 일반 월간보고 + 특별헌금 전체 통합 출력
+// 일반 월간보고 + 특별헌금(건축/전도/지역봉사) 통합 출력 — 각 1장씩 총 4장
 window.printMonthlyAll=function(){
   const selEl=document.getElementById('monthly-month');
   if(!selEl||!selEl.value){alert('월을 선택하세요.');return;}
   const ym=selEl.value;
+  const [yr,mo]=ym.split('-').map(Number);
   const el=document.getElementById('monthly-content');
   if(!el) return;
-  // 1) 일반 월간보고 렌더 → HTML 캡처
+
+  // 1) 일반 월간보고 (1장)
   let generalHTML='';
   try{ renderMonthlyGeneral(ym); generalHTML=el.innerHTML; }catch(e){console.error(e);}
-  // 2) 특별헌금 전체 렌더 → HTML 캡처
-  let specialHTML='';
-  try{ renderMonthlySpecialAll(ym); specialHTML=el.innerHTML; }catch(e){console.error(e);}
-  // 3) 두 보고서를 페이지 나눔으로 결합하여 임시 컨테이너에 표시 후 인쇄
-  const combined='<div class="print-block">'+generalHTML+'</div>'
-    +'<div style="page-break-before:always;break-before:page"></div>'
-    +'<div class="print-block">'+specialHTML+'</div>';
+
+  // 2) 특별회계 3계정 각각 1장씩 (건축/전도/지역봉사)
+  const specialTitle='<div style="text-align:center;margin-bottom:16px">'
+    +'<div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">'+yr+'년 '+mo+'월 특별 회계보고</div>'
+    +'<div style="font-size:11px;color:#94a3b8;margin-top:3px">서부광성교회 · Seobukwangseong Presbyterian Church</div>'
+    +'</div>';
+  const specialKeys=['special_build','special_mission','special_local'];
+  const specialPages=specialKeys.map(function(key){
+    let html='';
+    try{ html=buildSpecialSection(SPECIAL_CONF[key],key,ym,1); }catch(e){console.error(e);}
+    return '<div class="rpt-wrap">'+specialTitle+html+'</div>';
+  });
+
+  // 3) 4장 결합 (각 페이지 사이 page-break)
+  const pageBreak='<div style="page-break-before:always;break-before:page"></div>';
+  let combined='<div class="print-block">'+generalHTML+'</div>';
+  specialPages.forEach(function(p){
+    combined += pageBreak + '<div class="print-block">'+p+'</div>';
+  });
+
   el.innerHTML=combined;
   showResult('monthly-result');
   setTimeout(function(){ printSection('monthly-print-area'); },200);
@@ -5807,6 +5822,8 @@ window.printSection=function(areaId){
         @media print{ .rct-tbl{page-break-inside:avoid} }
       `:''}
       /* ── 출력물 통일 디자인 ── */
+      /* 통합출력: 각 print-block을 독립 페이지 단위로 */
+      .print-block{break-inside:auto}
       /* 모든 글자 검은색, 배경음영 제거, 숫자 우측정렬, 통일 폰트 */
       *{color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       h2{font-size:17px;font-weight:800;color:#000!important;text-align:center;margin-bottom:4px;padding-bottom:8px;border-bottom:2px solid #000}
