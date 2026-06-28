@@ -2751,14 +2751,15 @@ window.doSponSearch=function(){
   }).map(function(e){
     const memo=String(e.memo||'');
     const entryType=e.spon||getSponTypes().find(function(t){return memo.includes(t);})||e.type;
-    return {id:e.id,date:e.date,type:entryType,name:e.name||'',amount:e.amount||0,memo:e.memo||'',source:'헌금정리'};
+    // 비고(헌금구분자): memo가 있으면 사용, 없으면 찬조유형(entryType) 표시
+    return {id:e.id,date:e.date,type:entryType,name:e.name||'',amount:e.amount||0,memo:(e.memo&&e.memo.trim())?e.memo:entryType,source:'헌금정리'};
   });
 
   // 직접입력 DB
   const directSpons=getSponsors().filter(function(e){
     const inRange=(!fromDate||e.date>=fromDate)&&(!toDate||e.date<=toDate);
     return inRange&&typeMatch(e.type,e.memo||'');
-  }).map(function(e){return Object.assign({},e,{source:'직접입력'});});
+  }).map(function(e){return Object.assign({},e,{memo:(e.memo&&e.memo.trim())?e.memo:e.type,source:'직접입력'});});
 
   // 금액이 없는(0원) 찬조내역은 제외
   const combined=[...offeringSpons,...directSpons]
@@ -4402,7 +4403,7 @@ window.removeRecipient=function(i){
   renderAccountList();
 };
 window.addSponType=function(){
-  const inp=document.getElementById('new-spon');
+  const inp=document.getElementById('new-spon-type');
   const v=(inp?.value||'').trim();
   if(!v){alert('찬조유형을 입력하세요');return;}
   const types=getSponTypes();
