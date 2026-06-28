@@ -644,7 +644,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       if(snap.exists()) {
         const data = snap.data();
         ['offeringTypes','deptTypes','sponsorTypes','recipients',
-         'annualBudget','bankActual','deptOfficers'].forEach(k => {
+         'annualBudget','bankActual','deptOfficers','carryover','writers'].forEach(k => {
           if(data[k] !== undefined) {
             try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
           }
@@ -713,7 +713,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       if(!snap.exists()) return;
       const data = snap.data();
       ['offeringTypes','deptTypes','sponsorTypes','recipients',
-       'annualBudget','bankActual','deptOfficers'].forEach(k => {
+       'annualBudget','bankActual','deptOfficers','carryover','writers'].forEach(k => {
         if(data[k] !== undefined) {
           try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
         }
@@ -861,9 +861,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   <div class="nav-items-row" id="navItemsRow">
     <!-- 주간업무 -->
     <div class="nav-group-label" data-group="weekly">주간</div>
-    <div class="nav-item nav-input-tab" id="nav-input-1" onclick="selectInputSheet(1)">📋 입력 1</div>
-    <div class="nav-item nav-input-tab" id="nav-input-2" onclick="selectInputSheet(2)">📋 입력 2</div>
-    <div class="nav-item nav-input-tab" id="nav-input-3" onclick="selectInputSheet(3)">📋 입력 3</div>
+    <div class="nav-item nav-input-tab" id="nav-input-1" onclick="selectInputSheet(1)">📋 헌금입력</div>
     <div class="nav-item" data-tab="receipt">🗒️ 입금전표</div>
     <div class="nav-item" data-tab="query">당일헌금내역</div>
     <div class="nav-item" data-tab="weekly">주보용 헌금내역</div>
@@ -1674,7 +1672,7 @@ const ST={
   set(k,v){
     try{localStorage.setItem(k,JSON.stringify(v));}catch{}
     // Firebase 동기화 (설정값만)
-    const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers'];
+    const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers','carryover','writers'];
     if(configKeys.includes(k) && window._fbSaveConfig){
       window._fbSaveConfig(k,v);
     }
@@ -4933,6 +4931,10 @@ window.renderDeptReport=function(){
         yearExp+=parseInt(r.amount)||0;
       });
     }
+    // skpc_monthly.html에서 수정한 연누계 오버라이드(deptYearView_) 반영 → 두 페이지 일치
+    const _yearView=ST.get('deptYearView_'+ym+'_'+dept,{});
+    if(_yearView.inc!==undefined) yearInc=parseInt(_yearView.inc)||0;
+    if(_yearView.exp!==undefined) yearExp=parseInt(_yearView.exp)||0;
     const yearBal=yearInc-yearExp;
     const yearrow=document.createElement('div');
     yearrow.style.cssText='display:grid;grid-template-columns:110px 1fr 100px 100px 110px 100px;padding:9px 10px;background:#0f3460;font-weight:900;font-size:12px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact';
@@ -5024,7 +5026,7 @@ window.doImport=function(ev){
         window._fbSaveAll('expenseBook',exp),
         window._fbSaveAll('sponsorBook',spon)
       ]).then(()=>{
-        const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers'];
+        const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers','carryover','writers'];
         const cfg={};
         configKeys.forEach(k=>{try{cfg[k]=JSON.parse(localStorage.getItem(k));}catch{}});
         window._fbSaveConfigMulti && window._fbSaveConfigMulti(cfg);
@@ -5633,6 +5635,9 @@ window.printSection=function(areaId){
     'finsearch-content':'재정현황 검색결과'
   };
   const title = '서부광성교회 — ' + (titleMap[areaId]||'출력');
+  // 입금전표는 좌우 2단 표가 넓어 가로(landscape)로 인쇄 → 잘림 방지
+  const isReceipt = (areaId==='receipt-content');
+  const pageOrient = isReceipt ? 'A4 landscape' : 'A4 portrait';
   const printWin=window.open('','_blank','width=800,height=600');
   printWin.document.write(`\u003c!DOCTYPE html>\u003chtml>\u003chead>
     <meta charset="UTF-8">
@@ -5641,8 +5646,9 @@ window.printSection=function(areaId){
     \u003cstyle>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:'Nanum Gothic','Malgun Gothic',sans-serif;font-size:12px;padding:16px;color:#2c3e50}
-      @page{margin:10mm;size:A4 portrait}
+      @page{margin:8mm;size:${pageOrient}}
       @media print{body{padding:0}}
+      ${isReceipt?'.rct-tbl{font-size:9px!important}.rct-tbl th,.rct-tbl td{padding:2px 3px!important}':''}
       h2{font-size:16px;font-weight:800;color:#1a3a6e;text-align:center;margin-bottom:4px;padding-bottom:8px;border-bottom:2px solid #1a3a6e}
       .print-date{text-align:right;font-size:11px;color:#546e8a;margin-bottom:12px}
       table{width:100%;border-collapse:collapse;font-size:12px}

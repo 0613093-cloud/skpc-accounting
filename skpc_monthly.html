@@ -680,7 +680,7 @@ const ST={
   set(k,v){
     try{localStorage.setItem(k,JSON.stringify(v));}catch{}
     // Firebase 동기화 (설정값만)
-    const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers'];
+    const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers','carryover','writers'];
     if(configKeys.includes(k) && window._fbSaveConfig){
       window._fbSaveConfig(k,v);
     }
