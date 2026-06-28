@@ -5844,6 +5844,13 @@ window.printSection=function(areaId){
       thead{display:table-header-group}
       th{background:transparent!important;padding:7px 8px;text-align:center;border:1px solid #000;font-weight:800;font-size:12px;color:#000!important}
       td{padding:6px 8px;border:1px solid #999;color:#000!important;vertical-align:middle}
+      /* ★ 월간보고 표: A4 가득 채우기 (행 높이 키움, 항목 가로 표시) */
+      .rpt-tbl{width:100%!important;border-collapse:collapse}
+      .rpt-tbl td,.rpt-tbl th{height:36px!important;padding:9px 10px!important;font-size:13px!important;border:1px solid #888!important}
+      .rpt-tbl th{font-size:13px!important;padding:11px 10px!important}
+      .rpt-tbl td.rpt-item,.rpt-item{white-space:nowrap!important;word-break:keep-all!important;overflow:visible!important;text-align:left!important}
+      .rpt-section{margin-bottom:16px!important}
+      .rpt-section-title{font-size:15px!important;padding:10px 12px!important}
       /* 숫자 칸 우측정렬 */
       .nc,.rpt-num,td.num,.amount,.amt-cell,.bank-cell,td.amt-cell,td.bank-cell{text-align:right!important;font-family:'Nanum Gothic','Malgun Gothic',sans-serif}
       /* 배지 → 배경제거, 검은 볼드 텍스트만 */
