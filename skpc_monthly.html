@@ -226,16 +226,16 @@ table.tbl tfoot td{background:linear-gradient(180deg,#e8eff6,#dce6f0);font-weigh
   background:rgba(255,255,255,.15);color:#fff;font-family:var(--fn);font-size:11px;width:80px}
 .dr-officers input::placeholder{color:rgba(255,255,255,.6)}
 .dr-body{padding:14px}
-.dr-row{align-items:center;display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;border-bottom:1px solid var(--g5)}
+.dr-row{align-items:center;display:grid;grid-template-columns:105px minmax(140px,1.5fr) 95px 95px 105px 95px;border-bottom:1px solid var(--g5)}
 .dr-row:first-child{background:var(--g6);font-size:11px;font-weight:800;color:var(--g2)}
 .dr-row .dc{padding:6px 8px;font-size:12px;border-right:1px solid var(--g5);font-family:var(--fnum);overflow:hidden}
 .dr-row .dc:last-child{border-right:none}
 .dr-row input{border:none;padding:5px 7px;font-size:12px;background:transparent;width:100%;height:30px;font-family:var(--fn)}
 .dr-row input:focus{outline:2px solid var(--blue);border-radius:3px;z-index:1}
-.dr-foot{background:var(--blue-pale);display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;font-weight:800;color:var(--navy)}
+.dr-foot{background:var(--blue-pale);display:grid;grid-template-columns:105px minmax(140px,1.5fr) 95px 95px 105px 95px;font-weight:800;color:var(--navy)}
 .dr-foot .dc{padding:7px 8px;border-right:1px solid var(--blue-pale);font-family:var(--fnum);text-align:right;font-size:12px}
 .dr-foot .dc:first-child{text-align:center;font-family:var(--fn)}
-.dr-foot2{background:var(--navy);display:grid;grid-template-columns:130px 1fr 100px 100px 110px 110px;font-weight:800;color:#fff}
+.dr-foot2{background:var(--navy);display:grid;grid-template-columns:105px minmax(140px,1.5fr) 95px 95px 105px 95px;font-weight:800;color:#fff}
 .dr-foot2 .dc{padding:7px 8px;border-right:1px solid rgba(255,255,255,.15);font-family:var(--fnum);text-align:right;font-size:12px}
 .dr-foot2 .dc:first-child{text-align:center;font-family:var(--fn)}
 
@@ -1676,21 +1676,31 @@ window.renderDeptReport=function(){
     // Footer 연누계 (해당 연도 1월~해당월 전체)
     // 연누계 수입: 해당 연도 deptTopRows + deptCustomRows + viewData income 합산
     var yearIncTotal=0;
-    var yearExpTotal=dbCuExp; // 장부상 연누계 (expenseBook 기준)
-    // 연도 내 모든 월 viewData 수입 합산
+    // ★ 연누계 = 입력페이지(별도DB) 기준: deptExpRows_ + deptTopRows_ + deptCustomRows_ ★
+    var yearExpTotal=0;
     for(var mi=1;mi<=mo;mi++){
       const mym=yr+'-'+(mi<10?'0':'')+mi;
       const mViewKey='deptView_'+mym+'_'+dept;
       const mViewData=ST.get(mViewKey,{});
-      // DB rows income
-      const mExp=expenses.filter(function(e){return e.dept===dept&&monthOf(e.date)===mym;});
-      mExp.forEach(function(e){yearIncTotal+=parseInt((mViewData[e.id]||{}).income)||0;});
-      // topRows income
+      // 별도DB 지출행 (deptExpRows_) - 입력페이지 기준
+      const mExpRows=ST.get('deptExpRows_'+mym+'_'+dept,[]);
+      mExpRows.forEach(function(e){
+        const sv=mViewData[e.id]||{};
+        yearIncTotal+=sv.income!==undefined?(parseInt(sv.income)||0):(parseInt(e.income)||0);
+        yearExpTotal+=sv.amount!==undefined?(parseInt(sv.amount)||0):(parseInt(e.amount)||0);
+      });
+      // 상단행 (deptTopRows_)
       const mTopRows=ST.get('deptTopRows_'+mym+'_'+dept,[]);
-      mTopRows.forEach(function(r){yearIncTotal+=parseInt(r.income)||0;});
-      // customRows income
+      mTopRows.forEach(function(r){
+        yearIncTotal+=parseInt(r.income)||0;
+        yearExpTotal+=parseInt(r.amount)||0;
+      });
+      // 하단행 (deptCustomRows_)
       const mCustomRows=ST.get('deptCustomRows_'+mym+'_'+dept,[]);
-      mCustomRows.forEach(function(r){yearIncTotal+=parseInt(r.income)||0;});
+      mCustomRows.forEach(function(r){
+        yearIncTotal+=parseInt(r.income)||0;
+        yearExpTotal+=parseInt(r.amount)||0;
+      });
     }
     // 이번달 viewData 추가 (이미 위에서 포함됨)
     const yearBal=yearIncTotal-yearExpTotal;
