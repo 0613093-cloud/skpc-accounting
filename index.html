@@ -5776,7 +5776,7 @@ window.printSection=function(areaId){
   const title = '서부광성교회 — ' + (titleMap[areaId]||'출력');
   // 입금전표는 좌우 2단 표가 넓어 가로(landscape)로 인쇄 → 잘림 방지
   const isReceipt = (areaId==='receipt-content');
-  const pageOrient = isReceipt ? 'A4 landscape' : 'A4 portrait';
+  const pageOrient = 'A4 portrait'; // 입금전표 포함 모두 세로형
   const printWin=window.open('','_blank','width=800,height=600');
   printWin.document.write(`\u003c!DOCTYPE html>\u003chtml>\u003chead>
     <meta charset="UTF-8">
@@ -5787,7 +5787,7 @@ window.printSection=function(areaId){
       body{font-family:'Nanum Gothic','Malgun Gothic',sans-serif;font-size:12px;padding:16px;color:#2c3e50}
       @page{margin:8mm;size:${pageOrient}}
       @media print{body{padding:0}}
-      ${isReceipt?'.rct-tbl{font-size:8.5px!important}.rct-tbl th,.rct-tbl td{padding:1.5px 3px!important}.rct-tbl td.rc-n,.rct-tbl .rc-n{text-align:right!important;font-family:Arial,sans-serif!important}.rct-title{font-size:18px!important}.approv-tbl th,.approv-tbl td{padding:3px 14px!important}.approv-tbl td{height:34px!important}#receipt-content{transform:scale(0.96);transform-origin:top center}':''}
+      ${isReceipt?'.rct-tbl{font-size:8.5px!important}.rct-tbl th,.rct-tbl td{padding:1.5px 3px!important}.rct-tbl td.rc-n,.rct-tbl .rc-n,.rct-tbl .amt-cell,.rct-tbl .bank-cell,.rct-tbl td.amt-cell,.rct-tbl td.bank-cell{text-align:right!important;font-family:Arial,sans-serif!important}.rct-title{font-size:18px!important}.approv-tbl th,.approv-tbl td{padding:3px 14px!important}.approv-tbl td{height:34px!important}#receipt-content{width:100%}':''}
       /* ── 출력물 통일 디자인 ── */
       /* 모든 글자 검은색, 배경음영 제거, 숫자 우측정렬, 통일 폰트 */
       *{color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -5799,7 +5799,7 @@ window.printSection=function(areaId){
       th{background:transparent!important;padding:7px 8px;text-align:center;border:1px solid #000;font-weight:800;font-size:12px;color:#000!important}
       td{padding:6px 8px;border:1px solid #999;color:#000!important;vertical-align:middle}
       /* 숫자 칸 우측정렬 */
-      .nc,.rpt-num,td.num,.amount{text-align:right!important;font-family:'Nanum Gothic','Malgun Gothic',sans-serif}
+      .nc,.rpt-num,td.num,.amount,.amt-cell,.bank-cell,td.amt-cell,td.bank-cell{text-align:right!important;font-family:'Nanum Gothic','Malgun Gothic',sans-serif}
       /* 배지 → 배경제거, 검은 볼드 텍스트만 */
       .badge,.b-navy,.b-blue,.b-red,.b-green,.b-gray{background:transparent!important;color:#000!important;font-weight:800;padding:0;border-radius:0}
       tfoot td{background:transparent!important;font-weight:800;font-family:'Nanum Gothic','Malgun Gothic',sans-serif;border-top:2px solid #000}
