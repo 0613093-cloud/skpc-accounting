@@ -3279,7 +3279,7 @@ function renderMonthlyGeneral(ym){
 
   <!-- (1) 총계 -->
   <div class="rpt-section">
-    <div class="rpt-section-title">① 총 계 <span class="badge">${yr}. ${String(mo).padStart(2,'0')}</span></div>
+    <div class="rpt-section-title">① 총 계</div>
     <table class="rpt-summary-tbl" style="width:100%;border-collapse:collapse;margin:10px 0">
       <tbody>
         <tr>
@@ -3665,7 +3665,8 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'</table>'
     +'</div>'
 
-    +'</div>';
+    +'</div>'  // closes income/expense wrapper
+    +'</div>'; // closes rpt-section
   showResult('monthly-result');
 }
 
