@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>교육부찬조 부서별 배분 현황 — 서부광성교회</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fn:'Noto Sans KR','Gulim','굴림',sans-serif;
+  --fnum:Arial,'Helvetica Neue',sans-serif;
+  --navy:#1a2456; --blue:#2563eb; --red:#dc2626; --gold:#b45309;
+  --green:#16a34a;
+  --g1:#334155; --g2:#64748b; --g3:#94a3b8; --g4:#cbd5e1; --g5:#e2e8f0; --g6:#f1f5f9;
+  --r:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--fn);background:#f0f4f8;color:#1e293b;font-size:13px;line-height:1.6}
+
+/* 헤더 */
+.header{background:linear-gradient(135deg,#1a2456 0%,#2a4080 100%);color:#fff;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;font-weight:900;letter-spacing:.5px}
+.header .sub{font-size:12px;color:rgba(255,255,255,.65)}
+.header .stamp{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 16px;font-size:11px;font-weight:500}
+
+/* 컨테이너 */
+.container{max-width:960px;margin:0 auto;padding:20px 16px}
+
+/* 상태 */
+.status-bar{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:12px;color:var(--g2)}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-loading{background:#f59e0b;animation:pulse 1s infinite}
+.dot-ok{background:var(--green)}
+.dot-err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* 카드 */
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid var(--g5);margin-bottom:20px;overflow:hidden}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--g5);flex-wrap:wrap;gap:8px}
+.card-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:6px}
+.card-desc{font-size:11px;color:var(--g2);padding:10px 20px 0}
+
+/* 테이블 */
+.tbl-wrap{overflow-x:auto;padding:0 0 4px}
+table.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl thead{background:var(--g6)}
+.tbl th{padding:10px 14px;font-weight:700;color:var(--navy);border-bottom:2px solid var(--g4);white-space:nowrap}
+.tbl td{padding:9px 14px;border-bottom:1px solid var(--g5);vertical-align:middle}
+.tbl tbody tr:hover{background:#f8faff}
+.tbl tfoot{background:#f8faff}
+.tbl tfoot td{border-top:2px solid var(--navy);font-weight:700}
+.nc{text-align:right;font-family:var(--fnum)}
+
+/* 배지 */
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-navy{background:#e0e7ff;color:var(--navy)}
+.b-green{background:#dcfce7;color:var(--green)}
+.b-red{background:#fee2e2;color:var(--red)}
+.b-gold{background:#fef3c7;color:var(--gold)}
+
+/* 미지정 정보 박스 */
+.info-box{margin:12px 20px;padding:8px 14px;background:#f0f6ff;border-radius:6px;border-left:3px solid var(--blue);font-size:11px;color:var(--navy)}
+
+/* 수취자 매핑 */
+.recip-info{font-size:11px;color:var(--g2)}
+
+/* 로딩 스켈레톤 */
+.skeleton{background:linear-gradient(90deg,var(--g6) 25%,#e8edf2 50%,var(--g6) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;height:16px;margin:4px 0}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--g5)}
+
+/* 인쇄 */
+@media print{
+  body{background:#fff}
+  .header{background:#1a2456!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .no-print{display:none!important}
+  .card{box-shadow:none;border:1px solid #ccc}
+}
+
+/* 반응형 */
+@media(max-width:640px){
+  .header{padding:16px}
+  .header h1{font-size:16px}
+  .container{padding:12px 8px}
+  .card-hd{padding:10px 14px}
+  .tbl th,.tbl td{padding:7px 8px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📊 교육부찬조 부서별 배분 현황</h1>
+    <div class="sub">서부광성교회 · Seobukwangseong Presbyterian Church</div>
+  </div>
+  <div class="stamp" id="timestamp">조회 중...</div>
+</div>
+
+<div class="container">
+  <div class="status-bar">
+    <div class="status-dot dot-loading" id="status-dot"></div>
+    <span id="status-text">Firebase 연결 중...</span>
+  </div>
+
+  <!-- 부서별 배분 현황 -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">📊 부서별 배분 현황</div>
+      <button class="no-print" onclick="window.print()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--g4);background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--navy)">🖨️ 인쇄</button>
+    </div>
+    <div class="card-desc">
+      <b>지정금액</b>: 타입에 부서명 포함(예: 교육부찬조(청년부)) &nbsp;|&nbsp;
+      <b>배분금액</b>: 미지정 찬조 4등분 균등 배분 &nbsp;|&nbsp;
+      <b>찬조합계</b> = 지정 + 배분
+    </div>
+    <div class="info-box" id="undesig-info"></div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>부서</th>
+          <th class="nc">지정금액</th>
+          <th class="nc">배분금액</th>
+          <th class="nc" style="font-weight:900">찬조합계</th>
+          <th class="nc">받아간금액</th>
+          <th>상태</th>
+        </tr></thead>
+        <tbody id="dist-tbody">
+          <tr><td colspan="6"><div class="skeleton" style="width:80%"></div></td></tr>
+          <tr><td colspan="6"><div class="skeleton" style="width:60%"></div></td></tr>
+          <tr><td colspan="6"><div class="skeleton" style="width:70%"></div></td></tr>
+          <tr><td colspan="6"><div class="skeleton" style="width:50%"></div></td></tr>
+        </tbody>
+        <tfoot id="dist-foot"><tr>
+          <td>합계</td>
+          <td class="nc" id="tot-des"></td>
+          <td class="nc" id="tot-alloc"></td>
+          <td class="nc" id="tot-sum" style="font-weight:900;color:var(--blue)"></td>
+          <td class="nc" id="tot-recv"></td>
+          <td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- 입금내역 세부 -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">📋 입금내역 세부</div>
+      <div class="recip-info">수취자: 최희지·김하준→청년부 / 김미선→아동부 / 김여진→유치부 / 권순호→중고등부</div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>입금일자</th><th>소속</th><th>내용</th>
+          <th class="nc">금액(원)</th><th>요청자</th><th>송금받은자</th>
+        </tr></thead>
+        <tbody id="pay-tbody">
+          <tr><td colspan="6"><div class="skeleton" style="width:90%"></div></td></tr>
+          <tr><td colspan="6"><div class="skeleton" style="width:75%"></div></td></tr>
+          <tr><td colspan="6"><div class="skeleton" style="width:85%"></div></td></tr>
+        </tbody>
+        <tfoot><tr>
+          <td colspan="3" style="text-align:center;font-weight:700">합계</td>
+          <td class="nc" id="pay-total" style="font-weight:900;color:var(--red)"></td>
+          <td colspan="2"></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--g3)">
+    <a href="index.html" style="color:var(--blue);text-decoration:none">← 회계 시스템으로 돌아가기</a>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCkPtoF5GOq3IjJwoecpJ4e9Dyd7oZQTUU",
+  authDomain: "skpc-accounting.firebaseapp.com",
+  projectId: "skpc-accounting",
+  storageBucket: "skpc-accounting.firebasestorage.app",
+  messagingSenderId: "1035277328486",
+  appId: "1:1035277328486:web:83b462a36a480f9e4a0da7"
+};
+
+// ── 유틸 ──
+function fmtN(n){
+  if(n==null||isNaN(n)) return '—';
+  return Number(n).toLocaleString('ko-KR');
+}
+
+function setStatus(type, msg){
+  const dot=document.getElementById('status-dot');
+  const txt=document.getElementById('status-text');
+  dot.className='status-dot dot-'+type;
+  txt.textContent=msg;
+}
+
+function getEduDeptByRecip(recip){
+  const name=String(recip||'');
+  if(name.includes('최희지')||name.includes('김하준')) return '청년부';
+  if(name.includes('김미선')) return '아동부';
+  if(name.includes('김여진')) return '유치부';
+  if(name.includes('권순호')) return '중고등부';
+  return null;
+}
+
+// ── Firebase 초기화 & 데이터 로드 ──
+async function loadData(){
+  try{
+    const app=initializeApp(firebaseConfig);
+    const db=getFirestore(app);
+    setStatus('loading','데이터 로드 중...');
+
+    const [offSnap, expSnap, sponSnap]=await Promise.all([
+      getDocs(collection(db,'skpc_offerings')),
+      getDocs(collection(db,'skpc_expenses')),
+      getDocs(collection(db,'skpc_sponsors'))
+    ]);
+
+    const offerings=[];
+    offSnap.forEach(d=>{const data=d.data();data.id=d.id;offerings.push(data);});
+    const expenses=[];
+    expSnap.forEach(d=>{const data=d.data();data.id=d.id;expenses.push(data);});
+    const sponsors=[];
+    sponSnap.forEach(d=>{const data=d.data();data.id=d.id;sponsors.push(data);});
+
+    setStatus('ok','Firebase 연결 완료 · '+new Date().toLocaleString('ko-KR'));
+    document.getElementById('timestamp').textContent=new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' 기준';
+
+    render(offerings, expenses, sponsors);
+  }catch(e){
+    console.error(e);
+    setStatus('err','Firebase 연결 실패: '+e.message);
+    document.getElementById('dist-tbody').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--red);padding:20px">데이터를 불러올 수 없습니다.<br>네트워크를 확인해주세요.</td></tr>';
+  }
+}
+
+// ── 렌더링 ──
+function render(allOfferings, allExpenses, allSponsors){
+  const depts=['유치부','아동부','중고등부','청년부'];
+
+  // 교육부찬조 수집
+  const offerByType=allOfferings.filter(e=>String(e.type||'').includes('교육부찬조'));
+  const offerByMemo=allOfferings.filter(e=>!String(e.type||'').includes('교육부찬조')&&String(e.memo||'').includes('교육부찬조'));
+  const sponsorEdu=allSponsors.filter(e=>String(e.type||'').includes('교육부찬조'));
+
+  // 지정/미지정 분류
+  const designated={유치부:0,아동부:0,중고등부:0,청년부:0};
+  const undesig=[];
+
+  function classify(e, typeStr){
+    const amt=Number(e.amount||0);
+    if(!amt) return;
+    const m=typeStr.match(/교육부찬조[（(]([^）)]+)[）)]/);
+    if(m){
+      const dept=m[1].trim();
+      if(designated.hasOwnProperty(dept)) designated[dept]+=amt;
+      else undesig.push({amount:amt});
+    } else if(typeStr.includes('교육부찬조')){
+      undesig.push({amount:amt});
+    }
+  }
+
+  offerByType.forEach(e=>classify(e,String(e.type||'')));
+  offerByMemo.forEach(e=>classify(e,String(e.memo||'')));
+  sponsorEdu.forEach(e=>classify(e,String(e.type||'')));
+
+  // 미지정 → 4등분
+  const undTot=undesig.reduce((s,e)=>s+e.amount,0);
+  const shareEach=Math.floor(undTot/4);
+  const allocated={유치부:shareEach,아동부:shareEach,중고등부:shareEach,청년부:undTot-(shareEach*3)};
+
+  // 받아간 금액
+  const received={유치부:0,아동부:0,중고등부:0,청년부:0};
+  const receivedItems={유치부:[],아동부:[],중고등부:[],청년부:[]};
+  allExpenses.forEach(e=>{
+    if(e.dept&&String(e.dept).includes('교육부찬조')){
+      const dept=getEduDeptByRecip(e.recipient||e.recip||'');
+      if(dept){
+        received[dept]+=(Number(e.amount)||0);
+        receivedItems[dept].push(e);
+      }
+    }
+  });
+
+  // ── 테이블1: 부서별 배분 현황 ──
+  let totDes=0,totAlloc=0,totSum=0,totRecv=0;
+  document.getElementById('dist-tbody').innerHTML=depts.map(d=>{
+    const total=(designated[d]||0)+(allocated[d]||0);
+    const rec=received[d]||0;
+    const diff=total-rec;
+    totDes+=(designated[d]||0);
+    totAlloc+=(allocated[d]||0);
+    totSum+=total;
+    totRecv+=rec;
+    return '<tr>'
+      +'<td style="font-weight:700">'+d+'</td>'
+      +'<td class="nc">'+(designated[d]?'<strong>'+fmtN(designated[d])+'</strong>':'—')+'</td>'
+      +'<td class="nc">'+(allocated[d]?fmtN(allocated[d]):'—')+'</td>'
+      +'<td class="nc" style="font-weight:900">'+fmtN(total)+'</td>'
+      +'<td class="nc">'+fmtN(rec)+'</td>'
+      +'<td><span class="badge '+(diff===0?'b-green':diff>0?'b-navy':'b-red')+'">'
+        +(diff===0?'✅ 완료':diff>0?'잔여 '+fmtN(diff):'초과 '+fmtN(-diff))
+      +'</span></td></tr>';
+  }).join('');
+
+  document.getElementById('tot-des').textContent=fmtN(totDes)+'원';
+  document.getElementById('tot-alloc').textContent=fmtN(totAlloc)+'원';
+  document.getElementById('tot-sum').textContent=fmtN(totSum)+'원';
+  document.getElementById('tot-recv').textContent=fmtN(totRecv)+'원';
+
+  // 미지정 정보
+  document.getElementById('undesig-info').innerHTML=undTot
+    ? '미지정 합계 <strong>'+fmtN(undTot)+'원</strong> → 4등분 각 <strong>'+fmtN(shareEach)+'원</strong> (청년부 '+fmtN(undTot-(shareEach*3))+'원)'
+    : '<span style="color:#aaa">미지정 찬조 없음</span>';
+
+  // ── 테이블2: 입금내역 세부 ──
+  const rows=[];
+  depts.forEach(d=>{
+    receivedItems[d].forEach(e=>{
+      rows.push({dept:d,date:e.date||'',content:e.content||e.item||'',amount:Number(e.amount)||0,requester:e.requester||'',recipient:e.recipient||e.recip||''});
+    });
+  });
+  rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const payTotal=rows.reduce((s,r)=>s+r.amount,0);
+
+  document.getElementById('pay-tbody').innerHTML=rows.length
+    ? rows.map(r=>'<tr>'
+        +'<td style="font-family:var(--fnum)">'+r.date+'</td>'
+        +'<td><span class="badge b-navy">'+r.dept+'</span></td>'
+        +'<td>'+r.content+'</td>'
+        +'<td class="nc" style="font-weight:700;color:var(--red)">'+fmtN(r.amount)+'</td>'
+        +'<td>'+r.requester+'</td>'
+        +'<td>'+r.recipient+'</td></tr>'
+      ).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--g3)">데이터가 없습니다</td></tr>';
+
+  document.getElementById('pay-total').textContent=fmtN(payTotal)+'원';
+}
+
+// 실행
+loadData();
+</script>
+</body>
+</html>
