@@ -2095,7 +2095,7 @@ function buildInputSheet(num){
   const offTypes=getOffTypes();
 
   el.innerHTML=`
-  <div class="pg-hd"><div class="pg-title">📋 헌금내역 입력 — 시트 ${num}</div></div>
+  <div class="pg-hd"><div class="pg-title">📋 헌금내역 입력</div></div>
   <div class="card">
       <div class="card-title" style="margin-bottom:10px">기본 정보</div>
       <div class="fg"><div class="flbl">입력일자 (수정 가능)</div><input type="date" class="finp" id="s${num}-date" value="${TODAY}"></div>
@@ -3280,7 +3280,7 @@ function renderMonthlyGeneral(ym){
     <table class="rpt-summary-tbl" style="width:100%;border-collapse:collapse;margin:10px 0">
       <tbody>
         <tr>
-          <td style="width:50%;padding:0;vertical-align:top;border:none">
+          <td style="width:50%;padding:0;vertical-align:top;border:none!important">
             <table style="width:100%;border-collapse:collapse">
               <tr><td style="padding:8px 14px;background:#f8faff;border:1px solid #000;font-size:11px;font-weight:600;color:#64748b;width:110px">이 월 금</td>
                   <td style="padding:8px 14px;background:#f8faff;border:1px solid #000;font-size:14px;font-weight:800;color:#64748b;text-align:right;font-family:Arial,sans-serif">${fmtN(prevBal)}원</td></tr>
@@ -3292,8 +3292,8 @@ function renderMonthlyGeneral(ym){
                   <td style="padding:8px 14px;background:#fefce8;border:1px solid #000;font-size:14px;font-weight:800;color:#b45309;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoInc-tot2MoExp)}원</td></tr>
             </table>
           </td>
-          <td style="width:12px;border:none"></td>
-          <td style="width:50%;padding:0;vertical-align:top;border:none">
+          <td style="width:12px;border:none!important"></td>
+          <td style="width:50%;padding:0;vertical-align:top;border:none!important">
             <table style="width:100%;border-collapse:collapse">
               <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:11px;font-weight:600;color:#1d4ed8;width:110px">수입 누계</td>
                   <td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:14px;font-weight:800;color:#1d4ed8;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuInc)}원</td></tr>
