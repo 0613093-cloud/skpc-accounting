@@ -361,7 +361,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   #monthly-print-area .rpt-exp-section{ page-break-before:avoid!important; }
   /* 각 섹션 내부 줄바꿈 방지 */
   #monthly-print-area .rpt-tbl{ page-break-inside:avoid!important; break-inside:avoid!important; }
-  /* 합계행 굵게 */
+  /* 합계행 굵게, 합계행 페이지마다 반복 안 되게 */
+  #monthly-print-area tfoot{ display:table-row-group!important; }
   #monthly-print-area tfoot td{ font-weight:900!important; }
   /* 헤더 고정 */
   #monthly-print-area .rpt-hd{ text-align:center; border-bottom:2px solid #1e3a5f; margin-bottom:12px; }
@@ -5920,6 +5921,7 @@ window.printSection=function(areaId){
       table{width:100%;border-collapse:collapse;font-size:12px;page-break-inside:auto}
       tr{page-break-inside:avoid;page-break-after:auto}
       thead{display:table-header-group}
+      tfoot{display:table-row-group}
       th{background:transparent!important;padding:7px 8px;text-align:center;border:1px solid #000;font-weight:800;font-size:12px;color:#000!important}
       td{padding:6px 8px;border:1px solid #000;color:#000!important;vertical-align:middle}
       /* ★ 월간보고 표: A4 가득 채우기 (행 높이 키움, 항목 가로 표시) */
