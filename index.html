@@ -330,22 +330,25 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 
 /* ===== 월간보고 전용 인쇄 CSS ===== */
 @media print{
-  /* 월간보고 인쇄: 화면과 동일한 스타일 유지 */
+  /* 월간보고 인쇄 */
   #monthly-print-area{
     display:block!important;
     font-family:'Gulim','굴림',sans-serif;
     font-size:11px;
     color:#000;
   }
-  /* 색상 유지 */
-  #monthly-print-area .rpt-num{ color:inherit!important; }
+  /* ★ 일반회계: 모든 테이블 셀 border를 4방향 모두 검은색 강제 (인라인 컬러 border 덮어쓰기) */
+  #monthly-print-area table td,
+  #monthly-print-area table th{
+    border-top:1px solid #000!important;
+    border-right:1px solid #000!important;
+    border-bottom:1px solid #000!important;
+    border-left:1px solid #000!important;
+  }
+  /* rpt-tbl 추가 스타일 */
   #monthly-print-area .rpt-tbl td,
-  #monthly-print-area .rpt-tbl th{ border:1px solid #000!important; padding:9px 10px!important; height:36px!important; }
-  /* 총계 박스 라인도 검은색 */
-  #monthly-print-area .rpt-summary-tbl td,
-  #monthly-print-area .rpt-section table td,
-  #monthly-print-area .rpt-section table th{ border-color:#000!important; }
-  #monthly-print-area .rpt-hd{ border-bottom-color:#000!important; }
+  #monthly-print-area .rpt-tbl th{ padding:9px 10px!important; height:36px!important; }
+  #monthly-print-area .rpt-hd{ border-bottom:2px solid #000!important; }
   /* A4 가득: 표 너비 100%, 셀 높이 확보 */
   #monthly-print-area .rpt-tbl{ width:100%!important; table-layout:fixed!important; }
   #monthly-print-area .rpt-tbl td{ font-size:13px!important; }
@@ -3559,12 +3562,13 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px">② 수 입</span>'
     +'</div>'
     +'<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;table-layout:fixed">'
-    // 컬럼 비율: 항목(넓게) | 누계B(넓게) | 월계C(좁게) | 비고(넓게)
-    +'<colgroup><col style="width:30%"><col style="width:30%"><col style="width:14%"><col style="width:26%"></colgroup>'
+    // 4컬럼 균등 25%씩
+    +'<colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>'
     +'<thead><tr style="background:#dde6f2">'
     +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">항 목</th>'
     +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">누계(B)</th>'
-    +'<th style="padding:4px 6px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle;line-height:1.3">월계<br>(C)</th>'
+    // 월계(C): white-space:nowrap 으로 줄바꿈 방지
+    +'<th style="padding:7px 6px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle;white-space:nowrap">월계(C)</th>'
     +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">비 고</th>'
     +'</tr></thead>'
     +'<tbody>'
@@ -3573,17 +3577,26 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<td style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle">'+conf.label+'</td>'
     +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #b0bec5;vertical-align:middle">'+fmtN(cuInc)+'</td>'
     +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
-    +memoCell('inc_main').replace('class="rpt-note"','style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle"')
+    // 비고: 중앙정렬, overflow visible, white-space nowrap
+    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<input value="'+(memo['inc_main']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
+    +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
+    +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;inc_main&quot;,this.value)"'
+    +' onkeydown="if(event.key===&quot;Enter&quot;)this.blur()"></td>'
     +'</tr>'
     // 이자및기타 행
     +'<tr>'
     +'<td style="padding:8px 10px;height:42px;font-size:12px;color:#94a3b8;border:1px solid #b0bec5;vertical-align:middle">이자및기타</td>'
     +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
     +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
-    +memoCell('inc_etc').replace('class="rpt-note"','style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle"')
+    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<input value="'+(memo['inc_etc']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
+    +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
+    +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;inc_etc&quot;,this.value)"'
+    +' onkeydown="if(event.key===&quot;Enter&quot;)this.blur()"></td>'
     +'</tr>'
     +'</tbody>'
-    // 합계 행 (이미지: 굵은 파란 글씨, 배경 강조)
+    // 합계 행
     +'<tfoot>'
     +'<tr style="background:#dbeafe">'
     +'<td style="padding:8px 10px;height:42px;font-size:12px;font-weight:900;border:1px solid #b0bec5;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
@@ -3600,22 +3613,30 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px">③ 지 출</span>'
     +'</div>'
     +'<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;table-layout:fixed">'
-    +'<colgroup><col style="width:30%"><col style="width:30%"><col style="width:14%"><col style="width:26%"></colgroup>'
+    +'<colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>'
     +'<thead><tr style="background:#dde6f2">'
     +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">항 목</th>'
     +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">누계(B)</th>'
-    +'<th style="padding:4px 6px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle;line-height:1.3">월계<br>(C)</th>'
+    +'<th style="padding:7px 6px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle;white-space:nowrap">월계(C)</th>'
     +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">비 고</th>'
     +'</tr></thead>'
     +'<tbody>'
     +conf.expTypes.map(function(t,ti){
       const bB=cumExp.filter(function(e){return e.dept&&(e.dept===t||e.dept.trim()===t.trim());}).reduce(function(s,e){return s+Number(e.amount||0);},0);
       const bC=moExp.filter(function(e){return e.dept&&(e.dept===t||e.dept.trim()===t.trim());}).reduce(function(s,e){return s+Number(e.amount||0);},0);
+      const memoVal=(memo['exp_'+ti]||'').replace(/"/g,'&quot;');
+      const rtQ=rptType.replace(/"/g,'&quot;');
+      const ymQ=ym.replace(/"/g,'&quot;');
+      const kQ=('exp_'+ti).replace(/"/g,'&quot;');
       return '<tr>'
         +'<td style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle">'+t+'</td>'
         +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #b0bec5;vertical-align:middle">'+(bB?'<strong>'+fmtN(bB)+'</strong>':'—')+'</td>'
         +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">'+(bC?fmtN(bC):'—')+'</td>'
-        +memoCell('exp_'+ti).replace('class="rpt-note"','style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle"')
+        +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+        +'<input value="'+memoVal+'" placeholder="비고"'
+        +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
+        +' onchange="setSpecialMemo(&quot;'+rtQ+'&quot;,&quot;'+ymQ+'&quot;,&quot;'+kQ+'&quot;,this.value)"'
+        +' onkeydown="if(event.key===&quot;Enter&quot;)this.blur()"></td>'
         +'</tr>';
     }).join('')
     // 기타 행
@@ -3623,7 +3644,11 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<td style="padding:8px 10px;height:42px;font-size:12px;color:#94a3b8;border:1px solid #b0bec5;vertical-align:middle">기타</td>'
     +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
     +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
-    +memoCell('exp_etc').replace('class="rpt-note"','style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle"')
+    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<input value="'+(memo['exp_etc']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
+    +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
+    +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;exp_etc&quot;,this.value)"'
+    +' onkeydown="if(event.key===&quot;Enter&quot;)this.blur()"></td>'
     +'</tr>'
     +'</tbody>'
     // 합계 행
