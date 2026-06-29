@@ -369,6 +369,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   #monthly-print-area .rpt-wrap{ background:#fff!important; }
   /* 불필요 요소 숨김 */
   #monthly-print-area .no-print{ display:none!important; }
+  /* 특별회계 컴팩트 인쇄 */
+  #monthly-print-area .rpt-section{ margin-top:8px!important; margin-bottom:8px!important; }
 }
 
 /* ===== 부서보고서 전용 인쇄 CSS ===== */
@@ -3030,26 +3032,22 @@ window.printMonthlyAll=function(){
   let generalHTML='';
   try{ renderMonthlyGeneral(ym); generalHTML=el.innerHTML; }catch(e){console.error(e);}
 
-  // 2) 특별회계 3계정 각각 1장씩 (건축/전도/지역봉사)
+  // 2) 특별회계 3계정 연속 배치 → 2장 자동 줄바꿈
   const specialTitle='<div style="text-align:center;margin-bottom:16px">'
     +'<div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">'+yr+'년 '+mo+'월 특별 회계보고</div>'
     +'<div style="font-size:11px;color:#94a3b8;margin-top:3px">서부광성교회 · Seobukwangseong Presbyterian Church</div>'
     +'</div>';
-  // 특별회계 2페이지 구성: 1장=건축+전도, 2장=지역봉사
   let buildHTML='', missionHTML='', localHTML='';
   try{ buildHTML=buildSpecialSection(SPECIAL_CONF['special_build'],'special_build',ym,1); }catch(e){console.error(e);}
   try{ missionHTML=buildSpecialSection(SPECIAL_CONF['special_mission'],'special_mission',ym,2); }catch(e){console.error(e);}
-  try{ localHTML=buildSpecialSection(SPECIAL_CONF['special_local'],'special_local',ym,1); }catch(e){console.error(e);}
-  // 특별 1장: 건축 + 전도
-  const specialPage1='<div class="rpt-wrap">'+specialTitle+buildHTML+missionHTML+'</div>';
-  // 특별 2장: 지역봉사
-  const specialPage2='<div class="rpt-wrap">'+specialTitle+localHTML+'</div>';
+  try{ localHTML=buildSpecialSection(SPECIAL_CONF['special_local'],'special_local',ym,3); }catch(e){console.error(e);}
+  // 특별회계: 3계정 모두 연속 배치 (자동 페이지 나눔으로 2장)
+  const specialAll='<div class="rpt-wrap">'+specialTitle+buildHTML+missionHTML+localHTML+'</div>';
 
   // 3) 결합: 일반(2장) + 특별(2장)
   const pageBreak='<div style="page-break-before:always;break-before:page"></div>';
   let combined='<div class="print-block">'+generalHTML+'</div>'
-    +pageBreak+'<div class="print-block">'+specialPage1+'</div>'
-    +pageBreak+'<div class="print-block">'+specialPage2+'</div>';
+    +pageBreak+'<div class="print-block">'+specialAll+'</div>';
 
   el.innerHTML=combined;
   showResult('monthly-result');
@@ -3283,25 +3281,25 @@ function renderMonthlyGeneral(ym){
         <tr>
           <td style="width:50%;padding:0;vertical-align:top;border:none">
             <table style="width:100%;border-collapse:collapse">
-              <tr><td style="padding:8px 14px;background:#f8faff;border:1px solid #e2e8f0;font-size:11px;font-weight:600;color:#64748b;width:110px">이 월 금</td>
-                  <td style="padding:8px 14px;background:#f8faff;border:1px solid #e2e8f0;font-size:14px;font-weight:800;color:#64748b;text-align:right;font-family:Arial,sans-serif">${fmtN(prevBal)}원</td></tr>
-              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:11px;font-weight:600;color:#1d4ed8">${mo}월 수입</td>
-                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:14px;font-weight:800;color:#1d4ed8;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoInc)}원</td></tr>
-              <tr><td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:11px;font-weight:600;color:#dc2626">${mo}월 지출</td>
-                  <td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:14px;font-weight:800;color:#dc2626;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoExp)}원</td></tr>
-              <tr><td style="padding:8px 14px;background:#fefce8;border:1px solid #fde047;font-size:11px;font-weight:600;color:#b45309">${mo}월 결산</td>
-                  <td style="padding:8px 14px;background:#fefce8;border:1px solid #fde047;font-size:14px;font-weight:800;color:#b45309;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoInc-tot2MoExp)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#f8faff;border:1px solid #000;font-size:11px;font-weight:600;color:#64748b;width:110px">이 월 금</td>
+                  <td style="padding:8px 14px;background:#f8faff;border:1px solid #000;font-size:14px;font-weight:800;color:#64748b;text-align:right;font-family:Arial,sans-serif">${fmtN(prevBal)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:11px;font-weight:600;color:#1d4ed8">${mo}월 수입</td>
+                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:14px;font-weight:800;color:#1d4ed8;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoInc)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#fef2f2;border:1px solid #000;font-size:11px;font-weight:600;color:#dc2626">${mo}월 지출</td>
+                  <td style="padding:8px 14px;background:#fef2f2;border:1px solid #000;font-size:14px;font-weight:800;color:#dc2626;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoExp)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#fefce8;border:1px solid #000;font-size:11px;font-weight:600;color:#b45309">${mo}월 결산</td>
+                  <td style="padding:8px 14px;background:#fefce8;border:1px solid #000;font-size:14px;font-weight:800;color:#b45309;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2MoInc-tot2MoExp)}원</td></tr>
             </table>
           </td>
           <td style="width:12px;border:none"></td>
           <td style="width:50%;padding:0;vertical-align:top;border:none">
             <table style="width:100%;border-collapse:collapse">
-              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:11px;font-weight:600;color:#1d4ed8;width:110px">수입 누계</td>
-                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:14px;font-weight:800;color:#1d4ed8;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuInc)}원</td></tr>
-              <tr><td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:11px;font-weight:600;color:#dc2626">지출 누계</td>
-                  <td style="padding:8px 14px;background:#fef2f2;border:1px solid #fca5a5;font-size:14px;font-weight:800;color:#dc2626;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuExp)}원</td></tr>
-              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:11px;font-weight:600;color:#2563eb">잔 액</td>
-                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #93c5fd;font-size:14px;font-weight:800;color:#2563eb;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuInc-tot2CuExp)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:11px;font-weight:600;color:#1d4ed8;width:110px">수입 누계</td>
+                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:14px;font-weight:800;color:#1d4ed8;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuInc)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#fef2f2;border:1px solid #000;font-size:11px;font-weight:600;color:#dc2626">지출 누계</td>
+                  <td style="padding:8px 14px;background:#fef2f2;border:1px solid #000;font-size:14px;font-weight:800;color:#dc2626;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuExp)}원</td></tr>
+              <tr><td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:11px;font-weight:600;color:#2563eb">잔 액</td>
+                  <td style="padding:8px 14px;background:#eff6ff;border:1px solid #000;font-size:14px;font-weight:800;color:#2563eb;text-align:right;font-family:Arial,sans-serif">${fmtN(tot2CuInc-tot2CuExp)}원</td></tr>
             </table>
           </td>
         </tr>
@@ -3501,11 +3499,11 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
   }).join('');
 
   // 표 스타일 공통
-  const tdL='padding:7px 12px;font-size:12px;font-weight:600;width:120px;border:1px solid #d1d5db;';
-  const tdR='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;';
-  const tdRB='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;font-weight:800;';
+  const tdL='padding:7px 12px;font-size:12px;font-weight:600;width:120px;border:1px solid #000;';
+  const tdR='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;';
+  const tdRB='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;font-weight:800;';
 
-  return '<div class="rpt-section" style="margin-top:'+(sectionNo>1?'32px':'0')+';border:1px solid #d1d5db;border-radius:10px;overflow:hidden">'
+  return '<div class="rpt-section" style="margin-top:'+(sectionNo>1?'10px':'0')+';border:1px solid #000;border-radius:10px;overflow:hidden">'
 
     // 소타이틀 볼드
     +'<div style="background:#1e3a5f;padding:10px 16px;display:flex;align-items:center;justify-content:space-between">'
@@ -3515,7 +3513,7 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
 
     // (1) 총계 표 - 첨부 이미지 형식
     +'<div style="padding:0;background:#f8faff;border-bottom:1px solid #e2e8f0">'
-    +'<div style="background:linear-gradient(90deg,#1e3a5f,#374151);padding:8px 14px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div style="background:linear-gradient(90deg,#1e3a5f,#374151);padding:5px 12px;display:flex;align-items:center;justify-content:space-between">'
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.3px">① 총 계</span>'
     +'<span style="color:rgba(255,255,255,.6);font-size:10px">(단위:원)</span>'
     +'</div>'
@@ -3524,31 +3522,31 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<tbody>'
     // 이월금 / 전년도이월금 (입력)
     +'<tr>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:42px" title="전년도이월금 + 1월~전월 수입 - 1월~전월 지출">전월이월금</td>'
-    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f;height:42px">'+(prevBal?fmtN(prevBal):'0')+'</td>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:42px">전년도이월금</td>'
-    +'<td style="'+tdR+'font-weight:700;color:#334155;height:42px">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:28px" title="전년도이월금 + 1월~전월 수입 - 1월~전월 지출">전월이월금</td>'
+    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f;height:28px">'+(prevBal?fmtN(prevBal):'0')+'</td>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:28px">전년도이월금</td>'
+    +'<td style="'+tdR+'font-weight:700;color:#334155;height:28px">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'
     +'</tr>'
     // N월 수입 / 수입누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:42px">'+mo+'월 수 입</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8;height:42px">'+(moInc?fmtN(moInc):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:42px">수입 누계</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8;height:42px">'+fmtN(cuInc)+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:28px">'+mo+'월 수 입</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:28px">'+(moInc?fmtN(moInc):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:28px">수입 누계</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:28px">'+fmtN(cuInc)+'</td>'
     +'</tr>'
     // N월 지출 / 지출누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:42px">'+mo+'월 지 출</td>'
-    +'<td style="'+tdRB+'color:#dc2626;height:42px">'+(moExpT?fmtN(moExpT):'0')+'</td>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:42px">지출 누계</td>'
-    +'<td style="'+tdRB+'color:#dc2626;height:42px">'+fmtN(cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:28px">'+mo+'월 지 출</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:28px">'+(moExpT?fmtN(moExpT):'0')+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:28px">지출 누계</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:28px">'+fmtN(cuExpT)+'</td>'
     +'</tr>'
     // N월 결산 / 잔액
     +'<tr>'
-    +'<td style="'+tdL+'color:#92400e;background:#fffbeb;height:42px">'+mo+'월 결 산</td>'
-    +'<td style="'+tdRB+'color:#92400e;height:42px">'+(moResult?fmtN(moResult):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe;height:42px"><strong>잔 액</strong></td>'
-    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe;height:42px">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#92400e;background:#fffbeb;height:28px">'+mo+'월 결 산</td>'
+    +'<td style="'+tdRB+'color:#92400e;height:28px">'+(moResult?fmtN(moResult):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe;height:28px"><strong>잔 액</strong></td>'
+    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe;height:28px">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
     +'</tr>'
     +'</tbody></table>'
     +'</div>'
@@ -3565,20 +3563,20 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     // 4컬럼 균등 25%씩
     +'<colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>'
     +'<thead><tr style="background:#dde6f2">'
-    +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">항 목</th>'
-    +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">누계(B)</th>'
+    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">항 목</th>'
+    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">누계(B)</th>'
     // 월계(C): white-space:nowrap 으로 줄바꿈 방지
-    +'<th style="padding:7px 6px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle;white-space:nowrap">월계(C)</th>'
-    +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">비 고</th>'
+    +'<th style="padding:5px 6px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle;white-space:nowrap">월계(C)</th>'
+    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">비 고</th>'
     +'</tr></thead>'
     +'<tbody>'
     // 헌금 항목 행
     +'<tr>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle">'+conf.label+'</td>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #b0bec5;vertical-align:middle">'+fmtN(cuInc)+'</td>'
-    +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;border:1px solid #000;vertical-align:middle">'+conf.label+'</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #000;vertical-align:middle">'+fmtN(cuInc)+'</td>'
+    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
     // 비고: 중앙정렬, overflow visible, white-space nowrap
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
     +'<input value="'+(memo['inc_main']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
     +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
     +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;inc_main&quot;,this.value)"'
@@ -3586,10 +3584,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'</tr>'
     // 이자및기타 행
     +'<tr>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;color:#94a3b8;border:1px solid #b0bec5;vertical-align:middle">이자및기타</td>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
-    +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;color:#94a3b8;border:1px solid #000;vertical-align:middle">이자및기타</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
     +'<input value="'+(memo['inc_etc']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
     +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
     +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;inc_etc&quot;,this.value)"'
@@ -3599,10 +3597,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     // 합계 행
     +'<tfoot>'
     +'<tr style="background:#dbeafe">'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;font-weight:900;border:1px solid #b0bec5;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;color:#1d4ed8;border:1px solid #b0bec5;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuInc)+'</strong></td>'
-    +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #b0bec5;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
-    +'<td style="border:1px solid #b0bec5;border-top:2px solid #1e3a5f"></td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;color:#1d4ed8;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuInc)+'</strong></td>'
+    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
+    +'<td style="border:1px solid #000;border-top:2px solid #1e3a5f"></td>'
     +'</tr>'
     +'</tfoot>'
     +'</table>'
@@ -3615,10 +3613,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;table-layout:fixed">'
     +'<colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>'
     +'<thead><tr style="background:#dde6f2">'
-    +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">항 목</th>'
-    +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">누계(B)</th>'
-    +'<th style="padding:7px 6px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle;white-space:nowrap">월계(C)</th>'
-    +'<th style="padding:7px 10px;height:42px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #b0bec5;vertical-align:middle">비 고</th>'
+    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">항 목</th>'
+    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">누계(B)</th>'
+    +'<th style="padding:5px 6px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle;white-space:nowrap">월계(C)</th>'
+    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">비 고</th>'
     +'</tr></thead>'
     +'<tbody>'
     +conf.expTypes.map(function(t,ti){
@@ -3629,10 +3627,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
       const ymQ=ym.replace(/"/g,'&quot;');
       const kQ=('exp_'+ti).replace(/"/g,'&quot;');
       return '<tr>'
-        +'<td style="padding:8px 10px;height:42px;font-size:12px;border:1px solid #b0bec5;vertical-align:middle">'+t+'</td>'
-        +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #b0bec5;vertical-align:middle">'+(bB?'<strong>'+fmtN(bB)+'</strong>':'—')+'</td>'
-        +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">'+(bC?fmtN(bC):'—')+'</td>'
-        +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+        +'<td style="padding:5px 10px;height:28px;font-size:12px;border:1px solid #000;vertical-align:middle">'+t+'</td>'
+        +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #000;vertical-align:middle">'+(bB?'<strong>'+fmtN(bB)+'</strong>':'—')+'</td>'
+        +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">'+(bC?fmtN(bC):'—')+'</td>'
+        +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
         +'<input value="'+memoVal+'" placeholder="비고"'
         +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
         +' onchange="setSpecialMemo(&quot;'+rtQ+'&quot;,&quot;'+ymQ+'&quot;,&quot;'+kQ+'&quot;,this.value)"'
@@ -3641,10 +3639,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     }).join('')
     // 기타 행
     +'<tr>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;color:#94a3b8;border:1px solid #b0bec5;vertical-align:middle">기타</td>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
-    +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #b0bec5;vertical-align:middle">—</td>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:center;border:1px solid #b0bec5;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;color:#94a3b8;border:1px solid #000;vertical-align:middle">기타</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
     +'<input value="'+(memo['exp_etc']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
     +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
     +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;exp_etc&quot;,this.value)"'
@@ -3654,10 +3652,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     // 합계 행
     +'<tfoot>'
     +'<tr style="background:#fff">'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;font-weight:900;border:1px solid #b0bec5;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
-    +'<td style="padding:8px 10px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #b0bec5;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuExpT)+'</strong></td>'
-    +'<td style="padding:8px 6px;height:42px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #b0bec5;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moExpT?fmtN(moExpT):'—')+'</td>'
-    +'<td style="border:1px solid #b0bec5;border-top:2px solid #1e3a5f"></td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
+    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuExpT)+'</strong></td>'
+    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moExpT?fmtN(moExpT):'—')+'</td>'
+    +'<td style="border:1px solid #000;border-top:2px solid #1e3a5f"></td>'
     +'</tr>'
     +'</tfoot>'
     +'</table>'
@@ -3672,21 +3670,15 @@ function renderMonthlySpecialAll(ym){
   const [yr,mo]=ym.split('-').map(Number);
   const el=document.getElementById('monthly-content');
   if(!el) return;
-  // 인쇄 레이아웃: 1장=건축+전도, 2장=지역봉사
+  // 인쇄 레이아웃: 3계정 연속 배치 → 2장 자동 줄바꿈
   const entries=Object.entries(SPECIAL_CONF);
-  const page1=entries.filter(function(e){return e[0]==='special_build'||e[0]==='special_mission';});
-  const page2=entries.filter(function(e){return e[0]==='special_local';});
-  const sect1=page1.map(function(e,i){return buildSpecialSection(e[1],e[0],ym,i+1);}).join('');
-  const sect2=page2.map(function(e,i){return buildSpecialSection(e[1],e[0],ym,page1.length+i+1);}).join('');
-  const sections=sect1
-    +'<div style="page-break-before:always;break-before:page;padding-top:16px"></div>'
-    +sect2;
+  const allSections=entries.map(function(e,i){return buildSpecialSection(e[1],e[0],ym,i+1);}).join('');
   el.innerHTML='<div class="rpt-wrap">'
-    +'<div style="text-align:center;margin-bottom:20px">'
+    +'<div style="text-align:center;margin-bottom:10px">'
     +'<div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">'+yr+'년 '+mo+'월 특별 회계보고</div>'
     +'<div style="font-size:11px;color:#94a3b8;margin-top:3px">서부광성교회 · Seobukwangseong Presbyterian Church</div>'
     +'</div>'
-    +sections
+    +allSections
     +'</div>';
   showResult('monthly-result');
 }
