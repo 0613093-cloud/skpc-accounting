@@ -371,7 +371,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   /* 불필요 요소 숨김 */
   #monthly-print-area .no-print{ display:none!important; }
   /* 특별회계 컴팩트 인쇄 */
-  #monthly-print-area .rpt-section{ margin-top:8px!important; margin-bottom:8px!important; }
+  #monthly-print-area .rpt-section{ margin-top:8px!important; margin-bottom:8px!important; page-break-inside:avoid!important; break-inside:avoid!important; }
 }
 
 /* ===== 부서보고서 전용 인쇄 CSS ===== */
@@ -472,7 +472,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 }
 .nav-group-pill{
   display:flex;align-items:center;justify-content:center;
-  padding:0 20px;height:28px;
+  padding:0 20px;height:22px;
   font-size:11px;font-weight:900;letter-spacing:.6px;
   color:rgba(255,255,255,.7);
   white-space:nowrap;cursor:pointer;
@@ -2102,7 +2102,7 @@ function buildInputSheet(num){
       <div class="fg"><div class="flbl">작성자</div>
         <select class="fsel" id="s${num}-writer">${getWriters().map(w=>`<option ${w===st.writer?'selected':''}>${w}</option>`).join('')}
           </select>
-          <button type="button" class="btn btn-outline btn-sm" style="height:28px;padding:0 8px;font-size:11px;margin-left:4px"
+          <button type="button" class="btn btn-outline btn-sm" style="height:22px;padding:0 8px;font-size:11px;margin-left:4px"
             onclick="addWriterFromInput(${num})" title="작성자 추가">＋</button></div>
     </div>
   <div class="card">
@@ -3507,14 +3507,14 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
   return '<div class="rpt-section" style="margin-top:'+(sectionNo>1?'10px':'0')+';border:1px solid #000;border-radius:10px;overflow:hidden">'
 
     // 소타이틀 볼드
-    +'<div style="background:#1e3a5f;padding:10px 16px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div style="background:#1e3a5f;padding:5px 12px;display:flex;align-items:center;justify-content:space-between">'
     +'<strong style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.5px">'+conf.label+' 회계보고</strong>'
     +'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600">'+yr+'. '+String(mo).padStart(2,'0')+'</span>'
     +'</div>'
 
     // (1) 총계 표 - 첨부 이미지 형식
     +'<div style="padding:0;background:#f8faff;border-bottom:1px solid #e2e8f0">'
-    +'<div style="background:linear-gradient(90deg,#1e3a5f,#374151);padding:5px 12px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div style="background:linear-gradient(90deg,#1e3a5f,#374151);padding:3px 10px;display:flex;align-items:center;justify-content:space-between">'
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.3px">① 총 계</span>'
     +'<span style="color:rgba(255,255,255,.6);font-size:10px">(단위:원)</span>'
     +'</div>'
@@ -3523,31 +3523,31 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<tbody>'
     // 이월금 / 전년도이월금 (입력)
     +'<tr>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:28px" title="전년도이월금 + 1월~전월 수입 - 1월~전월 지출">전월이월금</td>'
-    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f;height:28px">'+(prevBal?fmtN(prevBal):'0')+'</td>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:28px">전년도이월금</td>'
-    +'<td style="'+tdR+'font-weight:700;color:#334155;height:28px">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:22px" title="전년도이월금 + 1월~전월 수입 - 1월~전월 지출">전월이월금</td>'
+    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f;height:22px">'+(prevBal?fmtN(prevBal):'0')+'</td>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:22px">전년도이월금</td>'
+    +'<td style="'+tdR+'font-weight:700;color:#334155;height:22px">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'
     +'</tr>'
     // N월 수입 / 수입누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:28px">'+mo+'월 수 입</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8;height:28px">'+(moInc?fmtN(moInc):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:28px">수입 누계</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8;height:28px">'+fmtN(cuInc)+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:22px">'+mo+'월 수 입</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:22px">'+(moInc?fmtN(moInc):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:22px">수입 누계</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:22px">'+fmtN(cuInc)+'</td>'
     +'</tr>'
     // N월 지출 / 지출누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:28px">'+mo+'월 지 출</td>'
-    +'<td style="'+tdRB+'color:#dc2626;height:28px">'+(moExpT?fmtN(moExpT):'0')+'</td>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:28px">지출 누계</td>'
-    +'<td style="'+tdRB+'color:#dc2626;height:28px">'+fmtN(cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:22px">'+mo+'월 지 출</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:22px">'+(moExpT?fmtN(moExpT):'0')+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:22px">지출 누계</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:22px">'+fmtN(cuExpT)+'</td>'
     +'</tr>'
     // N월 결산 / 잔액
     +'<tr>'
-    +'<td style="'+tdL+'color:#92400e;background:#fffbeb;height:28px">'+mo+'월 결 산</td>'
-    +'<td style="'+tdRB+'color:#92400e;height:28px">'+(moResult?fmtN(moResult):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe;height:28px"><strong>잔 액</strong></td>'
-    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe;height:28px">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#92400e;background:#fffbeb;height:22px">'+mo+'월 결 산</td>'
+    +'<td style="'+tdRB+'color:#92400e;height:22px">'+(moResult?fmtN(moResult):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe;height:22px"><strong>잔 액</strong></td>'
+    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe;height:22px">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
     +'</tr>'
     +'</tbody></table>'
     +'</div>'
@@ -3557,27 +3557,27 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<div>'
 
     // ② 수입
-    +'<div style="background:#1e3a5f;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+    +'<div style="background:#1e3a5f;padding:4px 12px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px">② 수 입</span>'
     +'</div>'
     +'<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;table-layout:fixed">'
     // 4컬럼 균등 25%씩
     +'<colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>'
     +'<thead><tr style="background:#dde6f2">'
-    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">항 목</th>'
-    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">누계(B)</th>'
+    +'<th style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">항 목</th>'
+    +'<th style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">누계(B)</th>'
     // 월계(C): white-space:nowrap 으로 줄바꿈 방지
-    +'<th style="padding:5px 6px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle;white-space:nowrap">월계(C)</th>'
-    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">비 고</th>'
+    +'<th style="padding:3px 5px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle;white-space:nowrap">월계(C)</th>'
+    +'<th style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">비 고</th>'
     +'</tr></thead>'
     +'<tbody>'
     // 헌금 항목 행
     +'<tr>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;border:1px solid #000;vertical-align:middle">'+conf.label+'</td>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #000;vertical-align:middle">'+fmtN(cuInc)+'</td>'
-    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;border:1px solid #000;vertical-align:middle">'+conf.label+'</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #000;vertical-align:middle">'+fmtN(cuInc)+'</td>'
+    +'<td style="padding:3px 5px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
     // 비고: 중앙정렬, overflow visible, white-space nowrap
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
     +'<input value="'+(memo['inc_main']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
     +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
     +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;inc_main&quot;,this.value)"'
@@ -3585,10 +3585,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'</tr>'
     // 이자및기타 행
     +'<tr>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;color:#94a3b8;border:1px solid #000;vertical-align:middle">이자및기타</td>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
-    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;color:#94a3b8;border:1px solid #000;vertical-align:middle">이자및기타</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:3px 5px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
     +'<input value="'+(memo['inc_etc']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
     +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
     +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;inc_etc&quot;,this.value)"'
@@ -3598,26 +3598,26 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     // 합계 행
     +'<tfoot>'
     +'<tr style="background:#dbeafe">'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;color:#1d4ed8;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuInc)+'</strong></td>'
-    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;color:#1d4ed8;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuInc)+'</strong></td>'
+    +'<td style="padding:3px 5px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moInc?fmtN(moInc):'—')+'</td>'
     +'<td style="border:1px solid #000;border-top:2px solid #1e3a5f"></td>'
     +'</tr>'
     +'</tfoot>'
     +'</table>'
 
     // ③ 지출
-    +'<div style="margin-top:6px">'
-    +'<div style="background:#1e3a5f;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+    +'<div style="margin-top:2px">'
+    +'<div style="background:#1e3a5f;padding:4px 12px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
     +'<span style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.8px">③ 지 출</span>'
     +'</div>'
     +'<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;table-layout:fixed">'
     +'<colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>'
     +'<thead><tr style="background:#dde6f2">'
-    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">항 목</th>'
-    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">누계(B)</th>'
-    +'<th style="padding:5px 6px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle;white-space:nowrap">월계(C)</th>'
-    +'<th style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">비 고</th>'
+    +'<th style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">항 목</th>'
+    +'<th style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">누계(B)</th>'
+    +'<th style="padding:3px 5px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle;white-space:nowrap">월계(C)</th>'
+    +'<th style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;color:#1e3a5f;text-align:center;border:1px solid #000;vertical-align:middle">비 고</th>'
     +'</tr></thead>'
     +'<tbody>'
     +conf.expTypes.map(function(t,ti){
@@ -3628,10 +3628,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
       const ymQ=ym.replace(/"/g,'&quot;');
       const kQ=('exp_'+ti).replace(/"/g,'&quot;');
       return '<tr>'
-        +'<td style="padding:5px 10px;height:28px;font-size:12px;border:1px solid #000;vertical-align:middle">'+t+'</td>'
-        +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #000;vertical-align:middle">'+(bB?'<strong>'+fmtN(bB)+'</strong>':'—')+'</td>'
-        +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">'+(bC?fmtN(bC):'—')+'</td>'
-        +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
+        +'<td style="padding:3px 8px;height:22px;font-size:12px;border:1px solid #000;vertical-align:middle">'+t+'</td>'
+        +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:700;color:#1d4ed8;border:1px solid #000;vertical-align:middle">'+(bB?'<strong>'+fmtN(bB)+'</strong>':'—')+'</td>'
+        +'<td style="padding:3px 5px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">'+(bC?fmtN(bC):'—')+'</td>'
+        +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
         +'<input value="'+memoVal+'" placeholder="비고"'
         +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
         +' onchange="setSpecialMemo(&quot;'+rtQ+'&quot;,&quot;'+ymQ+'&quot;,&quot;'+kQ+'&quot;,this.value)"'
@@ -3640,10 +3640,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     }).join('')
     // 기타 행
     +'<tr>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;color:#94a3b8;border:1px solid #000;vertical-align:middle">기타</td>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
-    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;color:#94a3b8;border:1px solid #000;vertical-align:middle">기타</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:3px 5px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #000;vertical-align:middle">—</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:center;border:1px solid #000;vertical-align:middle;overflow:visible;white-space:nowrap">'
     +'<input value="'+(memo['exp_etc']||'').replace(/"/g,'&quot;')+'" placeholder="비고"'
     +' style="border:none;border-bottom:1px dashed #cbd5e1;background:transparent;font-size:11px;width:100%;min-width:0;font-family:var(--fn);color:#64748b;text-align:center"'
     +' onchange="setSpecialMemo(&quot;'+rptType.replace(/"/g,'&quot;')+'&quot;,&quot;'+ym.replace(/"/g,'&quot;')+'&quot;,&quot;exp_etc&quot;,this.value)"'
@@ -3653,9 +3653,9 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     // 합계 행
     +'<tfoot>'
     +'<tr style="background:#fff">'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
-    +'<td style="padding:5px 10px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuExpT)+'</strong></td>'
-    +'<td style="padding:5px 6px;height:28px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moExpT?fmtN(moExpT):'—')+'</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">합 계</td>'
+    +'<td style="padding:3px 8px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle"><strong>'+fmtN(cuExpT)+'</strong></td>'
+    +'<td style="padding:3px 5px;height:22px;font-size:12px;text-align:right;font-family:var(--fnum);font-weight:900;border:1px solid #000;border-top:2px solid #1e3a5f;vertical-align:middle">'+(moExpT?fmtN(moExpT):'—')+'</td>'
     +'<td style="border:1px solid #000;border-top:2px solid #1e3a5f"></td>'
     +'</tr>'
     +'</tfoot>'
@@ -5920,7 +5920,7 @@ window.printSection=function(areaId){
       .print-date{text-align:right;font-size:11px;color:#000!important;margin-bottom:12px}
       table{width:100%;border-collapse:collapse;font-size:12px;page-break-inside:auto}
       tr{page-break-inside:avoid;page-break-after:auto}
-      thead{display:table-header-group}
+      thead{display:table-row-group}
       tfoot{display:table-row-group}
       th{background:transparent!important;padding:7px 8px;text-align:center;border:1px solid #000;font-weight:800;font-size:12px;color:#000!important}
       td{padding:6px 8px;border:1px solid #000;color:#000!important;vertical-align:middle}
