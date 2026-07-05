@@ -3688,8 +3688,8 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     const bB=cumExp.filter(function(e){return e.dept&&e.dept.includes(t);}).reduce(function(s,e){return s+Number(e.amount||0);},0);
     const bC=moExp.filter(function(e){return e.dept&&e.dept.includes(t);}).reduce(function(s,e){return s+Number(e.amount||0);},0);
     return '<tr><td>'+t+'</td>'
-      +'<td class="rpt-ie-n">'+(bB?fmtN(bB):'—')+'</td>'
-      +'<td class="rpt-ie-n">'+(bC?fmtN(bC):'—')+'</td>'
+      +'<td class="rpt-ie-n" style="text-align:right!important">'+(bB?fmtN(bB):'—')+'</td>'
+      +'<td class="rpt-ie-n" style="text-align:right!important">'+(bC?fmtN(bC):'—')+'</td>'
       +memoCell('exp_'+ti)+'</tr>';
   }).join('');
 
@@ -3755,13 +3755,13 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<thead><tr><th>항 목</th><th>누계(B)</th><th>월계(C)</th><th>비 고</th></tr></thead>'
     +'<tbody>'
     +'<tr><td>'+conf.label+'</td>'
-    +'<td class="rpt-ie-n">'+fmtN(cuInc)+'</td>'
-    +'<td class="rpt-ie-n">'+(moInc?fmtN(moInc):'—')+'</td>'+memoCell('inc_main')+'</tr>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">'+fmtN(cuInc)+'</td>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">'+(moInc?fmtN(moInc):'—')+'</td>'+memoCell('inc_main')+'</tr>'
     +'<tr><td>이자및기타</td>'
-    +'<td class="rpt-ie-n">—</td><td class="rpt-ie-n">—</td>'+memoCell('inc_etc')+'</tr>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">—</td><td class="rpt-ie-n" style="text-align:right!important">—</td>'+memoCell('inc_etc')+'</tr>'
     +'<tr class="rpt-ie-sum"><td>합 계</td>'
-    +'<td class="rpt-ie-n">'+fmtN(cuInc)+'</td>'
-    +'<td class="rpt-ie-n">'+(moInc?fmtN(moInc):'—')+'</td><td></td></tr>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">'+fmtN(cuInc)+'</td>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">'+(moInc?fmtN(moInc):'—')+'</td><td></td></tr>'
     +'</tbody></table>'
     // ③ 지출
     +'<div class="rpt-ie-hd">③ 지 출</div>'
@@ -3770,10 +3770,10 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<thead><tr><th>항 목</th><th>누계(B)</th><th>월계(C)</th><th>비 고</th></tr></thead>'
     +'<tbody>'+expRowsIE
     +'<tr><td>기타</td>'
-    +'<td class="rpt-ie-n">—</td><td class="rpt-ie-n">—</td>'+memoCell('exp_etc')+'</tr>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">—</td><td class="rpt-ie-n" style="text-align:right!important">—</td>'+memoCell('exp_etc')+'</tr>'
     +'<tr class="rpt-ie-sum"><td>합 계</td>'
-    +'<td class="rpt-ie-n">'+fmtN(cuExpT)+'</td>'
-    +'<td class="rpt-ie-n">'+(moExpT?fmtN(moExpT):'—')+'</td><td></td></tr>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">'+fmtN(cuExpT)+'</td>'
+    +'<td class="rpt-ie-n" style="text-align:right!important">'+(moExpT?fmtN(moExpT):'—')+'</td><td></td></tr>'
     +'</tbody></table>'
     +'</div>';
   showResult('monthly-result');
