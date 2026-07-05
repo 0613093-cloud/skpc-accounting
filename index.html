@@ -734,6 +734,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 
     onSnapshot(COL_OFF, (snap) => {
       // 로컬 저장 직후 5초간은 서버 스냅샷 무시 (방금 저장한 내역 원복 방지)
+      if(window._fbSaving > 0) return; // 저장 진행 중 → 서버 스냅샷 무시
       if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 5000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
@@ -757,6 +758,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     }, (err) => console.warn('[Firebase] offerings 리스너:', err.message));
 
     onSnapshot(COL_EXP, (snap) => {
+      if(window._fbSaving > 0) return; // 저장 진행 중 → 서버 스냅샷 무시
       if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 5000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
@@ -765,6 +767,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     }, (err) => console.warn('[Firebase] expenses 리스너:', err.message));
 
     onSnapshot(COL_SPON, (snap) => {
+      if(window._fbSaving > 0) return; // 저장 진행 중 → 서버 스냅샷 무시
       if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 5000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
@@ -790,6 +793,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 
   window._fbSaveAll = async function(key, arr) {
     window._lastLocalWrite = Date.now(); // 로컬 저장 시각 기록 (onSnapshot race 방지)
+    window._fbSaving = (window._fbSaving||0) + 1; // 저장 진행 중 카운터 (onSnapshot 완전 차단)
     let colPath;
     if(key==='accountBook') {
       colPath='skpc_offerings';
@@ -804,19 +808,23 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     }
     else if(key==='expenseBook') colPath='skpc_expenses';
     else if(key==='sponsorBook') colPath='skpc_sponsors';
-    else return;
+    else { window._fbSaving--; return; }
     try {
       window._fbStatus && window._fbStatus('saving');
-      // id 없는 항목에 id 부여 (id 없으면 Firestore 저장 누락 → 데이터 유실 방지)
+      // 모든 항목에 id 보장 (id 없으면 저장 누락/이중저장 발생) - localStorage도 갱신
       let needResave=false;
       arr.forEach(item => {
         if(!item.id){ item.id = 'auto_'+Date.now()+'_'+Math.random().toString(36).slice(2,9); needResave=true; }
       });
-      // id 부여했으면 localStorage도 갱신
-      if(needResave){
-        const lsKey = (key==='accountBook')?'accountBook':(key==='expenseBook')?'expenseBook':'sponsorBook';
-        localStorage.setItem(lsKey, JSON.stringify(arr));
-      }
+      // id 중복 제거 (같은 id 여러개면 마지막 것만 유지)
+      const seen={}; const dedup=[];
+      arr.forEach(item => { seen[item.id]=item; });
+      Object.keys(seen).forEach(k => dedup.push(seen[k]));
+      if(dedup.length !== arr.length) needResave=true;
+      arr = dedup;
+      const lsKey = (key==='accountBook')?'accountBook':(key==='expenseBook')?'expenseBook':'sponsorBook';
+      if(needResave){ localStorage.setItem(lsKey, JSON.stringify(arr)); }
+      // ── 서버 전체 삭제 후 재저장 (배열이 정답) ──
       const batch = writeBatch(db);
       const snapAll = await getDocs(collection(db, colPath));
       snapAll.forEach(d => batch.delete(d.ref));
@@ -824,15 +832,19 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
         batch.set(doc(db, colPath, String(item.id)), item);
       });
       await batch.commit();
+      // 커밋 완료 후 localStorage를 서버와 동일하게 재기록 (확정)
+      localStorage.setItem(lsKey, JSON.stringify(arr));
       window._lastLocalWrite = Date.now(); // 커밋 완료 시각 재기록
       window._fbStatus && window._fbStatus('saved');
     } catch(e) {
       console.error('[FB] saveAll 실패:', e.message);
       window._fbStatus && window._fbStatus('offline');
-      // 저장 실패 시 사용자에게 알림 (원복 원인 인지)
       if(window._fbSaveErrorAlert!==false){
         setTimeout(function(){ alert('⚠️ 서버 저장에 실패했습니다.\n인터넷 연결을 확인하고 다시 저장해주세요.\n(오류: '+e.message+')'); }, 100);
       }
+    } finally {
+      // 저장 완료 후 잠시 뒤 카운터 해제 (onSnapshot 재개)
+      setTimeout(function(){ window._fbSaving = Math.max(0,(window._fbSaving||1)-1); }, 1500);
     }
   };
 
@@ -2491,7 +2503,7 @@ window.updateOffering=function(id,field,val){
   }
 };
 
-window.saveOfferingEdits=function(){
+window.saveOfferingEdits=async function(){
   if(!Object.keys(_offEditBuffer).length){alert('수정된 내역이 없습니다.');return;}
   const arr=getOfferings();
   Object.entries(_offEditBuffer).forEach(function([id,fields]){
@@ -2500,19 +2512,25 @@ window.saveOfferingEdits=function(){
     Object.entries(fields).forEach(function([f,v]){ arr[idx][f]=v; });
   });
   const cnt=Object.keys(_offEditBuffer).length;
-  // localStorage 즉시 저장 + Firebase 비동기 저장
-  setOfferings(arr);
-  window._lastLocalWrite=Date.now(); // race 방지
+  window._lastLocalWrite=Date.now();
+  // localStorage 즉시 저장
+  const normalized=arr.map(e=>Object.assign({},e,{online:_normalizeOnline(e.online)}));
+  localStorage.setItem('accountBook', JSON.stringify(normalized));
   _offEditBuffer={};
   _offEditing=false;
   const btn=document.getElementById('off-save-btn');
   const hint=document.getElementById('off-edit-hint');
   if(btn) btn.style.display='none';
   if(hint) hint.style.display='none';
-  // 즉시 화면 갱신 (localStorage 기준)
+  doOfferingSearch(); // 즉시 화면 갱신
+  // Firebase 저장 완료까지 대기 (원복 방지)
+  try{
+    if(window._fbSaveAll) await window._fbSaveAll('accountBook', normalized);
+    alert('✅ '+cnt+'건의 수정 내역이 저장되었습니다.\n(서버 저장 완료 · 다시 조회해도 유지됩니다)');
+  }catch(e){
+    alert('⚠️ 수정은 화면에 반영됐으나 서버 저장에 실패했습니다.\n인터넷 확인 후 다시 저장해주세요.');
+  }
   doOfferingSearch();
-  // 저장 완료 팝업 (Firebase 저장은 백그라운드 진행)
-  alert('✅ '+cnt+'건의 수정 내역이 저장되었습니다.\n(모든 기기에 반영되며, 다시 조회해도 유지됩니다)');
 };
 
 // 헌금정리 - 년월 선택 시 날짜(특정일) 옵션 자동 필터링
@@ -2535,9 +2553,21 @@ window.syncExpDateFilter=function(){
 };
 
 
-window.deleteOffering=function(id){
-  if(!confirm('삭제?')) return;
-  setOfferings(getOfferings().filter(e=>e.id!==id));doOfferingSearch();initOfferingTab();
+window.deleteOffering=async function(id){
+  if(!confirm('이 헌금내역을 삭제하시겠습니까?')) return;
+  window._lastLocalWrite=Date.now();
+  const newArr=getOfferings().filter(e=>e.id!==id);
+  const normalized=newArr.map(e=>Object.assign({},e,{online:_normalizeOnline(e.online)}));
+  localStorage.setItem('accountBook', JSON.stringify(normalized));
+  doOfferingSearch();
+  try{
+    if(window._fbSaveAll) await window._fbSaveAll('accountBook', normalized);
+    if(typeof dmLoadOfferings==='function') dmLoadOfferings();
+    alert('✅ 삭제되었습니다.\n(서버 저장 완료 · 다시 조회해도 유지됩니다)');
+  }catch(e){
+    alert('⚠️ 화면에는 반영됐으나 서버 저장에 실패했습니다.\n인터넷 확인 후 다시 시도해주세요.');
+  }
+  initOfferingTab();
 };
 
 function initExpenseTab(){
@@ -2702,8 +2732,19 @@ window.updateExpDept=function(id,dept){
   const idx=exps.findIndex(e=>e.id===id);
   if(idx>=0){exps[idx].dept=dept;setExpenses(exps);}
 };
-window.deleteExpense=function(id){
-  if(!confirm('삭제?')) return;setExpenses(getExpenses().filter(e=>e.id!==id));doExpenseSearch();
+window.deleteExpense=async function(id){
+  if(!confirm('이 지출내역을 삭제하시겠습니까?')) return;
+  window._lastLocalWrite=Date.now();
+  const newArr=getExpenses().filter(e=>e.id!==id);
+  localStorage.setItem('expenseBook', JSON.stringify(newArr));
+  doExpenseSearch();
+  try{
+    if(window._fbSaveAll) await window._fbSaveAll('expenseBook', newArr);
+    if(typeof dmLoadExpenses==='function') dmLoadExpenses();
+    alert('✅ 삭제되었습니다.\n(서버 저장 완료)');
+  }catch(e){
+    alert('⚠️ 화면에는 반영됐으나 서버 저장에 실패했습니다.\n인터넷 확인 후 다시 시도해주세요.');
+  }
 };
 
 // ── 찬조 구분 셀렉트 연동 ────────────────────────────────────
@@ -2801,8 +2842,7 @@ window.doSponSearch=function(){
 
   const tbody=document.getElementById('spon-tbody');
   if(tbody) tbody.innerHTML=combined.map(function(e,i){
-    const delBtn=e.source==='직접입력'
-      ?('<button class="btn btn-red btn-xs" onclick="deleteSponsor(&#39;'+String(e.id).replace(/'/g,"\\'")+'&#39;)">삭제</button>'):'—';
+    const delBtn='<button class="btn btn-red btn-xs" onclick="deleteSponsor(&#39;'+String(e.id).replace(/'/g,"\\'")+'&#39;,&#39;'+(e.source==='헌금정리'?'off':'spon')+'&#39;)">삭제</button>';
     return '<tr>'
       +'<td>'+(i+1)+'</td>'
       +'<td style="font-family:var(--fnum)">'+e.date+'</td>'
@@ -3056,9 +3096,28 @@ window.clearSponForm=function(){
   ['spon-name','spon-dept','spon-memo'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   const a=document.getElementById('spon-amount');if(a){a.value='';delete a.dataset.raw;}
 };
-window.deleteSponsor=function(id){
-  if(!confirm('이 찬조내역을 삭제하시겠습니까?')) return;
-  setSponsors(getSponsors().filter(function(e){return e.id!==id;}));
+window.deleteSponsor=async function(id,src){
+  if(src==='off'){
+    if(!confirm('이 항목은 헌금내역에 등록된 찬조입니다.\n삭제하면 헌금내역에서도 완전히 제거됩니다.\n정말 삭제하시겠습니까?')) return;
+  } else {
+    if(!confirm('이 찬조내역을 삭제하시겠습니까?')) return;
+  }
+  window._lastLocalWrite=Date.now();
+  // 헌금내역(accountBook)과 찬조내역(sponsorBook) 양쪽에서 해당 id 제거
+  const newOff=getOfferings().filter(function(e){return e.id!==id;});
+  const newSpon=getSponsors().filter(function(e){return e.id!==id;});
+  // localStorage 즉시 반영
+  localStorage.setItem('accountBook', JSON.stringify(newOff));
+  localStorage.setItem('sponsorBook', JSON.stringify(newSpon));
+  doSponSearch(); // 화면 즉시 갱신
+  // Firebase 저장 완료까지 대기 (원복 방지)
+  try{
+    if(src==='off' && window._fbSaveAll) await window._fbSaveAll('accountBook', newOff);
+    if(window._fbSaveAll) await window._fbSaveAll('sponsorBook', newSpon);
+    alert('✅ 삭제되었습니다.\n(서버 저장 완료 · 다시 조회해도 유지됩니다)');
+  }catch(e){
+    alert('⚠️ 삭제는 화면에 반영됐으나 서버 저장에 실패했습니다.\n인터넷 확인 후 다시 시도해주세요.');
+  }
   doSponSearch();
 };
 
@@ -4745,7 +4804,7 @@ window.dmLoadOfferings=function(){
   if(tbOff){ tbOff.style.display=''; tbOff.textContent='▼ 펼치기'; tbOff.style.fontWeight='700'; }
 };
 
-window.dmSaveOffering=function(id){
+window.dmSaveOffering=async function(id){
   const row=document.getElementById('dm-off-row-'+id);
   if(!row) return;
   const inputs=row.querySelectorAll('.dm-edit-inp');
@@ -4756,13 +4815,22 @@ window.dmSaveOffering=function(id){
   const idx=books.findIndex(function(e){return e.id===id;});
   if(idx<0){alert('항목을 찾을 수 없습니다');return;}
   Object.assign(books[idx],changes);
-  window._lastLocalWrite=Date.now(); // race 방지 (저장 직후 onSnapshot 원복 방지)
-  setOfferings(books); // localStorage + Firebase(accountBook) 저장 - 잘못된 인자없는 호출 제거
-  // 저장 피드백
+  window._lastLocalWrite=Date.now();
+  // localStorage 즉시 저장
+  const normalized=books.map(e=>Object.assign({},e,{online:_normalizeOnline(e.online)}));
+  localStorage.setItem('accountBook', JSON.stringify(normalized));
   const btn=row.querySelector('.btn-navy');
-  if(btn){const orig=btn.textContent;btn.textContent='✓ 저장됨';btn.style.background='#27ae60';
-    setTimeout(function(){btn.textContent=orig;btn.style.background='';},1500);}
-  alert('✅ 저장되었습니다.\n(다시 조회해도 유지됩니다)');
+  if(btn){const orig=btn.textContent;btn.textContent='저장중...';btn.style.background='#888';}
+  // Firebase 저장 완료까지 대기 (원복 방지)
+  try{
+    if(window._fbSaveAll) await window._fbSaveAll('accountBook', normalized);
+    if(btn){btn.textContent='✓ 저장됨';btn.style.background='#27ae60';
+      setTimeout(function(){btn.textContent='저장';btn.style.background='';},1500);}
+    alert('✅ 저장되었습니다.\n(서버 저장 완료 · 다시 조회해도 유지됩니다)');
+  }catch(e){
+    if(btn){btn.textContent='저장';btn.style.background='';}
+    alert('⚠️ 화면에는 반영됐으나 서버 저장에 실패했습니다.\n인터넷 확인 후 다시 저장해주세요.');
+  }
 };
 
 
@@ -4838,7 +4906,7 @@ window.dmLoadExpenses=function(){
   if(tbExp){ tbExp.style.display=''; tbExp.textContent='▼ 펼치기'; tbExp.style.fontWeight='700'; }
 };
 
-window.dmSaveExpense=function(id){
+window.dmSaveExpense=async function(id){
   const row=document.getElementById('dm-exp-row-'+id);
   if(!row) return;
   const inputs=row.querySelectorAll('.dm-edit-exp');
@@ -4849,10 +4917,19 @@ window.dmSaveExpense=function(id){
   const idx=books.findIndex(function(e){return e.id===id;});
   if(idx<0){alert('항목을 찾을 수 없습니다');return;}
   Object.assign(books[idx],changes);
-  setExpenses(books); // setExpenses 내부에서 Firebase 동기화 자동 처리
+  window._lastLocalWrite=Date.now();
+  localStorage.setItem('expenseBook', JSON.stringify(books));
   const btn=row.querySelector('.btn-navy');
-  if(btn){const orig=btn.textContent;btn.textContent='✓ 저장됨';btn.style.background='#27ae60';
-    setTimeout(function(){btn.textContent=orig;btn.style.background='';},1500);}
+  if(btn){btn.textContent='저장중...';btn.style.background='#888';}
+  try{
+    if(window._fbSaveAll) await window._fbSaveAll('expenseBook', books);
+    if(btn){btn.textContent='✓ 저장됨';btn.style.background='#27ae60';
+      setTimeout(function(){btn.textContent='저장';btn.style.background='';},1500);}
+    alert('✅ 저장되었습니다.\n(서버 저장 완료)');
+  }catch(e){
+    if(btn){btn.textContent='저장';btn.style.background='';}
+    alert('⚠️ 화면에는 반영됐으나 서버 저장에 실패했습니다.');
+  }
 };
 
 
