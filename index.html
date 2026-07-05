@@ -679,6 +679,15 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       sponSnap.forEach(d => sponsors.push(d.data()));
       localStorage.setItem('sponsorBook', JSON.stringify(sponsors));
 
+      // ── 변경분 저장을 위한 캐시 초기화 (서버 현재 상태 = 기준점) ──
+      window._fbLastSaved = window._fbLastSaved || {};
+      const _cacheOff={}; offerings.forEach(e=>{ if(e.id) _cacheOff[String(e.id)]=JSON.stringify(e); });
+      const _cacheExp={}; expenses.forEach(e=>{ if(e.id) _cacheExp[String(e.id)]=JSON.stringify(e); });
+      const _cacheSpon={}; sponsors.forEach(e=>{ if(e.id) _cacheSpon[String(e.id)]=JSON.stringify(e); });
+      window._fbLastSaved.accountBook=_cacheOff;
+      window._fbLastSaved.expenseBook=_cacheExp;
+      window._fbLastSaved.sponsorBook=_cacheSpon;
+
       console.log('[Firebase] 초기 동기화 완료 ✅');
       window._fbReady = true;
       window._fbStatus && window._fbStatus('online');
@@ -754,6 +763,9 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
         return Object.assign({}, e, {online: onlineVal});
       });
       localStorage.setItem('accountBook', JSON.stringify(normalized));
+      // 캐시 갱신 (다른 기기 변경 반영 시 다음 저장 기준점 업데이트)
+      const _c={}; normalized.forEach(e=>{ if(e.id) _c[String(e.id)]=JSON.stringify(e); });
+      if(window._fbLastSaved) window._fbLastSaved.accountBook=_c;
       window._fbLiveRefresh && window._fbLiveRefresh('accountBook');
     }, (err) => console.warn('[Firebase] offerings 리스너:', err.message));
 
@@ -763,6 +775,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       const items = [];
       snap.forEach(d => items.push(d.data()));
       localStorage.setItem('expenseBook', JSON.stringify(items));
+      { const _c={}; items.forEach(e=>{ if(e.id) _c[String(e.id)]=JSON.stringify(e); }); if(window._fbLastSaved) window._fbLastSaved.expenseBook=_c; }
       window._fbLiveRefresh && window._fbLiveRefresh('expenseBook');
     }, (err) => console.warn('[Firebase] expenses 리스너:', err.message));
 
@@ -772,6 +785,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       const items = [];
       snap.forEach(d => items.push(d.data()));
       localStorage.setItem('sponsorBook', JSON.stringify(items));
+      { const _c={}; items.forEach(e=>{ if(e.id) _c[String(e.id)]=JSON.stringify(e); }); if(window._fbLastSaved) window._fbLastSaved.sponsorBook=_c; }
       window._fbLiveRefresh && window._fbLiveRefresh('sponsorBook');
     }, (err) => console.warn('[Firebase] sponsors 리스너:', err.message));
   }
@@ -791,13 +805,15 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     } catch(e) { console.error('[FB] config multi 저장 실패:', e.message); }
   };
 
+  // 이전 저장 상태 캐시 (변경분만 저장하기 위한 비교 기준)
+  window._fbLastSaved = window._fbLastSaved || {accountBook:{}, expenseBook:{}, sponsorBook:{}};
+
   window._fbSaveAll = async function(key, arr) {
-    window._lastLocalWrite = Date.now(); // 로컬 저장 시각 기록 (onSnapshot race 방지)
-    window._fbSaving = (window._fbSaving||0) + 1; // 저장 진행 중 카운터 (onSnapshot 완전 차단)
+    window._lastLocalWrite = Date.now();
+    window._fbSaving = (window._fbSaving||0) + 1;
     let colPath;
     if(key==='accountBook') {
       colPath='skpc_offerings';
-      // Firestore 저장 전 online 필드 반드시 정규화
       arr = arr.map(e => {
         const v = e.online;
         const onV = (v===true||v==='TRUE'||v==='true'||v==='1'||
@@ -811,40 +827,66 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     else { window._fbSaving--; return; }
     try {
       window._fbStatus && window._fbStatus('saving');
-      // 모든 항목에 id 보장 (id 없으면 저장 누락/이중저장 발생) - localStorage도 갱신
+      // 모든 항목에 id 보장
       let needResave=false;
       arr.forEach(item => {
         if(!item.id){ item.id = 'auto_'+Date.now()+'_'+Math.random().toString(36).slice(2,9); needResave=true; }
       });
-      // id 중복 제거 (같은 id 여러개면 마지막 것만 유지)
-      const seen={}; const dedup=[];
-      arr.forEach(item => { seen[item.id]=item; });
-      Object.keys(seen).forEach(k => dedup.push(seen[k]));
+      // id 중복 제거
+      const seen={}; arr.forEach(item => { seen[String(item.id)]=item; });
+      const dedup=Object.keys(seen).map(k=>seen[k]);
       if(dedup.length !== arr.length) needResave=true;
       arr = dedup;
       const lsKey = (key==='accountBook')?'accountBook':(key==='expenseBook')?'expenseBook':'sponsorBook';
       if(needResave){ localStorage.setItem(lsKey, JSON.stringify(arr)); }
-      // ── 서버 전체 삭제 후 재저장 (배열이 정답) ──
-      const batch = writeBatch(db);
-      const snapAll = await getDocs(collection(db, colPath));
-      snapAll.forEach(d => batch.delete(d.ref));
+
+      // ── 변경분만 개별 저장 (전체 삭제+재저장 방식 폐기 → 빠르고 500제한 없음) ──
+      const prev = window._fbLastSaved[key] || {};   // 이전 상태 {id: JSON문자열}
+      const curr = {};                                // 현재 상태
+      arr.forEach(item => { curr[String(item.id)] = JSON.stringify(item); });
+
+      // 추가/수정: 이전과 다르거나 새로운 항목만 setDoc
+      const toWrite = [];
       arr.forEach(item => {
-        batch.set(doc(db, colPath, String(item.id)), item);
+        const idStr = String(item.id);
+        if(prev[idStr] !== curr[idStr]) toWrite.push(item);
       });
-      await batch.commit();
-      // 커밋 완료 후 localStorage를 서버와 동일하게 재기록 (확정)
+      // 삭제: 이전엔 있었으나 지금 없는 항목만 deleteDoc
+      const toDelete = [];
+      Object.keys(prev).forEach(idStr => {
+        if(!(idStr in curr)) toDelete.push(idStr);
+      });
+
+      // 500개씩 나눠서 batch 처리 (Firestore 제한 대응)
+      const ops = [];
+      toWrite.forEach(item => ops.push({type:'set', item:item}));
+      toDelete.forEach(idStr => ops.push({type:'del', id:idStr}));
+
+      for(let i=0; i<ops.length; i+=450){
+        const chunk = ops.slice(i, i+450);
+        const batch = writeBatch(db);
+        chunk.forEach(op => {
+          if(op.type==='set') batch.set(doc(db, colPath, String(op.item.id)), op.item);
+          else batch.delete(doc(db, colPath, op.id));
+        });
+        await batch.commit();
+      }
+
+      // 저장 성공 → 현재 상태를 캐시에 기록
+      window._fbLastSaved[key] = curr;
       localStorage.setItem(lsKey, JSON.stringify(arr));
-      window._lastLocalWrite = Date.now(); // 커밋 완료 시각 재기록
+      window._lastLocalWrite = Date.now();
       window._fbStatus && window._fbStatus('saved');
+      console.log('[FB] '+key+' 저장: 수정'+toWrite.length+'건, 삭제'+toDelete.length+'건');
     } catch(e) {
       console.error('[FB] saveAll 실패:', e.message);
       window._fbStatus && window._fbStatus('offline');
       if(window._fbSaveErrorAlert!==false){
         setTimeout(function(){ alert('⚠️ 서버 저장에 실패했습니다.\n인터넷 연결을 확인하고 다시 저장해주세요.\n(오류: '+e.message+')'); }, 100);
       }
+      throw e; // 호출부(await)에서 실패 인지
     } finally {
-      // 저장 완료 후 잠시 뒤 카운터 해제 (onSnapshot 재개)
-      setTimeout(function(){ window._fbSaving = Math.max(0,(window._fbSaving||1)-1); }, 1500);
+      setTimeout(function(){ window._fbSaving = Math.max(0,(window._fbSaving||1)-1); }, 800);
     }
   };
 
