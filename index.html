@@ -733,8 +733,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     });
 
     onSnapshot(COL_OFF, (snap) => {
-      // 로컬 저장 직후 3초간은 서버 스냅샷 무시 (방금 저장한 내역 원복 방지)
-      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 3000)) return;
+      // 로컬 저장 직후 5초간은 서버 스냅샷 무시 (방금 저장한 내역 원복 방지)
+      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 5000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
       items.sort((a,b) => (a.date||'').localeCompare(b.date||''));
@@ -757,7 +757,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     }, (err) => console.warn('[Firebase] offerings 리스너:', err.message));
 
     onSnapshot(COL_EXP, (snap) => {
-      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 3000)) return;
+      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 5000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
       localStorage.setItem('expenseBook', JSON.stringify(items));
@@ -765,7 +765,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     }, (err) => console.warn('[Firebase] expenses 리스너:', err.message));
 
     onSnapshot(COL_SPON, (snap) => {
-      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 3000)) return;
+      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 5000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
       localStorage.setItem('sponsorBook', JSON.stringify(items));
@@ -807,11 +807,21 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     else return;
     try {
       window._fbStatus && window._fbStatus('saving');
+      // id 없는 항목에 id 부여 (id 없으면 Firestore 저장 누락 → 데이터 유실 방지)
+      let needResave=false;
+      arr.forEach(item => {
+        if(!item.id){ item.id = 'auto_'+Date.now()+'_'+Math.random().toString(36).slice(2,9); needResave=true; }
+      });
+      // id 부여했으면 localStorage도 갱신
+      if(needResave){
+        const lsKey = (key==='accountBook')?'accountBook':(key==='expenseBook')?'expenseBook':'sponsorBook';
+        localStorage.setItem(lsKey, JSON.stringify(arr));
+      }
       const batch = writeBatch(db);
       const snapAll = await getDocs(collection(db, colPath));
       snapAll.forEach(d => batch.delete(d.ref));
       arr.forEach(item => {
-        if(item.id) batch.set(doc(db, colPath, item.id), item);
+        batch.set(doc(db, colPath, String(item.id)), item);
       });
       await batch.commit();
       window._lastLocalWrite = Date.now(); // 커밋 완료 시각 재기록
@@ -819,6 +829,10 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     } catch(e) {
       console.error('[FB] saveAll 실패:', e.message);
       window._fbStatus && window._fbStatus('offline');
+      // 저장 실패 시 사용자에게 알림 (원복 원인 인지)
+      if(window._fbSaveErrorAlert!==false){
+        setTimeout(function(){ alert('⚠️ 서버 저장에 실패했습니다.\n인터넷 연결을 확인하고 다시 저장해주세요.\n(오류: '+e.message+')'); }, 100);
+      }
     }
   };
 
@@ -2129,10 +2143,7 @@ function buildInputSheet(num){
         <input class="finp" id="s${num}-memo" placeholder="월삭, 특별 등"
           onkeydown="if(event.key==='Enter'){event.preventDefault();addEntry(${num})}"></div>
       <div class="fg"><div class="flbl">찬조 선택 (찬조 헌금일 경우)</div>
-        <div class="flex gap4">
-          <select class="fsel" id="s${num}-spon" style="flex:1"><option value="">찬조 없음</option></select>
-          <button class="btn btn-gold btn-sm" onclick="addSponFromSheet(${num})" title="찬조 DB에 추가">+찬조</button>
-        </div>
+        <select class="fsel" id="s${num}-spon" style="width:100%"><option value="">찬조 없음</option></select>
       </div>
     </div>
     <div class="flex gap8">
@@ -2276,17 +2287,8 @@ window.addEntryNextWeek=function(num){
 
 
 window.addSponFromSheet=function(num){
-  const SK=`istate_${num}`;const st=ST.get(SK,{});
-  const nameEl=document.getElementById(`s${num}-name`);
-  const amtEl=document.getElementById(`s${num}-amount`);
-  const sponType=document.getElementById(`s${num}-spon`)?.value||'';
-  if(!sponType){alert('찬조 유형을 선택하세요.');return;}
-  const name=nameEl.value.trim();const amount=getRaw(amtEl);
-  if(!name||!amount){alert('성도명과 금액을 입력하세요.');return;}
-  const book=getSponsors();
-  book.push({id:uid(),date:TODAY,type:sponType,name,amount,dept:'',reason:'',memo:'찬조(헌금입력)',source:'sheet'});
-  setSponsors(book);
-  alert(`찬조DB에 추가: ${name} / ${fmtN(amount)}원 / ${sponType}`);
+  // 찬조는 일반 헌금입력(+ 행 추가)으로 저장하면 헌금내역·찬조내역 모두에 자동 반영됩니다.
+  alert('찬조 헌금은 [찬조 선택] 후 [+ 행 추가] 버튼으로 입력하세요.\n헌금내역과 찬조내역에 모두 반영됩니다.');
 };
 
 window.clearEntryForm=function(num){

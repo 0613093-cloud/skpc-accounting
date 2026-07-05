@@ -38,6 +38,9 @@
   .tot-row td{font-weight:900;color:var(--navy);background:#f0f4f9;border-top:2px solid var(--g4)}
   .loading{text-align:center;padding:40px;color:var(--g3)}
   .back{display:inline-block;margin-bottom:14px;color:var(--blue);text-decoration:none;font-size:13px;font-weight:700}
+  .neg{color:var(--red)!important}
+  .pos{color:#1a7a4a!important}
+  @media print{.no-print{display:none!important}}
 </style>
 </head>
 <body>
@@ -78,15 +81,18 @@
   const db = getFirestore(app);
   const COL_OFF = collection(db, 'skpc_offerings');
   const COL_SPON = collection(db, 'skpc_sponsors');
+  const COL_EXP = collection(db, 'skpc_expenses');
 
   // Firebase에서 데이터 로드 → localStorage 저장
   async function syncData(){
     try{
-      const [offSnap, sponSnap] = await Promise.all([getDocs(COL_OFF), getDocs(COL_SPON)]);
+      const [offSnap, sponSnap, expSnap] = await Promise.all([getDocs(COL_OFF), getDocs(COL_SPON), getDocs(COL_EXP)]);
       const offerings=[]; offSnap.forEach(d=>offerings.push(d.data()));
       const sponsors=[]; sponSnap.forEach(d=>sponsors.push(d.data()));
+      const expenses=[]; expSnap.forEach(d=>expenses.push(d.data()));
       localStorage.setItem('accountBook', JSON.stringify(offerings));
       localStorage.setItem('sponsorBook', JSON.stringify(sponsors));
+      localStorage.setItem('expenseBook', JSON.stringify(expenses));
       return true;
     }catch(e){ console.error('[Firebase]', e.message); return false; }
   }
@@ -99,8 +105,27 @@
   const ST={ get(k,d){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}} };
   const getOfferings=()=>ST.get('accountBook',[]);
   const getSponsors=()=>ST.get('sponsorBook',[]);
+  const getExpenses=()=>ST.get('expenseBook',[]);
   function fmtN(n){return (Number(n)||0).toLocaleString('ko-KR');}
   function monthOf(d){return String(d||'').slice(0,7);}
+
+  // 수취자 → 부서 매핑 (지급 내역을 부서별로 귀속)
+  const RECIPIENT_DEPT={
+    '최희지':'청년부', '김하준':'청년부',
+    '김미선':'아동부',
+    '김여진':'유치부',
+    '권순호':'중고등부'
+  };
+  // 수취자 이름으로 부서 추정 (매핑에 없으면 내용/부서에서 추출)
+  function recipientToDept(recipient, content){
+    var r=String(recipient||'').trim();
+    if(RECIPIENT_DEPT[r]) return RECIPIENT_DEPT[r];
+    // 내용에 부서명이 있으면 사용
+    var c=String(content||'');
+    var depts=['유치부','아동부','중고등부','청년부'];
+    for(var i=0;i<depts.length;i++){ if(c.includes(depts[i])) return depts[i]; }
+    return '기타';
+  }
 
   // 기본 기간: 당해년 1월 1일 ~ 오늘
   (function initDates(){
@@ -179,18 +204,87 @@
       청년부:designated.청년부+undesigShare
     };
 
+    // ── 지급 내역 수집 (지출내역 expenseBook 중 dept='교육부찬조'인 것만) ──
+    const allExpenses=getExpenses();
+    const payouts=allExpenses.filter(function(e){
+      return inRange(e.date)&&String(e.dept||'')==='교육부찬조';
+    }).map(function(e){
+      var dept=recipientToDept(e.recipient, e.content);
+      return {date:e.date, dept:dept, content:e.content||'', amount:Number(e.amount||0), recipient:e.recipient||''};
+    }).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+
+    // 부서별 지급 합계
+    const paidByDept={유치부:0,아동부:0,중고등부:0,청년부:0,기타:0};
+    payouts.forEach(function(p){
+      if(paidByDept.hasOwnProperty(p.dept)) paidByDept[p.dept]+=p.amount;
+      else paidByDept['기타']+=p.amount;
+    });
+    const paidTotal=payouts.reduce(function(s,p){return s+p.amount;},0);
+
+    // 부서별 잔액 = 배분(finalDept) - 지급(paidByDept)
+    const balDept={
+      유치부:finalDept.유치부-paidByDept.유치부,
+      아동부:finalDept.아동부-paidByDept.아동부,
+      중고등부:finalDept.중고등부-paidByDept.중고등부,
+      청년부:finalDept.청년부-paidByDept.청년부
+    };
+    const balTotal=grandTotal-paidTotal;
+
     // ── 렌더링 ──
     let html='';
     // 통계
     html+='<div class="stat-row">'
       +'<div class="stat gold"><div class="stat-lbl">교육부찬조 총액</div><div class="stat-val">'+fmtN(grandTotal)+'</div></div>'
-      +'<div class="stat"><div class="stat-lbl">지정 배분</div><div class="stat-val">'+fmtN(desigTotal)+'</div></div>'
-      +'<div class="stat"><div class="stat-lbl">미지정 (4등분)</div><div class="stat-val">'+fmtN(undesigTotal)+'</div></div>'
+      +'<div class="stat"><div class="stat-lbl">지급 합계</div><div class="stat-val">'+fmtN(paidTotal)+'</div></div>'
+      +'<div class="stat"><div class="stat-lbl">잔액</div><div class="stat-val '+(balTotal>=0?'pos':'neg')+'">'+fmtN(balTotal)+'</div></div>'
       +'</div>';
 
-    // 부서별 배분 표
-    html+='<div class="card"><div class="card-title">부서별 배분 (미지정 균등 배분 포함)</div>'
-      +'<table><thead><tr><th>부서</th><th style="text-align:right">지정 배분</th><th style="text-align:right">미지정 배분</th><th style="text-align:right">합계</th></tr></thead><tbody>';
+    // 부서별 배분 + 지급 + 잔액 표
+    html+='<div class="card"><div class="card-title">부서별 찬조 합계 · 지급 · 잔액</div>'
+      +'<table><thead><tr><th>부서</th>'
+      +'<th style="text-align:right">배분 합계</th>'
+      +'<th style="text-align:right">지급액</th>'
+      +'<th style="text-align:right">잔액</th></tr></thead><tbody>';
+    ['유치부','아동부','중고등부','청년부'].forEach(function(d){
+      var bal=balDept[d];
+      html+='<tr><td><span class="badge">'+d+'</span></td>'
+        +'<td class="num" style="color:var(--gold)">'+fmtN(finalDept[d])+'</td>'
+        +'<td class="num">'+fmtN(paidByDept[d])+'</td>'
+        +'<td class="num '+(bal>=0?'pos':'neg')+'">'+fmtN(bal)+'</td></tr>';
+    });
+    // 기타 지급이 있으면 표시
+    if(paidByDept['기타']>0){
+      html+='<tr><td><span class="badge" style="background:#f0f0f0;color:#888">기타</span></td>'
+        +'<td class="num">—</td>'
+        +'<td class="num">'+fmtN(paidByDept['기타'])+'</td>'
+        +'<td class="num neg">'+fmtN(-paidByDept['기타'])+'</td></tr>';
+    }
+    html+='<tr class="tot-row"><td>합 계</td>'
+      +'<td class="num">'+fmtN(grandTotal)+'</td>'
+      +'<td class="num">'+fmtN(paidTotal)+'</td>'
+      +'<td class="num '+(balTotal>=0?'pos':'neg')+'">'+fmtN(balTotal)+'</td></tr>';
+    html+='</tbody></table></div>';
+
+    // 지급 내역 (지출내역에서 가져온 교육부찬조 지급건)
+    html+='<div class="card"><div class="card-title">💸 지급 내역 ('+payouts.length+'건)</div>'
+      +'<table><thead><tr><th>입금일자</th><th>소속</th><th>내용</th><th style="text-align:right">금액</th><th>수취자</th></tr></thead><tbody>';
+    if(payouts.length){
+      payouts.forEach(function(p){
+        html+='<tr><td style="font-family:var(--fnum);font-size:12px">'+p.date+'</td>'
+          +'<td><span class="badge">'+p.dept+'</span></td>'
+          +'<td style="font-size:12px">'+p.content+'</td>'
+          +'<td class="num">'+fmtN(p.amount)+'</td>'
+          +'<td>'+p.recipient+'</td></tr>';
+      });
+      html+='<tr class="tot-row"><td colspan="3">지급 합계</td><td class="num">'+fmtN(paidTotal)+'</td><td></td></tr>';
+    } else {
+      html+='<tr><td colspan="5" style="text-align:center;color:var(--g3);padding:20px">해당 기간 교육부찬조 지급 내역이 없습니다.<br><span style="font-size:11px">(지출내역에서 부서를 \'교육부찬조\'로 입력한 건이 표시됩니다)</span></td></tr>';
+    }
+    html+='</tbody></table></div>';
+
+    // 배분 상세 (지정/미지정 4등분)
+    html+='<div class="card no-print" style="background:#fafbff"><div class="card-title">배분 상세 (지정 + 미지정 4등분)</div>'
+      +'<table><thead><tr><th>부서</th><th style="text-align:right">지정 배분</th><th style="text-align:right">미지정 배분</th><th style="text-align:right">배분 합계</th></tr></thead><tbody>';
     ['유치부','아동부','중고등부','청년부'].forEach(function(d){
       html+='<tr><td><span class="badge">'+d+'</span></td>'
         +'<td class="num">'+fmtN(designated[d])+'</td>'
@@ -205,7 +299,7 @@
 
     // 상세 내역
     detailRows.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-    html+='<div class="card"><div class="card-title">교육부찬조 상세 내역 ('+detailRows.length+'건)</div>'
+    html+='<div class="card no-print"><div class="card-title">교육부찬조 수입 상세 내역 ('+detailRows.length+'건)</div>'
       +'<table><thead><tr><th>일자</th><th>성도명</th><th>구분</th><th>배분 부서</th><th style="text-align:right">금액</th></tr></thead><tbody>';
     if(detailRows.length){
       detailRows.forEach(function(r){
