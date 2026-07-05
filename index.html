@@ -2186,7 +2186,7 @@ function buildInputSheet(num){
   const offTypes=getOffTypes();
 
   el.innerHTML=`
-  <div class="pg-hd"><div class="pg-title">📋 헌금내역 입력 — 시트 ${num}</div></div>
+  <div class="pg-hd"><div class="pg-title">📋 헌금내역 입력</div></div>
   <div class="card">
       <div class="card-title" style="margin-bottom:10px">기본 정보</div>
       <div class="fg"><div class="flbl">입력일자 (수정 가능)</div><input type="date" class="finp" id="s${num}-date" value="${TODAY}"></div>
@@ -4829,17 +4829,31 @@ window.renderReceipt=function(){
     +'<td class="amt-cell" style="color:#a04000;font-size:10px">'+fmtN(cashOut)+'</td>'
     +'<td class="amt-cell" style="color:var(--red);font-size:10px;font-weight:800">'+fmtN(totOut)+'</td></tr></tfoot>'
     +'</table></div></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;align-items:start">'
+    +'<div>'
     +'<div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">Ⅲ. 수입 - 지출</div>'
-    +'<table class="rct-tbl" style="margin-bottom:8px;width:100%">'
+    +'<table class="rct-tbl" style="width:100%">'
     +'<colgroup><col style="width:80px"><col style="width:120px"><col style="width:120px"></colgroup>'
     +'<tbody>'
-    +'<tr><td style="font-weight:800;font-size:10px">수입 총계</td><td style="font-size:10px">현금 '+fmtN(cashInc)+'</td><td class="rc-n" style="font-size:11px;font-weight:800;color:var(--blue)">'+fmtN(totInc)+'</td>'
-    +'</td></tr>'
+    +'<tr><td style="font-weight:800;font-size:10px">수입 총계</td><td style="font-size:10px">현금 '+fmtN(cashInc)+'</td><td class="rc-n" style="font-size:11px;font-weight:800;color:var(--blue)">'+fmtN(totInc)+'</td></tr>'
     +'<tr><td style="font-size:10px;color:#2471a3">온라인입금</td><td style="font-size:10px;color:#2471a3">'+fmtN(bankInc)+'</td><td></td></tr>'
     +'<tr><td rowspan="2" style="font-size:10px;font-weight:700">지출 총계</td><td style="font-size:10px;color:#2471a3">└송금 '+fmtN(remitOut)+'</td><td class="rc-n" style="font-size:11px;color:var(--red);font-weight:800">'+fmtN(totOut)+'</td></tr>'
     +'<tr><td style="font-size:10px;color:#a04000">└현금 '+fmtN(cashOut)+'</td><td></td></tr>'
-    +'<tr style="background:#e8eff6;font-weight:800"><td colspan="2" style="text-align:center;font-size:11px">수입 - 지출 잔액</td><td class="rc-n" style="font-size:12px;font-weight:800;color:var(--navy)">'+fmtN(totInc-totOut)+'</td><td></td></tr>'
+    +'<tr style="background:#e8eff6;font-weight:800"><td colspan="2" style="text-align:center;font-size:11px">수입 - 지출 잔액</td><td class="rc-n" style="font-size:12px;font-weight:800;color:var(--navy)">'+fmtN(totInc-totOut)+'</td></tr>'
     +'</tbody></table>'
+    +'</div>'
+    +'<div>'
+    +'<div style="font-weight:800;margin-bottom:3px;color:var(--navy);font-size:11px">당일 입금대상액</div>'
+    +'<table class="rct-tbl" style="width:100%">'
+    +'<colgroup><col style="width:35%"><col style="width:40%"><col style="width:25%"></colgroup>'
+    +'<thead><tr><th style="font-size:9px">구분</th><th style="font-size:9px">내용</th><th style="font-size:9px">비고</th></tr></thead>'
+    +'<tbody>'
+    +'<tr><td style="text-align:center;font-size:10px;font-weight:700">현금입금</td><td class="rc-n" style="font-size:10px">'+fmtN(cashInc)+'</td><td></td></tr>'
+    +'<tr><td style="text-align:center;font-size:10px;font-weight:700">현금지출</td><td class="rc-n" style="font-size:10px">'+fmtN(cashOut)+'</td><td></td></tr>'
+    +'<tr style="background:#fff59d;font-weight:800"><td style="text-align:center;font-size:11px">통장입금대상액</td><td class="rc-n" style="font-size:12px;font-weight:800;color:var(--navy)">'+fmtN(cashInc-cashOut)+'</td><td></td></tr>'
+    +'</tbody></table>'
+    +'</div>'
+    +'</div>'
     +'<div style="margin-top:30px;padding-top:14px;border-top:2px solid #c8d8e8;text-align:center;font-size:15px;font-weight:900;color:var(--navy);letter-spacing:2px">서부광성교회</div>';
   showResult('rec-result');
 };
