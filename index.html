@@ -345,7 +345,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   #monthly-print-area .rpt-tbl{ width:100%!important; table-layout:fixed!important; }
   #monthly-print-area .rpt-tbl td{ font-size:13px!important; }
   #monthly-print-area .rpt-tbl th{ font-size:13px!important; padding:11px 10px!important; }
-  #monthly-print-area .rpt-section{ margin-bottom:18px!important; }
+  #monthly-print-area .rpt-section{ margin-bottom:10px!important; }
   #monthly-print-area .rpt-section-title{ font-size:15px!important; padding:10px 12px!important; }
   /* 수입 섹션 - 페이지 나눔 없음 */
   #monthly-print-area .rpt-inc-section{ page-break-after:always!important; break-after:page!important; }
@@ -598,12 +598,13 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#000;font-weight:400;
   text-align:center;vertical-align:middle;background:#fff}
 .rpt-ie-tbl th{font-weight:700}
-.rpt-ie-tbl td.rpt-ie-n{text-align:right;font-family:var(--fnum)}
+.rpt-ie-tbl td.rpt-ie-n{text-align:right!important;font-family:var(--fnum)}
 .rpt-ie-tbl tr.rpt-ie-sum td{font-weight:700}
 .rpt-ie-tbl .rpt-note{padding:0}
 .rpt-ie-tbl .rpt-note input{width:100%;text-align:center;font-size:12px;border:none;background:transparent;font-family:var(--fn);color:#000}
 @media print{
   .rpt-ie-tbl th,.rpt-ie-tbl td{border:1px solid #000!important;font-size:12px!important;padding:3px 6px!important;height:22px!important;background:#fff!important;color:#000!important}
+  .rpt-ie-tbl td.rpt-ie-n{text-align:right!important}
   .rpt-ie-hd{border:1px solid #000!important;border-bottom:none!important;background:#fff!important;color:#000!important;font-size:12px!important}
 }
 </style>
@@ -3693,14 +3694,14 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
   }).join('');
 
   // 표 스타일 공통
-  const tdL='padding:7px 12px;font-size:12px;font-weight:600;width:120px;border:1px solid #d1d5db;';
-  const tdR='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;';
-  const tdRB='padding:7px 12px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;font-weight:800;';
+  const tdL='padding:3px 6px;font-size:12px;font-weight:600;width:120px;border:1px solid #d1d5db;line-height:1.1;';
+  const tdR='padding:3px 6px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;line-height:1.1;';
+  const tdRB='padding:3px 6px;font-size:12px;text-align:right;font-family:var(--fnum);border:1px solid #d1d5db;font-weight:800;line-height:1.1;';
 
-  return '<div class="rpt-section" style="margin-top:'+(sectionNo>1?'32px':'0')+';border:1px solid #d1d5db;border-radius:10px;overflow:hidden">'
+  return '<div class="rpt-section" style="margin-top:'+(sectionNo>1?'16px':'0')+';border:1px solid #d1d5db;border-radius:10px;overflow:hidden">'
 
     // 소타이틀 볼드
-    +'<div style="background:#1e3a5f;padding:10px 16px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div style="background:#1e3a5f;padding:6px 14px;display:flex;align-items:center;justify-content:space-between">'
     +'<strong style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.5px">'+conf.label+' 회계보고</strong>'
     +'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600">'+yr+'. '+String(mo).padStart(2,'0')+'</span>'
     +'</div>'
@@ -3716,31 +3717,31 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
     +'<tbody>'
     // 이월금 / 전년도이월금 (입력)
     +'<tr>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:42px" title="전년도이월금 + 1월~전월 수입 - 1월~전월 지출">전월이월금</td>'
-    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f;height:42px">'+(prevBal?fmtN(prevBal):'0')+'</td>'
-    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:42px">전년도이월금</td>'
-    +'<td style="'+tdR+'font-weight:700;color:#334155;height:42px">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:22px" title="전년도이월금 + 1월~전월 수입 - 1월~전월 지출">전월이월금</td>'
+    +'<td style="'+tdR+'font-weight:800;color:#1e3a5f;height:22px">'+(prevBal?fmtN(prevBal):'0')+'</td>'
+    +'<td style="'+tdL+'color:#374151;background:#f9fafb;height:22px">전년도이월금</td>'
+    +'<td style="'+tdR+'font-weight:700;color:#334155;height:22px">'+(prevYrBal?fmtN(prevYrBal):'—')+'</td>'
     +'</tr>'
     // N월 수입 / 수입누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:42px">'+mo+'월 수 입</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8;height:42px">'+(moInc?fmtN(moInc):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:42px">수입 누계</td>'
-    +'<td style="'+tdRB+'color:#1d4ed8;height:42px">'+fmtN(cuInc)+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:22px">'+mo+'월 수 입</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:22px">'+(moInc?fmtN(moInc):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1d4ed8;background:#eff6ff;height:22px">수입 누계</td>'
+    +'<td style="'+tdRB+'color:#1d4ed8;height:22px">'+fmtN(cuInc)+'</td>'
     +'</tr>'
     // N월 지출 / 지출누계
     +'<tr>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:42px">'+mo+'월 지 출</td>'
-    +'<td style="'+tdRB+'color:#dc2626;height:42px">'+(moExpT?fmtN(moExpT):'0')+'</td>'
-    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:42px">지출 누계</td>'
-    +'<td style="'+tdRB+'color:#dc2626;height:42px">'+fmtN(cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:22px">'+mo+'월 지 출</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:22px">'+(moExpT?fmtN(moExpT):'0')+'</td>'
+    +'<td style="'+tdL+'color:#dc2626;background:#fff1f2;height:22px">지출 누계</td>'
+    +'<td style="'+tdRB+'color:#dc2626;height:22px">'+fmtN(cuExpT)+'</td>'
     +'</tr>'
     // N월 결산 / 잔액
     +'<tr>'
-    +'<td style="'+tdL+'color:#92400e;background:#fffbeb;height:42px">'+mo+'월 결 산</td>'
-    +'<td style="'+tdRB+'color:#92400e;height:42px">'+(moResult?fmtN(moResult):'0')+'</td>'
-    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe;height:42px"><strong>잔 액</strong></td>'
-    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe;height:42px">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
+    +'<td style="'+tdL+'color:#92400e;background:#fffbeb;height:22px">'+mo+'월 결 산</td>'
+    +'<td style="'+tdRB+'color:#92400e;height:22px">'+(moResult?fmtN(moResult):'0')+'</td>'
+    +'<td style="'+tdL+'color:#1e3a5f;font-weight:800;background:#dbeafe;height:22px"><strong>잔 액</strong></td>'
+    +'<td style="'+tdRB+'color:#1e3a5f;font-size:14px;font-weight:900;background:#dbeafe;height:22px">'+fmtN(prevYrBal+cuInc-cuExpT)+'</td>'
     +'</tr>'
     +'</tbody></table>'
     +'</div>'
@@ -3790,7 +3791,7 @@ function renderMonthlySpecialAll(ym){
   const sect1=page1.map(function(e,i){return buildSpecialSection(e[1],e[0],ym,i+1);}).join('');
   const sect2=page2.map(function(e,i){return buildSpecialSection(e[1],e[0],ym,page1.length+i+1);}).join('');
   const sections=sect1
-    +'<div style="page-break-before:always;break-before:page;padding-top:16px"></div>'
+    +'<div style="page-break-before:always;break-before:page;padding-top:8px"></div>'
     +sect2;
   el.innerHTML='<div class="rpt-wrap">'
     +'<div style="text-align:center;margin-bottom:20px">'
