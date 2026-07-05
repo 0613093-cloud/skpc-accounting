@@ -1030,7 +1030,10 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 <!-- ===== 찬조내역 ===== -->
 
 <div id="tab-sponsor" class="tab-pane">
-  <div class="pg-hd"><div class="pg-title">🎁 찬조내역</div></div>
+  <div class="pg-hd" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="pg-title">🎁 찬조내역</div>
+    <a href="edu-sponsor.html" target="_blank" class="btn btn-navy no-print" style="text-decoration:none;font-size:13px">📊 교육부찬조 배분 현황</a>
+  </div>
 
   <!-- 조회 조건 (인쇄 제외) -->
   <div class="search-panel no-print">
@@ -1702,7 +1705,7 @@ const ST={
 // ===== DEFAULT DATA =====
 const DEF_OFF_TYPES=['십일조헌금','월정헌금','감사헌금','주일헌금','비전헌금','맥추감사헌금','헌신예배','교회학교','장학헌금','추수감사헌금','일천번제','선교헌금','부활절','성탄절','신년헌금','기타','건축헌금','전도헌금','지역봉사헌금'];
 const DEF_DEPT_TYPES=['총무부','관리부','차량부','친교부','미화부','선교부','경조부','예배부','영상매체부','교육부','교육부찬조','장학위원회','재정부','감사부','건축대출금상환','기타(예비비)','건축헌금','전도헌금','사회봉사'];
-const DEF_SPON_TYPES=['교육부찬조','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','꽃꽂이찬조','기타찬조'];
+const DEF_SPON_TYPES=['교육부찬조(미지정)','교육부찬조(청년부)','교육부찬조(중고등부)','교육부찬조(아동부)','교육부찬조(유치부)','영상찬조','야외예배찬조','꽃꽂이찬조','기타찬조'];
 const DEF_WRITERS=['이광원','유치주','하태식','김종우'];
 function getWriters(){return ST.get('writers',DEF_WRITERS);}
 
@@ -1840,6 +1843,8 @@ const getSponTypes=function(){
   const cleaned=[];
   types.forEach(function(t){
     if(t==='꽃꽃이찬조') return; // 오타 버전 제외
+    // 정확히 '교육부찬조'(괄호 없음) → '교육부찬조(미지정)'으로 표준화
+    if(t==='교육부찬조') t='교육부찬조(미지정)';
     if(cleaned.indexOf(t)<0) cleaned.push(t);
   });
   return cleaned;
@@ -2211,9 +2216,13 @@ window.addEntry=function(num){
   if(!name||!amount){alert('성도명과 금액을 입력하세요.');nameEl.focus();return;}
   const entryDate=document.getElementById(`s${num}-date`)?.value||TODAY;
   const online=document.getElementById(`s${num}-online`).value;
-  const memo=document.getElementById(`s${num}-memo`).value.trim();
+  const memoRaw=document.getElementById(`s${num}-memo`).value.trim();
   const spon=document.getElementById(`s${num}-spon`)?.value||'';
   const type=st.selectedType||getOffTypes()[0];
+  // 비고(memo)에 찬조선택(spon)도 함께 표시: 둘 다 있으면 합침, 하나만 있으면 그것만
+  let memo=memoRaw;
+  if(spon && memoRaw){ memo=memoRaw+' / '+spon; }
+  else if(spon && !memoRaw){ memo=spon; }
   st.entries.push({id:uid(),date:entryDate,type,name,amount,online,memo,spon,sheet:num});
   ST.set(SK,st);
   nameEl.value='';amtEl.value='';delete amtEl.dataset.raw;
@@ -2248,9 +2257,12 @@ window.addEntryNextWeek=function(num){
   const curDate=document.getElementById(`s${num}-date`)?.value||TODAY;
   const nextSunday=getNextSunday(curDate);
   const online=document.getElementById(`s${num}-online`).value;
-  const memo=document.getElementById(`s${num}-memo`).value.trim();
+  const memoRaw=document.getElementById(`s${num}-memo`).value.trim();
   const spon=document.getElementById(`s${num}-spon`)?.value||'';
   const type=st.selectedType||getOffTypes()[0];
+  let memo=memoRaw;
+  if(spon && memoRaw){ memo=memoRaw+' / '+spon; }
+  else if(spon && !memoRaw){ memo=spon; }
   st.entries.push({id:uid(),date:curDate,type,name,amount,online,memo,spon,sheet:num,nextWeek:true,displayWeek:nextSunday});
   ST.set(SK,st);
   nameEl.value='';amtEl.value='';delete amtEl.dataset.raw;
@@ -4742,12 +4754,13 @@ window.dmSaveOffering=function(id){
   const idx=books.findIndex(function(e){return e.id===id;});
   if(idx<0){alert('항목을 찾을 수 없습니다');return;}
   Object.assign(books[idx],changes);
-  setOfferings(books);
-  if(window._fbSaveConfig) window._fbSaveAll&&window._fbSaveAll();
+  window._lastLocalWrite=Date.now(); // race 방지 (저장 직후 onSnapshot 원복 방지)
+  setOfferings(books); // localStorage + Firebase(accountBook) 저장 - 잘못된 인자없는 호출 제거
   // 저장 피드백
   const btn=row.querySelector('.btn-navy');
   if(btn){const orig=btn.textContent;btn.textContent='✓ 저장됨';btn.style.background='#27ae60';
     setTimeout(function(){btn.textContent=orig;btn.style.background='';},1500);}
+  alert('✅ 저장되었습니다.\n(다시 조회해도 유지됩니다)');
 };
 
 
