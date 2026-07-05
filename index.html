@@ -733,6 +733,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     });
 
     onSnapshot(COL_OFF, (snap) => {
+      // 로컬 저장 직후 3초간은 서버 스냅샷 무시 (방금 저장한 내역 원복 방지)
+      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 3000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
       items.sort((a,b) => (a.date||'').localeCompare(b.date||''));
@@ -755,6 +757,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     }, (err) => console.warn('[Firebase] offerings 리스너:', err.message));
 
     onSnapshot(COL_EXP, (snap) => {
+      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 3000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
       localStorage.setItem('expenseBook', JSON.stringify(items));
@@ -762,6 +765,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
     }, (err) => console.warn('[Firebase] expenses 리스너:', err.message));
 
     onSnapshot(COL_SPON, (snap) => {
+      if(window._lastLocalWrite && (Date.now()-window._lastLocalWrite < 3000)) return;
       const items = [];
       snap.forEach(d => items.push(d.data()));
       localStorage.setItem('sponsorBook', JSON.stringify(items));
@@ -785,6 +789,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   };
 
   window._fbSaveAll = async function(key, arr) {
+    window._lastLocalWrite = Date.now(); // 로컬 저장 시각 기록 (onSnapshot race 방지)
     let colPath;
     if(key==='accountBook') {
       colPath='skpc_offerings';
@@ -809,6 +814,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
         if(item.id) batch.set(doc(db, colPath, item.id), item);
       });
       await batch.commit();
+      window._lastLocalWrite = Date.now(); // 커밋 완료 시각 재기록
       window._fbStatus && window._fbStatus('saved');
     } catch(e) {
       console.error('[FB] saveAll 실패:', e.message);
@@ -2479,20 +2485,20 @@ window.saveOfferingEdits=function(){
     if(idx<0) return;
     Object.entries(fields).forEach(function([f,v]){ arr[idx][f]=v; });
   });
+  const cnt=Object.keys(_offEditBuffer).length;
+  // localStorage 즉시 저장 + Firebase 비동기 저장
   setOfferings(arr);
+  window._lastLocalWrite=Date.now(); // race 방지
   _offEditBuffer={};
   _offEditing=false;
   const btn=document.getElementById('off-save-btn');
   const hint=document.getElementById('off-edit-hint');
   if(btn) btn.style.display='none';
   if(hint) hint.style.display='none';
-  // 저장 완료 피드백
-  const savedMsg=document.createElement('span');
-  savedMsg.style.cssText='font-size:11px;color:#27ae60;font-weight:600';
-  savedMsg.textContent='✅ 저장 완료';
-  const hd=document.querySelector('#off-result .card-hd .flex');
-  if(hd){hd.appendChild(savedMsg);setTimeout(function(){savedMsg.remove();},2000);}
+  // 즉시 화면 갱신 (localStorage 기준)
   doOfferingSearch();
+  // 저장 완료 팝업 (Firebase 저장은 백그라운드 진행)
+  alert('✅ '+cnt+'건의 수정 내역이 저장되었습니다.\n(모든 기기에 반영되며, 다시 조회해도 유지됩니다)');
 };
 
 // 헌금정리 - 년월 선택 시 날짜(특정일) 옵션 자동 필터링
@@ -2750,8 +2756,11 @@ window.doSponSearch=function(){
   const offeringSpons=getOfferings().filter(function(e){
     const memo=String(e.memo||'');
     const type=String(e.type||'');
-    const isSpon=getSponTypes().some(function(t){return memo.includes(t)||type.includes('찬조');})
-                 ||e.spon;
+    // 찬조 판정: type/memo에 찬조유형 포함 OR type에 '찬조' OR spon 필드 존재 OR memo/spon에 '교육부찬조'
+    const isSpon=getSponTypes().some(function(t){return memo.includes(t)||type.includes(t);})
+                 ||type.includes('찬조')
+                 ||memo.includes('교육부찬조')
+                 ||String(e.spon||'').length>0;
     if(!isSpon) return false;
     const inRange=(!fromDate||e.date>=fromDate)&&(!toDate||e.date<=toDate);
     if(!inRange) return false;
@@ -2806,20 +2815,22 @@ window.doSponSearch=function(){
     if(cat===''){ // 전체 조회일 때만
       // 유형 통합 규칙: '교육부찬조'로 시작하는 모든 하위유형(유치부/아동부/중고등부/청년부/미지정)을 '교육부찬조'로 합산
       // → 관리설정에서 찬조유형이 추가되어도 자동 반영 (combined 데이터 기준 동적 집계)
-      function groupType(raw){
-        var t=String(raw||'기타');
-        if(t.indexOf('교육부찬조')===0) return '교육부찬조';
-        return t;
+      // 교육부찬조 판정: type/memo/spon 중 하나라도 '교육부찬조' 포함 → '교육부찬조'로 통합
+      // (월간보고 eduSponBudget과 동일 기준으로 통일 → 금액 일치)
+      function groupType(e){
+        var t=String(e.type||''), m=String(e.memo||''), sp=String(e.spon||'');
+        if(t.includes('교육부찬조')||m.includes('교육부찬조')||sp.includes('교육부찬조')) return '교육부찬조';
+        return t||'기타';
       }
       const typeSum={};
       combined.forEach(function(e){
-        var t=groupType(e.type);
+        var t=groupType(e);
         typeSum[t]=(typeSum[t]||0)+(e.amount||0);
       });
       // 정렬: 관리설정(getSponTypes)에 정의된 순서 우선, 없으면 뒤에 (교육부찬조 하위는 하나로 병합됨)
       var typeOrder=[];
       getSponTypes().forEach(function(st){
-        var g=groupType(st);
+        var g=groupType({type:st});
         if(typeOrder.indexOf(g)<0) typeOrder.push(g);
       });
       const rows=Object.keys(typeSum).sort(function(a,b){
