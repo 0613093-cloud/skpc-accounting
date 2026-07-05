@@ -88,8 +88,14 @@ label,p,h1,h2,h3,h4,h5,h6,td,th{text-align:inherit}
 .stat.red{border-left:4px solid var(--red);background:var(--red-l)}
 
 /* FORM */
-.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;position:relative}
 .flbl{font-size:11px;font-weight:900;color:var(--g2);letter-spacing:.5px;text-align:left}
+.type-suggest{position:absolute;top:100%;left:0;right:0;z-index:50;background:#fff;border:1.5px solid var(--blue);
+  border-top:none;border-radius:0 0 8px 8px;box-shadow:0 6px 14px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none}
+.type-suggest.show{display:block}
+.type-suggest .ts-item{padding:8px 12px;font-size:13px;cursor:pointer;color:var(--navy,#1e3a5f)}
+.type-suggest .ts-item:hover,.type-suggest .ts-item.active{background:#eff6ff}
+.type-suggest .ts-item b{color:var(--blue);font-weight:900}
 .finp,.fsel{height:36px;padding:0 10px;border:1.5px solid var(--g4);border-radius:var(--r);
   font-family:var(--fn);font-size:13px;color:var(--g1);background:#fff;
   transition:border .15s,box-shadow .15s;width:100%;text-align:left}
@@ -2191,12 +2197,16 @@ function buildInputSheet(num){
             onclick="addWriterFromInput(${num})" title="작성자 추가">＋</button></div>
     </div>
   <div class="card">
-    <div class="card-title" style="margin-bottom:8px">헌금 종류 선택</div>
-    <div class="rpwrap" id="s${num}-typeRadio"></div>
-  </div>
-  <div class="card">
     <div class="card-title" style="margin-bottom:10px">헌금 내역 입력</div>
-    <div class="g3">
+    <div class="g4">
+      <div class="fg"><div class="flbl">헌금종류</div>
+        <input class="finp" id="s${num}-type" placeholder="예: 십일조헌금" autocomplete="off"
+          list="s${num}-typeList" value="${st.selectedType||offTypes[0]||''}"
+          oninput="handleTypeInput(${num},this.value)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('s${num}-name').focus()}">
+        <datalist id="s${num}-typeList">${offTypes.map(t=>`<option value="${t}">`).join('')}</datalist>
+        <div id="s${num}-typeSuggest" class="type-suggest"></div>
+      </div>
       <div class="fg"><div class="flbl">성도명</div>
         <input class="finp" id="s${num}-name" placeholder="성도명"
           onkeydown="if(event.key==='Enter'){event.preventDefault();addEntry(${num})}"></div>
@@ -2263,13 +2273,49 @@ function buildInputSheet(num){
     <div id="s${num}-msg" class="mt8"></div>
   </div>`;
 
-  buildRadioGroup(`s${num}-typeRadio`, offTypes, st.selectedType, (v)=>{
-    const s=ST.get(SK,{});s.selectedType=v;ST.set(SK,s);
-  });
   // sponsor select options
   const sponSel=document.getElementById(`s${num}-spon`);
   if(sponSel) getSponTypes().forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sponSel.appendChild(o);});
   renderEntryTable(num);
+}
+
+// ── 헌금종류 입력 자동완성 ──────────────────────────────────
+function handleTypeInput(num,val){
+  const box=document.getElementById(`s${num}-typeSuggest`);
+  if(!box) return;
+  const q=(val||'').trim();
+  if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
+  const matches=getOffTypes().filter(t=>t.includes(q));
+  if(!matches.length){ box.classList.remove('show'); box.innerHTML=''; return; }
+  box.innerHTML=matches.map(t=>{
+    const i=t.indexOf(q);
+    const marked=i>=0 ? t.slice(0,i)+'<b>'+t.slice(i,i+q.length)+'</b>'+t.slice(i+q.length) : t;
+    return `<div class="ts-item" onclick="selectType(${num},'${t.replace(/'/g,"\\'")}')">${marked}</div>`;
+  }).join('');
+  box.classList.add('show');
+}
+window.selectType=function(num,type){
+  const el=document.getElementById(`s${num}-type`);
+  if(el) el.value=type;
+  const box=document.getElementById(`s${num}-typeSuggest`);
+  if(box){ box.classList.remove('show'); box.innerHTML=''; }
+  const SK=`istate_${num}`;const s=ST.get(SK,{});s.selectedType=type;ST.set(SK,s);
+  document.getElementById(`s${num}-name`)?.focus();
+};
+document.addEventListener('click',function(e){
+  document.querySelectorAll('.type-suggest.show').forEach(function(box){
+    if(!box.parentElement || !box.parentElement.contains(e.target)) { box.classList.remove('show'); box.innerHTML=''; }
+  });
+});
+// 헌금종류 입력값을 등록된 종류 목록과 대조 (정확일치 우선, 없으면 공백제거 비교)
+function resolveOffType(raw){
+  const q=(raw||'').trim();
+  if(!q) return '';
+  const types=getOffTypes();
+  if(types.includes(q)) return q;
+  const norm=s=>s.replace(/\s+/g,'');
+  const hit=types.find(t=>norm(t)===norm(q));
+  return hit||'';
 }
 
 function buildRadioGroup(cid,opts,sel,onChange){
@@ -2291,8 +2337,11 @@ window.addEntry=function(num){
   const SK=`istate_${num}`;
   let st=ST.get(SK,{entries:[],selectedType:getOffTypes()[0]});
   st.entries=st.entries||[];
+  const typeEl=document.getElementById(`s${num}-type`);
   const nameEl=document.getElementById(`s${num}-name`);
   const amtEl=document.getElementById(`s${num}-amount`);
+  const type=resolveOffType(typeEl?.value);
+  if(!type){alert('헌금종류를 목록에서 선택하거나 정확히 입력하세요.');typeEl?.focus();return;}
   const name=nameEl.value.trim();
   const amount=getRaw(amtEl);
   if(!name||!amount){alert('성도명과 금액을 입력하세요.');nameEl.focus();return;}
@@ -2300,12 +2349,12 @@ window.addEntry=function(num){
   const online=document.getElementById(`s${num}-online`).value;
   const memoRaw=document.getElementById(`s${num}-memo`).value.trim();
   const spon=document.getElementById(`s${num}-spon`)?.value||'';
-  const type=st.selectedType||getOffTypes()[0];
   // 비고(memo)에 찬조선택(spon)도 함께 표시: 둘 다 있으면 합침, 하나만 있으면 그것만
   let memo=memoRaw;
   if(spon && memoRaw){ memo=memoRaw+' / '+spon; }
   else if(spon && !memoRaw){ memo=spon; }
   st.entries.push({id:uid(),date:entryDate,type,name,amount,online,memo,spon,sheet:num});
+  st.selectedType=type;
   ST.set(SK,st);
   nameEl.value='';amtEl.value='';delete amtEl.dataset.raw;
   document.getElementById(`s${num}-memo`).value='';
@@ -2329,8 +2378,11 @@ window.addEntryNextWeek=function(num){
   const SK=`istate_${num}`;
   let st=ST.get(SK,{entries:[],selectedType:getOffTypes()[0]});
   st.entries=st.entries||[];
+  const typeEl=document.getElementById(`s${num}-type`);
   const nameEl=document.getElementById(`s${num}-name`);
   const amtEl=document.getElementById(`s${num}-amount`);
+  const type=resolveOffType(typeEl?.value);
+  if(!type){alert('헌금종류를 목록에서 선택하거나 정확히 입력하세요.');typeEl?.focus();return;}
   const name=nameEl.value.trim();
   const amount=getRaw(amtEl);
   if(!name||!amount){alert('성도명과 금액을 입력하세요.');nameEl.focus();return;}
@@ -2341,11 +2393,11 @@ window.addEntryNextWeek=function(num){
   const online=document.getElementById(`s${num}-online`).value;
   const memoRaw=document.getElementById(`s${num}-memo`).value.trim();
   const spon=document.getElementById(`s${num}-spon`)?.value||'';
-  const type=st.selectedType||getOffTypes()[0];
   let memo=memoRaw;
   if(spon && memoRaw){ memo=memoRaw+' / '+spon; }
   else if(spon && !memoRaw){ memo=spon; }
   st.entries.push({id:uid(),date:curDate,type,name,amount,online,memo,spon,sheet:num,nextWeek:true,displayWeek:nextSunday});
+  st.selectedType=type;
   ST.set(SK,st);
   nameEl.value='';amtEl.value='';delete amtEl.dataset.raw;
   document.getElementById(`s${num}-memo`).value='';
