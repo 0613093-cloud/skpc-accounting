@@ -1980,24 +1980,40 @@ function appYears(){
 // 저장구조: annualBudget = { '2026':{...}, '2027':{...} }
 // 구버전(평면 in_/out_ 키)은 2026년 예산으로 자동 마이그레이션
 function getBudgetAll(){
-  let all=ST.get('annualBudget',null);
-  if(!all||typeof all!=='object'){ all={}; }
+  let raw=null;
+  try{ raw=ST.get('annualBudget',null); }catch(e){ raw=null; }
+  let all = (raw && typeof raw==='object' && !Array.isArray(raw)) ? raw : {};
   const keys=Object.keys(all);
-  const isLegacy=keys.length>0 && keys.some(k=>k.startsWith('in_')||k.startsWith('out_'));
-  if(isLegacy){ all={ '2026': all }; }
-  if(keys.length===0){ all={ '2026': Object.assign({},DEF_BUDGET) }; }
-  let changed=isLegacy||keys.length===0;
-  // 매년 자동 추가: 없는 연도는 직전 연도 예산 복사(없으면 기본값)
+  const hasLegacy = keys.some(k=>/^(in_|out_)/.test(k));
+  const hasYear   = keys.some(k=>/^\d{4}$/.test(k));
+  let changed=false;
+  if(hasLegacy && !hasYear){
+    // 전부 평면 → 2026 예산으로 이동
+    all={ '2026': all };
+    changed=true;
+  } else if(hasLegacy && hasYear){
+    // 혼재 → 평면 키 제거 (연도 데이터가 정본)
+    Object.keys(all).forEach(function(k){ if(/^(in_|out_)/.test(k)) delete all[k]; });
+    changed=true;
+  }
+  if(Object.keys(all).length===0){
+    all={ '2026': Object.assign({},DEF_BUDGET) };
+    changed=true;
+  }
+  // 매년 자동 확장: 없는 연도는 직전 연도 예산 복사
   appYears().forEach(function(y){
-    if(!all[String(y)]){
+    const k=String(y);
+    if(!all[k] || typeof all[k]!=='object'){
       const prev=all[String(y-1)];
-      all[String(y)]=Object.assign({}, prev||DEF_BUDGET);
+      all[k]=Object.assign({}, (prev && typeof prev==='object') ? prev : DEF_BUDGET);
       changed=true;
     }
   });
   if(changed){
-    ST.set('annualBudget',all);
-    if(window._fbSaveConfig) window._fbSaveConfig('annualBudget',all);
+    try{
+      ST.set('annualBudget',all);
+      if(window._fbSaveConfig) window._fbSaveConfig('annualBudget',all);
+    }catch(e){ console.warn('[budget] save failed:', e); }
   }
   return all;
 }
@@ -4031,7 +4047,8 @@ window.switchMgr=function(id,btn){
 function renderCarryoverForm(){
   const el=document.getElementById('carryover-form');if(!el) return;
   const co=getCarryover();
-  const years=appYears();
+  // 2025년부터 (+2년말까지) 모두 조회
+  const years=[2025].concat(appYears());
   const MONTHS=Array.from({length:12},function(_,i){return String(i+1).padStart(2,'0');});
   const SPECIAL_LABELS={special_build:'건축헌금',special_mission:'전도헌금',special_local:'지역봉사헌금'};
 
@@ -4111,7 +4128,7 @@ function renderCarryoverForm(){
 
 window.saveCarryover=function(){
   const co=getCarryover();
-  const years=appYears();
+  const years=[2025].concat(appYears());
   const MONTHS=Array.from({length:12},(_,i)=>String(i+1).padStart(2,'0'));
   const SPECIAL_KEYS=['special_build','special_mission','special_local'];
   // 연도 이월금
@@ -4702,38 +4719,46 @@ window.onBudgetYearChange=function(v){
 function renderBudgetForm(){
   const el=document.getElementById('budget-form');
   if(!el) return;
-  const ysel=document.getElementById('budget-year');
-  const curY=budgetYear();
-  if(ysel){
-    ysel.innerHTML=appYears().map(function(y){
-      return '<option value="'+y+'"'+(y===curY?' selected':'')+'>'+y+'년 예산</option>';
-    }).join('');
+  try{
+    const ysel=document.getElementById('budget-year');
+    const curY=budgetYear();
+    if(ysel){
+      ysel.innerHTML=appYears().map(function(y){
+        return '<option value="'+y+'"'+(y===curY?' selected':'')+'>'+y+'년 예산</option>';
+      }).join('');
+    }
+    const budget=getBudget(curY) || {};
+    const incTypes=getOffTypes().filter(function(t){return !['건축헌금','전도헌금','지역봉사헌금'].includes(t);});
+    // MAP 기준: 특별회계 지출 부서 제외
+    const outTypes=getDeptTypes().filter(function(d){return !['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'].includes(d);});
+    let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+    html+='<div><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">수입 예산</div>';
+    incTypes.forEach(function(t){
+      const v=parseN(budget['in_'+t])||0;
+      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        +'<label style="font-size:12px;min-width:120px">'+t+'</label>'
+        +'<input class="finp" id="bgt-in-'+t+'" type="text" value="'+(v?fmtN(v):'')+'" placeholder="0"'
+        +' style="max-width:130px;text-align:right"'
+        +' oninput="this.value=this.value.replace(/[^0-9]/g,\'\')"></div>';
+    });
+    html+='</div><div><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">지출 예산</div>';
+    outTypes.forEach(function(d){
+      const v=parseN(budget['out_'+d])||0;
+      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        +'<label style="font-size:12px;min-width:120px">'+d+'</label>'
+        +'<input class="finp" id="bgt-out-'+d+'" data-key="out_'+d+'" type="text" value="'+(v?fmtN(v):'')+'" placeholder="0"'
+        +' style="max-width:130px;text-align:right"'
+        +' oninput="this.value=this.value.replace(/[^0-9]/g,\'\')"></div>';
+    });
+    html+='</div></div>';
+    el.innerHTML=html;
+  }catch(e){
+    console.error('[예산 폼 오류]',e);
+    el.innerHTML='<div style="padding:14px;color:#b91c1c;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:13px">'
+      +'예산 폼을 그리는 중 오류가 발생했습니다: '+String(e.message||e)
+      +'<br><button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="localStorage.removeItem(\'annualBudget\');renderBudgetForm()">저장된 예산 초기화 후 다시 시도</button>'
+      +'</div>';
   }
-  const budget=getBudget(curY);
-  const incTypes=getOffTypes().filter(function(t){return !['건축헌금','전도헌금','지역봉사헌금'].includes(t);});
-  // MAP 기준: 특별회계 지출 부서 제외
-  const outTypes=getDeptTypes().filter(function(d){return !['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'].includes(d);});
-  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
-  html+='<div><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">수입 예산</div>';
-  incTypes.forEach(function(t){
-    const v=parseN(budget['in_'+t])||0;
-    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-      +'<label style="font-size:12px;min-width:120px">'+t+'</label>'
-      +'<input class="finp" id="bgt-in-'+t+'" type="text" value="'+(v?fmtN(v):'')+'" placeholder="0"'
-      +' style="max-width:130px;text-align:right"'
-      +' oninput="this.value=this.value.replace(/[^0-9]/g,\'\')"></div>';
-  });
-  html+='</div><div><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">지출 예산</div>';
-  outTypes.forEach(function(d){
-    const v=parseN(budget['out_'+d])||0;
-    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-      +'<label style="font-size:12px;min-width:120px">'+d+'</label>'
-      +'<input class="finp" id="bgt-out-'+d+'" data-key="out_'+d+'" type="text" value="'+(v?fmtN(v):'')+'" placeholder="0"'
-      +' style="max-width:130px;text-align:right"'
-      +' oninput="this.value=this.value.replace(/[^0-9]/g,\'\')"></div>';
-  });
-  html+='</div></div>';
-  el.innerHTML=html;
 }
 
 // 관리 항목 추가/삭제
