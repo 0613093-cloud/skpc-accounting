@@ -590,16 +590,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 .rpt-tbl tfoot tr.sum2 td.rpt-num{color:#93c5fd}
 .rpt-tbl tfoot tr.sum2 td:first-child{color:#fff;font-size:13px}
 @media print{.rpt-section{page-break-inside:avoid}.rpt-section-title{-webkit-print-color-adjust:exact}}
-/* ── 헌금종류 자동완성 ────────────────────────── */
-.ac-wrap{position:relative}
-.ac-list{position:absolute;top:100%;left:0;right:0;z-index:200;background:#fff;border:1.5px solid var(--navy);border-top:none;border-radius:0 0 8px 8px;box-shadow:0 6px 16px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none}
-.ac-list.show{display:block}
-.ac-item{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
-.ac-item:last-child{border-bottom:none}
-.ac-item:hover,.ac-item.active{background:#eef4fb;color:var(--navy);font-weight:700}
-.ac-item .ac-hint{font-size:10px;color:#94a3b8;font-weight:400}
-.ac-item.active .ac-hint{color:var(--navy)}
-.ac-match{color:var(--blue);font-weight:800}
+
 </style>
 
 <!-- Firebase SDK -->
@@ -1499,7 +1490,11 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   </div>
   <div id="budget-mgr" class="card hidden">
     <div class="card-title" style="margin-bottom:10px">연간예산 입력</div>
-    <div class="alert alert-info">월간 회계보고 예산 진도율에 사용됩니다.</div>
+    <div class="month-bar" style="margin-bottom:10px">
+      <label>예산 연도</label>
+      <select id="budget-year" class="fsel" style="height:34px;font-size:13px;font-weight:700;color:var(--navy)" onchange="onBudgetYearChange(this.value)"></select>
+    </div>
+    <div class="alert alert-info">월간 회계보고 예산 진도율에 사용됩니다. 연도별로 따로 저장되며, 새 연도는 직전 연도 예산이 복사되어 자동 생성됩니다.</div>
     <div id="budget-form"></div>
     <button class="btn btn-navy mt12" onclick="saveBudget()">💾 예산 저장</button>
   </div>
@@ -1966,7 +1961,56 @@ function getAccountByName(name){
   return found?found.acct||'':'';
 }
 
-const getBudget=()=>ST.get('annualBudget',DEF_BUDGET);
+// ══ 연도 관리 공통 ══════════════════════════════════════════
+// 시작연도 2026 고정 / 표시 상한 = 당해년 +2 (매년 7/1 자동 확장)
+const APP_START_YEAR=2026;
+function appEndYear(){
+  const d=nowKST();
+  const y=d.getFullYear(), m=d.getMonth()+1;
+  // 7/1 이후에는 다음 연도 기준으로 +2년까지 미리 열어둠
+  return (m>=7? y+1 : y)+1;
+}
+function appYears(){
+  const out=[];
+  for(let y=APP_START_YEAR; y<=appEndYear(); y++) out.push(y);
+  return out;
+}
+
+// ── 연간예산 (연도별) ────────────────────────────────────────
+// 저장구조: annualBudget = { '2026':{...}, '2027':{...} }
+// 구버전(평면 in_/out_ 키)은 2026년 예산으로 자동 마이그레이션
+function getBudgetAll(){
+  let all=ST.get('annualBudget',null);
+  if(!all||typeof all!=='object'){ all={}; }
+  const keys=Object.keys(all);
+  const isLegacy=keys.length>0 && keys.some(k=>k.startsWith('in_')||k.startsWith('out_'));
+  if(isLegacy){ all={ '2026': all }; }
+  if(keys.length===0){ all={ '2026': Object.assign({},DEF_BUDGET) }; }
+  let changed=isLegacy||keys.length===0;
+  // 매년 자동 추가: 없는 연도는 직전 연도 예산 복사(없으면 기본값)
+  appYears().forEach(function(y){
+    if(!all[String(y)]){
+      const prev=all[String(y-1)];
+      all[String(y)]=Object.assign({}, prev||DEF_BUDGET);
+      changed=true;
+    }
+  });
+  if(changed){
+    ST.set('annualBudget',all);
+    if(window._fbSaveConfig) window._fbSaveConfig('annualBudget',all);
+  }
+  return all;
+}
+window.BUDGET_YEAR=null;
+function budgetYear(){
+  if(window.BUDGET_YEAR) return window.BUDGET_YEAR;
+  const y=nowKST().getFullYear();
+  return Math.min(Math.max(y,APP_START_YEAR),appEndYear());
+}
+const getBudget=(yr)=>{
+  const all=getBudgetAll();
+  return all[String(yr||budgetYear())]||Object.assign({},DEF_BUDGET);
+};
 
 window.fmtAmt=function(el){
   const raw=el.value.replace(/[^0-9]/g,'');
@@ -2155,12 +2199,12 @@ function initMonthSel(selId,badgeId){
   const sel=document.getElementById(selId);if(!sel||sel.options.length>0) return;
   // 시작 연도(2026)부터 당월 +1개월까지 표시
   // - 2026년 이전(2025 등)은 제외
-  // - 당월 다음달까지 표시 (12월이면 다음해 1월로 넘어감)
+  // - 당해년 +2년 12월까지 표시 (매년 7/1 기준 자동 확장)
   // - 연도가 바뀌어도 시작연도(2026)부터 계속 누적 표시
-  const START_YEAR=2026;
-  // 마지막 표시 시점 = 당월 +1개월 (연/월 계산)
-  let endY=CUR_YEAR, endM=CUR_MONTH+1;
-  if(endM>12){ endM=1; endY=CUR_YEAR+1; }
+  // - 기본 선택은 당월
+  const START_YEAR=APP_START_YEAR;
+  // 표시 상한 = 당해년+2 12월 (매년 7/1 자동 확장)
+  let endY=appEndYear(), endM=12;
   // 시작(START_YEAR-01) ~ 끝(endY-endM)까지 월 목록 생성 (최신이 위로)
   const months=[];
   for(let y=START_YEAR; y<=endY; y++){
@@ -2209,16 +2253,10 @@ function buildInputSheet(num){
   <div class="card">
     <div class="card-title" style="margin-bottom:10px">헌금 내역 입력</div>
     <div class="g3">
-      <div class="fg"><div class="flbl">헌금종류 <span style="font-size:10px;color:#94a3b8">(입력 후 Tab/Enter로 자동완성)</span></div>
-        <div class="ac-wrap">
-          <input class="finp" id="s${num}-type" placeholder="예: 십 → 십일조헌금" autocomplete="off"
-            value="${st.selectedType||''}"
-            oninput="acInput(${num})"
-            onkeydown="acKeydown(event,${num})"
-            onfocus="acInput(${num})"
-            onblur="setTimeout(function(){acHide(${num})},180)">
-          <div class="ac-list" id="s${num}-aclist"></div>
-        </div>
+      <div class="fg"><div class="flbl">헌금종류</div>
+        <select class="fsel" id="s${num}-type" onchange="pickType(${num},this.value)">
+          ${offTypes.map(t=>`<option value="${t}"${t===st.selectedType?' selected':''}>${t}</option>`).join('')}
+        </select>
       </div>
       <div class="fg"><div class="flbl">성도명</div>
         <input class="finp" id="s${num}-name" placeholder="성도명"
@@ -2293,119 +2331,21 @@ function buildInputSheet(num){
   renderEntryTable(num);
 }
 
-// ── 헌금종류 자동완성 ──────────────────────────────────
-window._acState={}; // {num:{items:[], idx:-1}}
-
-// 입력값으로 후보 필터링 (앞글자 우선, 그 다음 포함)
-function acFilter(q){
-  const types=getOffTypes();
-  const s=String(q||'').trim();
-  if(!s) return types.slice(0,10);
-  const starts=[], contains=[];
-  types.forEach(function(t){
-    if(t.startsWith(s)) starts.push(t);
-    else if(t.includes(s)) contains.push(t);
-  });
-  return starts.concat(contains).slice(0,10);
-}
-
-window.acInput=function(num){
-  const inp=document.getElementById('s'+num+'-type');
-  const list=document.getElementById('s'+num+'-aclist');
-  if(!inp||!list) return;
-  const q=inp.value;
-  const items=acFilter(q);
-  window._acState[num]={items:items, idx: items.length?0:-1};
-  if(!items.length){ list.classList.remove('show'); list.innerHTML=''; return; }
-  const qs=String(q||'').trim();
-  list.innerHTML=items.map(function(t,i){
-    let disp=t;
-    if(qs){
-      const pos=t.indexOf(qs);
-      if(pos>=0) disp=t.slice(0,pos)+'<span class="ac-match">'+t.slice(pos,pos+qs.length)+'</span>'+t.slice(pos+qs.length);
-    }
-    return '<div class="ac-item'+(i===0?' active':'')+'" data-val="'+t+'" onmousedown="acPick('+num+',\''+t.replace(/'/g,"\\'")+'\')">'
-      +'<span>'+disp+'</span>'
-      +(i===0?'<span class="ac-hint">Tab / Enter</span>':'')
-      +'</div>';
-  }).join('');
-  list.classList.add('show');
+// ── 헌금종류 선택 (드롭다운) ──────────────────────────
+// 값의 기준은 select(s{num}-type)
+window.syncTypeRadios=function(num,val){
+  const sel=document.getElementById('s'+num+'-type');
+  if(sel && val) sel.value=val;
 };
 
-window.acHide=function(num){
-  const list=document.getElementById('s'+num+'-aclist');
-  if(list){ list.classList.remove('show'); }
-};
-
-// 항목 선택 → 입력칸 확정 + 상태 저장 + 성도명으로 포커스 이동
-window.acPick=function(num,val){
-  const inp=document.getElementById('s'+num+'-type');
-  if(inp) inp.value=val;
+window.pickType=function(num,val){
   const SK='istate_'+num;
   const st=ST.get(SK,{});
   st.selectedType=val;
   ST.set(SK,st);
-  acHide(num);
   const nameEl=document.getElementById('s'+num+'-name');
   if(nameEl) nameEl.focus();
 };
-
-// 키보드: ↑↓ 이동, Tab/Enter 선택, Esc 닫기
-window.acKeydown=function(e,num){
-  const st=window._acState[num];
-  const list=document.getElementById('s'+num+'-aclist');
-  const open=list && list.classList.contains('show') && st && st.items.length;
-
-  if(e.key==='ArrowDown'){
-    if(!open){ acInput(num); return; }
-    e.preventDefault();
-    st.idx=Math.min(st.idx+1, st.items.length-1);
-    acHighlight(num);
-    return;
-  }
-  if(e.key==='ArrowUp'){
-    if(!open) return;
-    e.preventDefault();
-    st.idx=Math.max(st.idx-1, 0);
-    acHighlight(num);
-    return;
-  }
-  if(e.key==='Tab'){
-    if(open && st.idx>=0){
-      e.preventDefault(); // Tab으로 자동완성 선택
-      acPick(num, st.items[st.idx]);
-    }
-    return;
-  }
-  if(e.key==='Enter'){
-    e.preventDefault();
-    if(open && st.idx>=0){
-      acPick(num, st.items[st.idx]); // 후보 선택
-    } else {
-      // 후보 없으면 입력값 그대로 확정 후 성도명으로
-      const inp=document.getElementById('s'+num+'-type');
-      if(inp && inp.value.trim()){
-        const SK='istate_'+num;
-        const s=ST.get(SK,{}); s.selectedType=inp.value.trim(); ST.set(SK,s);
-      }
-      acHide(num);
-      const nameEl=document.getElementById('s'+num+'-name');
-      if(nameEl) nameEl.focus();
-    }
-    return;
-  }
-  if(e.key==='Escape'){ acHide(num); return; }
-};
-
-function acHighlight(num){
-  const list=document.getElementById('s'+num+'-aclist');
-  const st=window._acState[num];
-  if(!list||!st) return;
-  const items=list.querySelectorAll('.ac-item');
-  items.forEach(function(el,i){
-    if(i===st.idx) el.classList.add('active'); else el.classList.remove('active');
-  });
-}
 
 function buildRadioGroup(cid,opts,sel,onChange){
   const c=document.getElementById(cid);if(!c) return;
@@ -2444,6 +2384,7 @@ function commitEntry(num, cand){
   st.entries.push(cand);
   st.selectedType=cand.type; // 헌금종류 유지 (연속 입력 편의)
   ST.set(SK,st);
+  syncTypeRadios(num,cand.type);
   const nameEl=document.getElementById(`s${num}-name`);
   const amtEl=document.getElementById(`s${num}-amount`);
   if(nameEl) nameEl.value='';
@@ -2595,10 +2536,9 @@ window.addSponFromSheet=function(num){
 };
 
 window.clearEntryForm=function(num){
-  ['type','name','amount','memo'].forEach(f=>{const el=document.getElementById(`s${num}-${f}`);if(el){el.value='';delete el.dataset.raw;}});
+  ['name','amount','memo'].forEach(f=>{const el=document.getElementById(`s${num}-${f}`);if(el){el.value='';delete el.dataset.raw;}});
   const sponEl=document.getElementById(`s${num}-spon`); if(sponEl) sponEl.value='';
-  acHide(num);
-  const t=document.getElementById(`s${num}-type`); if(t) t.focus();
+  const n=document.getElementById(`s${num}-name`); if(n) n.focus();
 };
 
 window.updateEntry=function(num,id,field,val){
@@ -3572,7 +3512,7 @@ function renderMonthlyGeneral(ym){
     byDeptMo[dept]=moTotal;
   });
 
-  const budget=getBudget();
+  const budget=getBudget(yr);
 
   // ★ 수입 합계 = incTypes 목록 항목들의 합산 (목록에 없는 유형 제외)
   const cuIncTable=incTypes.reduce((s,t)=>s+(byTypeInc[t]||0),0);
@@ -4091,7 +4031,7 @@ window.switchMgr=function(id,btn){
 function renderCarryoverForm(){
   const el=document.getElementById('carryover-form');if(!el) return;
   const co=getCarryover();
-  const years=[CUR_YEAR-1, CUR_YEAR, CUR_YEAR+1];
+  const years=appYears();
   const MONTHS=Array.from({length:12},function(_,i){return String(i+1).padStart(2,'0');});
   const SPECIAL_LABELS={special_build:'건축헌금',special_mission:'전도헌금',special_local:'지역봉사헌금'};
 
@@ -4171,7 +4111,7 @@ function renderCarryoverForm(){
 
 window.saveCarryover=function(){
   const co=getCarryover();
-  const years=[CUR_YEAR-1, CUR_YEAR, CUR_YEAR+1];
+  const years=appYears();
   const MONTHS=Array.from({length:12},(_,i)=>String(i+1).padStart(2,'0'));
   const SPECIAL_KEYS=['special_build','special_mission','special_local'];
   // 연도 이월금
@@ -4754,10 +4694,22 @@ function renderSponTypeList(){
   renderListMgr('spon-type-list',types,'removeSponType');
 }
 
+window.onBudgetYearChange=function(v){
+  window.BUDGET_YEAR=parseInt(v)||null;
+  renderBudgetForm();
+};
+
 function renderBudgetForm(){
   const el=document.getElementById('budget-form');
   if(!el) return;
-  const budget=getBudget();
+  const ysel=document.getElementById('budget-year');
+  const curY=budgetYear();
+  if(ysel){
+    ysel.innerHTML=appYears().map(function(y){
+      return '<option value="'+y+'"'+(y===curY?' selected':'')+'>'+y+'년 예산</option>';
+    }).join('');
+  }
+  const budget=getBudget(curY);
   const incTypes=getOffTypes().filter(function(t){return !['건축헌금','전도헌금','지역봉사헌금'].includes(t);});
   // MAP 기준: 특별회계 지출 부서 제외
   const outTypes=getDeptTypes().filter(function(d){return !['건축대출금상환','건축헌금사용','친교부(새신자)','사회봉사'].includes(d);});
@@ -5595,10 +5547,13 @@ window.saveBudget=function(){
   oTypes.forEach(function(d){
     if(budget['out_'+d]===undefined) budget['out_'+d]=0;
   });
-  // localStorage + Firebase 저장
-  ST.set('annualBudget',budget);
-  if(window._fbSaveConfig) window._fbSaveConfig('annualBudget',budget);
-  alert('예산이 저장되었습니다.');
+  // localStorage + Firebase 저장 (연도별)
+  const yr=budgetYear();
+  const all=getBudgetAll();
+  all[String(yr)]=budget;
+  ST.set('annualBudget',all);
+  if(window._fbSaveConfig) window._fbSaveConfig('annualBudget',all);
+  alert(yr+'년 예산이 저장되었습니다.');
 };
 
 window.exportData=function(){
@@ -6419,13 +6374,15 @@ var SPECIAL_EXP_TYPES = ['건축대출금상환','건축헌금사용','친교부
 function initBankBalTab(){
   var sel = document.getElementById('bankbal-year');
   if(!sel || sel.options.length > 0) return;
-  var yr = new Date().getFullYear();
-  for(var y = yr; y >= yr - 4; y--){
+  var cur = new Date().getFullYear();
+  var years = appYears();          // 2026 ~ 당해년+2 (7/1 이후 자동 확장)
+  var def = Math.min(Math.max(cur, APP_START_YEAR), years[years.length-1]);
+  years.slice().reverse().forEach(function(y){
     var o = document.createElement('option');
     o.value = y; o.textContent = y + '년';
-    if(y === yr) o.selected = true;
+    if(y === def) o.selected = true;
     sel.appendChild(o);
-  }
+  });
 }
 
 // 월별 수입/지출 계산
@@ -6618,20 +6575,36 @@ window.renderBankBal = function(){
       }).join('')
     + '</tr>'
     + '<tr style="background:#fef2f2">'
-    + '<td style="font-weight:900;color:#dc2626">조정필요</td>'
-    + '<td></td>'
+    + '<td style="font-weight:900;color:#dc2626">조정필요<br><span style="font-size:9px;font-weight:600;color:#94a3b8">실제잔금 − 장부</span></td>'
+    + '<td class="nc" style="font-weight:800">'
+    + (totalDiff !== null
+        ? (totalDiff === 0
+            ? '<span style="color:#16a34a">일치</span>'
+            : '<span style="color:'+(totalDiff>0?'#0369a1':'#dc2626')+'">'
+              + (totalDiff>0?'+':'−') + fmtN(Math.abs(totalDiff))
+              + '<br><span style="font-size:9px;font-weight:700">'
+              + (totalDiff>0?'통장 초과(돈이 더 있음)':'통장 부족(돈이 모자람)')
+              + '</span></span>')
+        : '—')
+    + '</td>'
     + cmpAccts.map(function(a){
         var diff = a.realAmt !== null ? (parseInt(a.realAmt)||0) - a.bal : null;
-        var diffColor = diff === 0 ? '#16a34a' : '#dc2626';
-        return '<td class="nc" style="font-weight:700;color:' + diffColor + '">'
-          + (diff !== null ? fmtN(diff) : '—') + '</td>';
+        if(diff === null) return '<td class="nc" style="color:#aaa">—</td>';
+        if(diff === 0) return '<td class="nc" style="font-weight:700;color:#16a34a">일치</td>';
+        var over = diff > 0;
+        return '<td class="nc" style="font-weight:700;color:' + (over?'#0369a1':'#dc2626') + '">'
+          + (over?'+':'−') + fmtN(Math.abs(diff))
+          + '<br><span style="font-size:9px;font-weight:700">'
+          + (over?'초과(더 있음)':'부족(모자람)') + '</span></td>';
       }).join('')
     + '</tr>';
 
   var matchBadge = totalDiff === 0
     ? '<span style="background:#fef08a;color:#92400e;padding:4px 16px;border-radius:20px;font-weight:900;font-size:13px">✅ 통장맞음</span>'
     : totalDiff !== null
-      ? '<span style="background:#fecaca;color:#dc2626;padding:4px 16px;border-radius:20px;font-weight:900;font-size:13px">⚠️ 차이: ' + fmtN(Math.abs(totalDiff)) + '원</span>'
+      ? '<span style="background:' + (totalDiff>0?'#dbeafe':'#fecaca') + ';color:' + (totalDiff>0?'#0369a1':'#dc2626') + ';padding:4px 16px;border-radius:20px;font-weight:900;font-size:13px">⚠️ '
+        + (totalDiff>0?'통장이 ':'통장이 ') + fmtN(Math.abs(totalDiff)) + '원 '
+        + (totalDiff>0?'더 많음 (초과)':'모자람 (부족)') + '</span>'
       : '<span style="color:#aaa;font-size:12px">실제잔금을 입력하세요</span>';
 
   var cmpSection = '<div class="card" style="border:2px solid var(--gold);margin-top:20px">'
