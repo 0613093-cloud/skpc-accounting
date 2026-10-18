@@ -803,6 +803,25 @@ table.fm-tbl td{height:44px}
 .fm-fam-more{padding:8px 12px;font-size:11px;color:var(--g3)}
 @media (max-width:900px){.fm-un-steps{grid-template-columns:1fr}}
 
+.fm-dup-btn{height:30px;padding:0 12px;border-radius:15px;border:1.5px solid #f0b429;background:#fff8e6;color:#8a5a00;font-family:var(--fn);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.fm-dup-btn b{font-family:var(--fnum);font-size:13px;color:#b45309}
+.fm-dup-btn.open{background:#f0b429;color:#3b2600}
+.fm-dup-btn.ok{border-color:var(--g4);background:#fff;color:var(--green)}
+.fm-dup-panel{border:1.5px solid #f0b429;border-radius:10px;margin-bottom:12px;overflow:hidden;background:#fff}
+.fm-dup-hd{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff8e6;border-bottom:1px solid #f5d98b;font-size:11px;color:#6b4b00;flex-wrap:wrap}
+.fm-dup-hd b{font-size:13px;color:#8a5a00}.fm-dup-hd span{flex:1}.fm-dup-hd .fm-ico{margin:0}
+.fm-dup-row{display:flex;gap:12px;padding:8px 12px;border-bottom:1px solid var(--g5);align-items:flex-start}
+.fm-dup-name{width:90px;flex-shrink:0;font-weight:800;color:var(--navy);font-size:14px;padding-top:6px}
+.fm-dup-name small{display:block;font-size:10px;color:var(--g3);font-weight:600}
+.fm-dup-fams{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
+.fm-dup-fam{display:flex;align-items:center;gap:8px;border:1px solid var(--g4);border-radius:8px;padding:6px 8px;background:#fafcff}
+.fm-dup-fam .t{flex:1;min-width:0}.fm-dup-fam .t b{font-size:12px;color:var(--navy)}
+.fm-dup-fam .m{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.fm-dup-mem{display:inline-flex;align-items:center;gap:3px;background:#fff;border:1px solid var(--g4);border-radius:10px;padding:1px 3px 1px 8px;font-size:11px}
+.fm-dup-mem small{font-family:var(--fnum);color:var(--g2)}
+.fm-dup-mem button{width:16px;height:16px;border:none;border-radius:50%;background:transparent;color:var(--g3);cursor:pointer;font-size:11px}
+.fm-dup-mem button:hover{background:var(--red-l);color:var(--red)}
+
 /* 숫자 강조 복사 피드백 토스트 */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;
   border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:all .25s;z-index:9999}
@@ -1839,8 +1858,10 @@ table.fm-tbl td{height:44px}
           <button id="fm-list-q-clear" onclick="document.getElementById('fm-list-q').value='';fmListFilter();document.getElementById('fm-list-q').focus()" title="지우기">×</button>
           <span id="fm-list-q-cnt"></span>
         </div>
+        <button id="fm-dup-btn" class="fm-dup-btn no-print" onclick="fmDupToggle()" style="display:none"></button>
         <a href="#" class="no-print" onclick="openFamilyMgr();return false;" style="font-size:11px;font-weight:700;color:var(--blue)">관리 › 가족 관리 →</a>
       </div>
+      <div id="fm-dup-wrap"></div>
       <div id="fm-list"></div>
     </div>
     <div id="fm-excluded-wrap"></div>
@@ -6138,6 +6159,7 @@ window.doFamilySearch=function(){
     else ex.innerHTML='<div class="no-print" style="text-align:center;margin-top:10px"><button class="btn btn-outline btn-sm" onclick="fmToggleShowExcluded()">▼ 제외된 내역 '+d.excluded.length+'건 · '+fmtN(exTot)+'원 펼치기</button></div>';
   }
   showResult('fm-result');
+  fmDupRender();
   fmListFilter();
   if(_fmPop.key) setTimeout(_fmPopRefresh,0);
 };
@@ -6241,6 +6263,64 @@ window.fmListFilter=function(){
   const empty=document.getElementById('fm-list-q-empty');
   if(q&&!hit){ if(!empty){const d=document.createElement('div');d.id='fm-list-q-empty';d.className='tbl-empty';d.textContent='"'+inp.value+'" 와(과) 일치하는 가족/성도가 없습니다';document.getElementById('fm-list').appendChild(d);} else empty.textContent='"'+inp.value+'" 와(과) 일치하는 가족/성도가 없습니다'; }
   else if(empty) empty.remove();
+};
+// ── 중복 이름 점검: 같은 이름(또는 이름 조각)이 2개 이상 가족에 들어간 경우 ──
+let _fmDupOpen=false;
+const _DUP_STOP=['생일','가정','헌금','감사','새벽기도','부부','가족','외','기타','장로','권사','집사','목사','성도','청년','자녀'];
+function _nameTokens(m){
+  return String(m||'').split(/[,，\s\/·&+\-()\[\]]+/).map(function(t){return t.trim();})
+    .filter(function(t){return /^[가-힣]{2,4}$/.test(t)&&!_DUP_STOP.includes(t)&&!/찬조$/.test(t)&&!/(생일|감사)$/.test(t);});
+}
+function fmFindDuplicates(){
+  const fams=getFamilies(); const idx={};   // token -> {famId -> [member strings]}
+  fams.forEach(function(f){ (f.members||[]).forEach(function(m){
+    const nm=normDonorName(m); const toks=new Set(_nameTokens(nm)); if(!toks.size) toks.add(nm);
+    toks.forEach(function(t){ idx[t]=idx[t]||{}; (idx[t][f.id]=idx[t][f.id]||[]).push(m); });
+  }); });
+  const out=[];
+  Object.keys(idx).forEach(function(t){ const ids=Object.keys(idx[t]); if(ids.length>=2) out.push({token:t,fams:ids.map(function(id){const f=fams.find(function(x){return x.id===id;});return {id:id,name:f?f.name:id,members:idx[t][id]};})}); });
+  return out.sort(function(a,b){return a.token.localeCompare(b.token,'ko');});
+}
+window.fmDupToggle=function(){ _fmDupOpen=!_fmDupOpen; fmDupRender(); };
+window.fmDupRender=function(){
+  const btn=document.getElementById('fm-dup-btn'); const wrap=document.getElementById('fm-dup-wrap'); if(!btn||!wrap) return;
+  const dups=fmFindDuplicates();
+  btn.style.display=dups.length||_fmDupOpen?'':'none';
+  btn.className='fm-dup-btn no-print'+(dups.length?'':' ok')+(_fmDupOpen?' open':'');
+  btn.innerHTML=dups.length?'⚠ 중복 이름 <b>'+dups.length+'</b>건 '+(_fmDupOpen?'▴':'▾'):'✓ 중복 없음';
+  if(!_fmDupOpen){ wrap.innerHTML=''; return; }
+  if(!dups.length){ wrap.innerHTML='<div class="fm-dup-panel"><div class="tbl-empty" style="padding:14px">✓ 여러 가족에 중복으로 들어간 이름이 없습니다</div></div>'; return; }
+  // 금액(현재 조회기간)
+  const amt={}; _fmCompute().list.forEach(function(g){ Object.keys(g.byMember).forEach(function(m){amt[m]=g.byMember[m];}); });
+  wrap.innerHTML='<div class="fm-dup-panel no-print">'
+    +'<div class="fm-dup-hd"><b>⚠ 여러 가족에 들어간 이름 '+dups.length+'건</b><span>한 사람은 한 가족에만 있어야 합니다. 맞는 가족에서 <b>여기에 남기기</b>를 누르면 다른 가족에서는 빠집니다. (금액은 현재 조회 기간 기준)</span><button class="fm-ico" onclick="fmDupToggle()" title="닫기">×</button></div>'
+    +dups.map(function(d){
+      return '<div class="fm-dup-row"><div class="fm-dup-name">'+escH(d.token)+'<small>'+d.fams.length+'개 가족</small></div><div class="fm-dup-fams">'
+        +d.fams.map(function(f){
+          return '<div class="fm-dup-fam"><div class="t"><b>'+escH(f.name)+'</b>'
+            +'<div class="m">'+f.members.map(function(m){const nm=normDonorName(m);return '<span class="fm-dup-mem">'+escH(m)+(amt[nm]?' <small>'+fmtN(amt[nm])+'</small>':'')+'<button onclick="fmDupRemove(\''+_q(f.id)+'\',\''+_q(m)+'\')" title="이 가족에서 빼기">×</button></span>';}).join('')+'</div></div>'
+            +'<button class="btn btn-navy btn-xs" onclick="fmDupKeep(\''+_q(d.token)+'\',\''+_q(f.id)+'\')">여기에 남기기</button></div>';
+        }).join('')+'</div></div>';
+    }).join('')+'</div>';
+};
+// token이 들어간 구성원을 keepId 가족에만 남기고 다른 가족에서는 제거 (옮겨옴)
+window.fmDupKeep=function(token,keepId){
+  const fams=getFamilies(); const keep=fams.find(function(f){return f.id===keepId;}); if(!keep) return;
+  const moved=[];
+  fams.forEach(function(f){ if(f.id===keepId) return;
+    f.members=(f.members||[]).filter(function(m){ const has=_nameTokens(normDonorName(m)).includes(token)||normDonorName(m)===token; if(has) moved.push(m); return !has; });
+    if(!f.members.map(normDonorName).includes(normDonorName(f.main))) f.main=f.members[0]||'';
+  });
+  if(!confirm('"'+token+'"이(가) 들어간 이름 '+moved.length+'건을 다른 가족에서 빼고 "'+keep.name+'"에 남깁니다.\n\n'+moved.join(', ')+'\n\n진행할까요?')) return;
+  moved.forEach(function(m){ if(!keep.members.map(normDonorName).includes(normDonorName(m))) keep.members.push(normDonorName(m)); });
+  setFamilies(fams.filter(function(f){return (f.members||[]).length;}));
+  showToast('"'+token+'" → '+keep.name+' 에만 남김'); doFamilySearch();
+};
+window.fmDupRemove=function(fid,m){
+  const fams=getFamilies(); const f=fams.find(function(x){return x.id===fid;}); if(!f) return;
+  if(!confirm('"'+m+'"을(를) "'+f.name+'"에서 뺄까요?')) return;
+  f.members=f.members.filter(function(x){return x!==m;}); if(f.main===m) f.main=f.members[0]||'';
+  setFamilies(fams.filter(function(x){return (x.members||[]).length;})); showToast(m+' 제거'); doFamilySearch();
 };
 // ── 미등록 패널: STEP1 검색 ──
 window.fmUnFilter=function(){
