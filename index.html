@@ -781,6 +781,28 @@ table.fm-tbl td{height:44px}
 .fm-list-search button{visibility:hidden;width:20px;height:20px;border-radius:50%;border:none;background:var(--g5);color:var(--g2);cursor:pointer;font-size:12px;line-height:1}
 #fm-list-q-cnt{font-family:var(--fnum);font-size:11px;font-weight:700;color:var(--navy);white-space:nowrap}
 
+.fm-un-steps{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 14px;border-bottom:1px solid var(--g5);background:#fafcff}
+.fm-un-step{background:#fff;border:1px solid var(--g4);border-radius:10px;padding:10px 12px;min-width:0}
+.fm-un-step-hd{font-size:12px;font-weight:800;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.fm-un-step-hd .num{width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+.fm-un-step-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fm-un-step-row .fm-list-search{flex:1;min-width:200px}
+.fm-un-picked{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;max-height:64px;overflow-y:auto}
+.fm-un-picked:empty{display:none}
+.fm-un-picked .sel-chip{font-size:11px;padding:2px 5px 2px 9px}
+.fm-fam-combo{position:relative;flex:1;min-width:220px}
+.fm-fam-combo .fm-list-search{min-width:0}
+#fm-un-fam-q.picked{font-weight:800;color:var(--navy)}
+.fm-fam-list{display:none;position:absolute;left:0;right:0;top:36px;z-index:50;background:#fff;border:1.5px solid var(--navy);border-radius:10px;box-shadow:0 10px 28px rgba(15,35,71,.22);max-height:280px;overflow-y:auto}
+.fm-fam-list.open{display:block}
+.fm-fam-opt{padding:7px 12px;border-bottom:1px solid var(--g5);cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.fm-fam-opt b{font-size:13px;color:var(--navy)}
+.fm-fam-opt small{font-size:10px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-fam-opt mark{background:#fff3cd;color:inherit;padding:0}
+.fm-fam-opt:hover,.fm-fam-opt.on{background:var(--blue-xp)}
+.fm-fam-more{padding:8px 12px;font-size:11px;color:var(--g3)}
+@media (max-width:900px){.fm-un-steps{grid-template-columns:1fr}}
+
 /* 숫자 강조 복사 피드백 토스트 */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;
   border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:all .25s;z-index:9999}
@@ -6055,19 +6077,40 @@ window.doFamilySearch=function(){
     else {
       const sorted=singles.slice().sort(function(a,b){return a.name.localeCompare(b.name,'ko');});
       up.innerHTML='<details class="fm-unassigned no-print"'+(window._fmUnOpen?' open':'')+' ontoggle="window._fmUnOpen=this.open">'
-        +'<summary><span>🧩 가족 미등록 헌금자 <b>'+singles.length+'명</b></span><span class="hint-inline">체크 → 아래 "기존 가족 선택" 또는 "새 가족", 또는 표의 가족 행에 있는 <b>➕ 여기에</b> 버튼으로 추가</span></summary>'
-        +'<div class="fm-un-tools">'
-          +'<label class="chk-pill"><input type="checkbox" onchange="fmUnSelAll(this.checked)"> 전체 선택</label>'
-          +'<span id="fm-un-count" class="badge b-navy">'+checkedUn.length+'명 선택</span>'
-          +'<span style="flex:1"></span>'
-          +'<select class="fsel" id="fm-un-target" style="width:auto;min-width:220px;max-width:340px;height:32px"><option value="">→ 기존 가족 선택</option>'+_fmFamilyOptions(null)+'</select>'
-          +'<button class="btn btn-navy btn-sm" onclick="fmBulkAssign()">기존 가족에 추가</button>'
-          +'<button class="btn btn-outline btn-sm" onclick="fmBulkNew()">+ 새 가족으로 만들기</button>'
+        +'<summary><span>🧩 가족 미등록 헌금자 <b>'+singles.length+'명</b></span><span class="hint-inline">① 헌금자 검색·체크 → ② 가족 검색·선택 → 추가 (또는 표의 <b>➕ 여기에</b>)</span></summary>'
+        +'<div class="fm-un-steps">'
+          // STEP 1: 미등록 내역 검색 + 선택
+          +'<div class="fm-un-step">'
+            +'<div class="fm-un-step-hd"><span class="num">1</span>추가할 헌금자 찾아서 체크</div>'
+            +'<div class="fm-un-step-row">'
+              +'<div class="fm-list-search"><span class="ico">🔍</span><input id="fm-un-q" placeholder="미등록 헌금자 검색 (예: 김기호)" autocomplete="off" value="'+escH(window._fmUnQ||'')+'" oninput="fmUnFilter()" onkeydown="if(event.key===\'Escape\'){this.value=\'\';fmUnFilter();}"><button id="fm-un-q-clear" onclick="var i=document.getElementById(\'fm-un-q\');i.value=\'\';fmUnFilter();i.focus()" title="지우기">×</button><span id="fm-un-q-cnt"></span></div>'
+              +'<label class="chk-pill"><input type="checkbox" id="fm-un-all" onchange="fmUnSelAll(this.checked)"> 보이는 항목 전체 선택</label>'
+              +'<span id="fm-un-count" class="badge b-navy">'+checkedUn.length+'명 선택</span>'
+              +'<button class="btn btn-outline btn-xs" onclick="fmUnClearSel()">선택 해제</button>'
+            +'</div>'
+            +'<div id="fm-un-picked" class="fm-un-picked"></div>'
+          +'</div>'
+          // STEP 2: 기존 가족 검색 → 지정 → 추가
+          +'<div class="fm-un-step">'
+            +'<div class="fm-un-step-hd"><span class="num">2</span>넣을 가족 선택</div>'
+            +'<div class="fm-un-step-row">'
+              +'<div class="fm-fam-combo">'
+                +'<div class="fm-list-search"><span class="ico">👨‍👩‍👧</span><input id="fm-un-fam-q" placeholder="기존 가족 이름/구성원 검색" autocomplete="off" oninput="fmFamComboFilter()" onfocus="fmFamComboOpen()" onkeydown="fmFamComboKey(event)"><button id="fm-un-fam-clear" onclick="fmFamComboPick(\'\')" title="선택 취소">×</button></div>'
+                +'<div id="fm-un-fam-list" class="fm-fam-list"></div>'
+              +'</div>'
+              +'<input type="hidden" id="fm-un-target" value="'+escH(window._fmUnTarget||'')+'">'
+              +'<button class="btn btn-navy btn-sm" onclick="fmBulkAssign()">선택한 가족에 추가</button>'
+              +'<span style="color:var(--g3);font-size:11px">또는</span>'
+              +'<button class="btn btn-outline btn-sm" onclick="fmBulkNew()">+ 새 가족으로 만들기</button>'
+            +'</div>'
+          +'</div>'
         +'</div>'
-        +'<div class="fm-un-grid">'+sorted.map(function(g){const on=checkedUn.includes(g.main);return '<label class="fm-un-item"><input type="checkbox" class="fm-un-chk" value="'+escH(g.main)+'" '+(on?'checked':'')+' onchange="fmUnChanged()"><span class="n">'+escH(g.main)+'</span><span class="a">'+fmtN(g.total)+'</span></label>';}).join('')+'</div>'
+        +'<div class="fm-un-grid">'+sorted.map(function(g){const on=checkedUn.includes(g.main);return '<label class="fm-un-item" data-q="'+escH(g.main.toLowerCase())+'"><input type="checkbox" class="fm-un-chk" value="'+escH(g.main)+'" '+(on?'checked':'')+' onchange="fmUnChanged()"><span class="n">'+escH(g.main)+'</span><span class="a">'+fmtN(g.total)+'</span></label>';}).join('')+'</div>'
+        +'<div id="fm-un-empty" class="tbl-empty" style="display:none;padding:14px">일치하는 미등록 헌금자가 없습니다</div>'
         +'</details>';
     }
   }
+  if(up&&singles.length){ fmUnFilter(); fmFamComboRenderPicked(); _fmUnPickedRender(); }
   // ② 추천 배너
   const sw=document.getElementById('fm-suggest-wrap');
   if(sw){
@@ -6199,9 +6242,73 @@ window.fmListFilter=function(){
   if(q&&!hit){ if(!empty){const d=document.createElement('div');d.id='fm-list-q-empty';d.className='tbl-empty';d.textContent='"'+inp.value+'" 와(과) 일치하는 가족/성도가 없습니다';document.getElementById('fm-list').appendChild(d);} else empty.textContent='"'+inp.value+'" 와(과) 일치하는 가족/성도가 없습니다'; }
   else if(empty) empty.remove();
 };
+// ── 미등록 패널: STEP1 검색 ──
+window.fmUnFilter=function(){
+  const inp=document.getElementById('fm-un-q'); if(!inp) return;
+  const q=inp.value.trim().toLowerCase(); window._fmUnQ=inp.value;
+  const items=document.querySelectorAll('.fm-un-item'); let hit=0;
+  items.forEach(function(it){const ok=!q||(it.getAttribute('data-q')||'').includes(q); it.style.display=ok?'':'none'; if(ok) hit++;});
+  const cnt=document.getElementById('fm-un-q-cnt'); if(cnt) cnt.textContent=q?(hit+' / '+items.length+'명'):'';
+  const clr=document.getElementById('fm-un-q-clear'); if(clr) clr.style.visibility=q?'visible':'hidden';
+  const em=document.getElementById('fm-un-empty'); if(em) em.style.display=(q&&!hit)?'':'none';
+  _fmUnSyncAll();
+};
+function _fmUnSyncAll(){
+  const vis=Array.from(document.querySelectorAll('.fm-un-item')).filter(function(i){return i.style.display!=='none';}).map(function(i){return i.querySelector('.fm-un-chk');});
+  const all=document.getElementById('fm-un-all'); if(all) all.checked=vis.length>0&&vis.every(function(c){return c.checked;});
+}
+function _fmUnPickedRender(){
+  const el=document.getElementById('fm-un-picked'); if(!el) return;
+  const arr=window._fmUnChecked||[];
+  el.innerHTML=arr.length?arr.map(function(n){return '<span class="sel-chip">'+escH(n)+'<button onclick="fmUnUncheck(\''+_q(n)+'\')" title="선택 취소">×</button></span>';}).join(''):'';
+}
+window.fmUnUncheck=function(n){
+  document.querySelectorAll('.fm-un-chk').forEach(function(c){if(c.value===n) c.checked=false;});
+  window._fmUnChecked=(window._fmUnChecked||[]).filter(function(x){return x!==n;}); _fmUnLightRefresh();
+};
+window.fmUnClearSel=function(){ document.querySelectorAll('.fm-un-chk').forEach(function(c){c.checked=false;}); window._fmUnChecked=[]; _fmUnLightRefresh(); };
+// ── 미등록 패널: STEP2 기존 가족 검색 콤보 ──
+let _fmComboIdx=0;
+function _fmComboItems(q){
+  q=(q||'').trim().toLowerCase();
+  return getFamilies().filter(function(f){return !q||f.name.toLowerCase().includes(q)||(f.members||[]).some(function(m){return String(m).toLowerCase().includes(q);});})
+    .sort(function(a,b){return a.name.localeCompare(b.name,'ko');});
+}
+window.fmFamComboOpen=function(){ const l=document.getElementById('fm-un-fam-list'); if(l){ l.classList.add('open'); fmFamComboFilter(); } };
+window.fmFamComboFilter=function(){
+  const inp=document.getElementById('fm-un-fam-q'); const l=document.getElementById('fm-un-fam-list'); if(!inp||!l) return;
+  l.classList.add('open');
+  const items=_fmComboItems(inp.value); _fmComboIdx=0; const q=inp.value.trim();
+  l.innerHTML=items.length?items.slice(0,50).map(function(f,i){
+      const mem=(f.members||[]).map(function(m){return q&&String(m).includes(q)?'<mark>'+escH(m)+'</mark>':escH(m);}).join(', ');
+      return '<div class="fm-fam-opt'+(i===0?' on':'')+'" data-id="'+escH(f.id)+'" onmousedown="event.preventDefault();fmFamComboPick(\''+_q(f.id)+'\')"><b>'+escH(f.name)+'</b><small>'+(f.members||[]).length+'명 · '+mem+'</small></div>';
+    }).join('')+(items.length>50?'<div class="fm-fam-more">… '+(items.length-50)+'개 더 (검색어를 더 입력하세요)</div>':'')
+    :'<div class="fm-fam-more">일치하는 가족이 없습니다 — "새 가족으로 만들기"를 사용하세요</div>';
+};
+window.fmFamComboKey=function(ev){
+  const l=document.getElementById('fm-un-fam-list'); if(!l) return;
+  const opts=l.querySelectorAll('.fm-fam-opt');
+  if(ev.key==='ArrowDown'||ev.key==='ArrowUp'){ ev.preventDefault(); if(!opts.length) return; _fmComboIdx=(_fmComboIdx+(ev.key==='ArrowDown'?1:-1)+opts.length)%opts.length; opts.forEach(function(o,i){o.classList.toggle('on',i===_fmComboIdx);}); opts[_fmComboIdx].scrollIntoView({block:'nearest'}); }
+  else if(ev.key==='Enter'){ ev.preventDefault(); if(opts[_fmComboIdx]) fmFamComboPick(opts[_fmComboIdx].dataset.id); }
+  else if(ev.key==='Escape'){ l.classList.remove('open'); }
+};
+window.fmFamComboPick=function(id){
+  window._fmUnTarget=id||''; const h=document.getElementById('fm-un-target'); if(h) h.value=window._fmUnTarget;
+  const l=document.getElementById('fm-un-fam-list'); if(l) l.classList.remove('open');
+  fmFamComboRenderPicked();
+};
+function fmFamComboRenderPicked(){
+  const inp=document.getElementById('fm-un-fam-q'); const clr=document.getElementById('fm-un-fam-clear'); if(!inp) return;
+  const f=getFamilies().find(function(x){return x.id===window._fmUnTarget;});
+  if(f){ inp.value=f.name; inp.classList.add('picked'); } else { if(window._fmUnTarget){window._fmUnTarget='';} inp.classList.remove('picked'); if(document.activeElement!==inp) inp.value=''; }
+  const h=document.getElementById('fm-un-target'); if(h) h.value=window._fmUnTarget||'';
+  if(clr) clr.style.visibility=f?'visible':'hidden';
+}
+window.fmFamComboRenderPicked=fmFamComboRenderPicked;
+document.addEventListener('mousedown',function(ev){ if(!ev.target.closest||!ev.target.closest('.fm-fam-combo')){ const l=document.getElementById('fm-un-fam-list'); if(l&&l.classList.contains('open')){ l.classList.remove('open'); fmFamComboRenderPicked(); } } });
 // 체크박스 변경 시: 체크 목록은 다시 그리지 않음(스크롤 유지) → 개수 표시 + 표만 갱신
 function _fmUnLightRefresh(){
-  fmUnCount();
+  fmUnCount(); _fmUnPickedRender(); _fmUnSyncAll();
   const el=document.getElementById('fm-list'); if(!el) return;
   const wrap=el.querySelector('.tbl-wrap'); const sx=wrap?wrap.scrollLeft:0;
   const d=_fmCompute();
@@ -6214,8 +6321,9 @@ window.fmUnChanged=function(){
   window._fmUnOpen=true; _fmUnLightRefresh();
 };
 window.fmUnSelAll=function(on){
-  document.querySelectorAll('.fm-un-chk').forEach(function(c){c.checked=!!on;});
-  window._fmUnChecked=on?Array.from(document.querySelectorAll('.fm-un-chk')).map(function(c){return c.value;}):[];
+  // 검색으로 보이는 항목만 선택/해제 (숨은 항목의 선택 상태는 유지)
+  document.querySelectorAll('.fm-un-item').forEach(function(it){ if(it.style.display!=='none'){ const c=it.querySelector('.fm-un-chk'); if(c) c.checked=!!on; } });
+  window._fmUnChecked=Array.from(document.querySelectorAll('.fm-un-chk:checked')).map(function(c){return c.value;});
   window._fmUnOpen=true; _fmUnLightRefresh();
 };
 window.fmUnCount=function(){const n=(window._fmUnChecked||[]).length;const el=document.getElementById('fm-un-count');if(el) el.textContent=n+'명 선택';};
@@ -6223,8 +6331,8 @@ window.fmBulkAssign=function(){
   const names=(window._fmUnChecked||[]).slice();
   const to=document.getElementById('fm-un-target')?.value||'';
   if(!names.length){showToast('먼저 헌금자를 체크하세요');return;}
-  if(!to){showToast('추가할 가족을 선택하세요 (또는 표의 ➕ 여기에 버튼)');document.getElementById('fm-un-target')?.focus();return;}
-  if(addMembersToFamily(to,names,true)){ showToast(names.length+'명 → '+(getFamilies().find(function(f){return f.id===to;})||{}).name); window._fmUnChecked=[]; window._fmUnOpen=true; doFamilySearch(); }
+  if(!to){showToast('② 넣을 가족을 검색해서 선택하세요 (또는 표의 ➕ 여기에 버튼)');document.getElementById('fm-un-fam-q')?.focus();return;}
+  if(addMembersToFamily(to,names,true)){ showToast(names.length+'명 → '+(getFamilies().find(function(f){return f.id===to;})||{}).name); window._fmUnChecked=[]; window._fmUnQ=''; window._fmUnOpen=true; doFamilySearch(); }
 };
 window.fmBulkNew=function(){
   const names=(window._fmUnChecked||[]).slice();
