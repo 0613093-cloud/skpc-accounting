@@ -5501,7 +5501,7 @@ window.renderDonorPicker=function(){
     const sel=_mbSelected.includes(d.name);
     return head+'<div class="dp-item'+(sel?' sel':'')+'" onclick="toggleMbDonor(\''+escH(d.name).replace(/'/g,"\\'")+'\')">'
       +'<span class="dp-chk">'+(sel?'✓':'')+'</span>'
-      +'<span class="dp-name">'+escH(d.name)+(d.raws.length?'<span class="dp-raw" title="원본 표기: '+escH(d.raws.join(', '))+'">+'+d.raws.length+'</span>':'')+'</span>'
+      +'<span class="dp-name">'+escH(d.name)+'</span>'
       +'<span class="dp-meta"><b>'+fmtN(d.ytd)+'</b><small>올해 · '+d.count+'건</small></span>'
     +'</div>';
   }).join('');
@@ -5603,7 +5603,7 @@ window.doMemberSearch=function(){
         +'</tbody></table></div>';
     }
     return '<div class="card mb-person">'
-      +'<div class="mb-person-hd"><div><div class="mb-person-name">👤 '+escH(name)+(raws.length?' <span class="dp-raw" title="원본 표기 포함">'+escH(raws.join(', '))+'</span>':'')+'</div>'
+      +'<div class="mb-person-hd"><div><div class="mb-person-name">👤 '+escH(name)+'</div>'
         +'<div class="mb-person-sub">'+mine.length+'건 · '+Object.keys(mine.reduce(function(o,e){o[e.type]=1;return o;},{})).length+'종</div></div>'
         +'<div class="mb-person-tot">'+fmtN(mt)+'<small>원</small></div></div>'
       +body+'</div>';
@@ -6000,7 +6000,7 @@ function _fmTable(list,d,opts){
       +(muted?'':'<td class="no-print"><input type="checkbox" class="fm-row-chk" '+(sel?'checked':'')+' onchange="fmSelRow(\''+_q(g.key)+'\',this.checked)"></td>')
       +'<td style="text-align:center;font-family:var(--fnum);font-weight:800;color:'+(!muted&&i<3?'var(--gold)':'var(--g2)')+'">'+(muted?'–':i+1)+'</td>'
       +'<td><b style="color:var(--navy);font-size:13px">'+escH(g.name)+'</b> '+(g.isFamily?'<span class="badge b-navy">가족 '+g.members.length+'</span>':'<span class="badge b-gray">개인</span>')
-        +(g.raws.length?'<div class="fm-raw-line"><span class="dp-raw" title="원본 표기: '+escH(g.raws.join(', '))+'">'+escH(g.raws.join(', '))+'</span></div>':'')+'</td>'
+        +'</td>'
       +'<td>'+_fmMembersCell(g,d)+'</td>'
       +cols.map(function(c){return '<td class="nc">'+_fmRowCell(g,c,cc.rest||[])+'</td>';}).join('')
       +'<td class="nc" style="font-weight:800;color:var(--navy);font-size:13px">'+fmtN(g.total)+'</td>'
@@ -6051,7 +6051,7 @@ window.doFamilySearch=function(){
           +'<button class="btn btn-navy btn-sm" onclick="fmBulkAssign()">기존 가족에 추가</button>'
           +'<button class="btn btn-outline btn-sm" onclick="fmBulkNew()">+ 새 가족으로 만들기</button>'
         +'</div>'
-        +'<div class="fm-un-grid">'+sorted.map(function(g){const on=checkedUn.includes(g.main);return '<label class="fm-un-item"><input type="checkbox" class="fm-un-chk" value="'+escH(g.main)+'" '+(on?'checked':'')+' onchange="fmUnChanged()"><span class="n">'+escH(g.main)+(g.raws.length?'<small class="dp-raw">'+escH(g.raws.join(', '))+'</small>':'')+'</span><span class="a">'+fmtN(g.total)+'</span></label>';}).join('')+'</div>'
+        +'<div class="fm-un-grid">'+sorted.map(function(g){const on=checkedUn.includes(g.main);return '<label class="fm-un-item"><input type="checkbox" class="fm-un-chk" value="'+escH(g.main)+'" '+(on?'checked':'')+' onchange="fmUnChanged()"><span class="n">'+escH(g.main)+'</span><span class="a">'+fmtN(g.total)+'</span></label>';}).join('')+'</div>'
         +'</details>';
     }
   }
