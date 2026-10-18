@@ -655,6 +655,81 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 .fam-sug-row .why{font-size:11px;color:#8a6022;background:#fff3cd;padding:2px 8px;border-radius:4px;font-weight:700}
 .fam-sug-row .names{flex:1;font-size:13px;font-weight:700;color:var(--navy)}
 
+
+/* ── 성도별: 헌금자 피커 ── */
+.mb-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:14px;align-items:start}
+.mb-picker{margin:0;padding:14px;position:sticky;top:0}
+.cho-bar{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px}
+.cho-btn{height:24px;min-width:24px;padding:0 6px;border:1px solid var(--g4);background:#fff;border-radius:6px;font-size:11px;font-weight:800;color:var(--g2);cursor:pointer;font-family:var(--fn)}
+.cho-btn.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.cho-btn.dim{opacity:.35}
+.dp-list{max-height:62vh;overflow-y:auto;border:1px solid var(--g5);border-radius:8px}
+.dp-head{position:sticky;top:0;background:var(--g6);color:var(--g2);font-size:10px;font-weight:800;padding:3px 10px;border-bottom:1px solid var(--g5);z-index:1}
+.dp-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--g6);cursor:pointer;font-size:13px}
+.dp-item:hover{background:var(--blue-xp)}
+.dp-item.sel{background:#eaf3ff}
+.dp-chk{width:18px;height:18px;border:1.5px solid var(--g4);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0;background:#fff}
+.dp-item.sel .dp-chk{background:var(--navy);border-color:var(--navy)}
+.dp-name{flex:1;font-weight:700;color:var(--g1);display:flex;align-items:center;gap:5px;min-width:0}
+.dp-raw{font-size:9px;font-weight:700;color:#8a6022;background:#fff3cd;border:1px solid #f0dca8;border-radius:10px;padding:0 6px;white-space:nowrap}
+.dp-meta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.dp-meta b{font-family:var(--fnum);font-size:12px;color:var(--navy)}
+.dp-meta small{font-size:9px;color:var(--g3)}
+.sel-chip{display:inline-flex;align-items:center;gap:4px;background:var(--navy);color:#fff;border-radius:20px;padding:3px 6px 3px 11px;font-size:12px;font-weight:700}
+.sel-chip button{width:18px;height:18px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:12px;line-height:1}
+.sel-chip button:hover{background:var(--red)}
+.mb-person{margin:0 0 12px;padding:0;overflow:hidden}
+.mb-person-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,var(--navy),var(--navy-m));color:#fff}
+.mb-person-name{font-size:15px;font-weight:800}
+.mb-person-sub{font-size:11px;opacity:.75;margin-top:2px}
+.mb-person-tot{font-family:var(--fnum);font-size:20px;font-weight:800}
+.mb-person-tot small{font-family:var(--fn);font-size:11px;margin-left:2px;opacity:.8}
+.mb-tgroup{border-bottom:1px solid var(--g5)}
+.mb-tgroup:last-child{border-bottom:none}
+.mb-tgroup-hd{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px dashed var(--g4)}
+.mb-tgroup-sub{font-size:11px;color:var(--g2)}
+.mb-tgroup-tot{margin-left:auto;font-family:var(--fnum);font-weight:800;color:var(--navy);font-size:14px}
+table.mb-tbl{min-width:0}
+table.mb-tbl td.d{font-family:var(--fnum);width:150px}
+table.mb-tbl td.d small{color:var(--g3);font-family:var(--fn);font-size:10px}
+table.mb-tbl td.amt{font-weight:800;color:var(--navy);width:130px}
+table.mb-tbl td.pay{width:70px}
+table.mb-tbl td.memo{font-size:11px;color:var(--g2)}
+.mb-person .tbl-empty{padding:18px}
+/* ── 가족별: 편집/미등록/제외 ── */
+.fm-card.muted{opacity:.7;filter:grayscale(.35)}
+.fm-card.muted .fm-card-hd{background:linear-gradient(90deg,#6b7280,#9ca3af)}
+.fm-ico{width:26px;height:26px;border-radius:50%;border:1px solid var(--g4);background:#fff;color:var(--g2);cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto}
+.fm-ico:hover{border-color:var(--blue);color:var(--blue)}
+.fm-ico.hd{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;margin-left:6px}
+.fm-ico.hd:hover{background:#fff;color:var(--navy)}
+.fm-chip.zero{opacity:.55;border-style:dashed}
+.fm-edit{display:flex;gap:5px;flex-wrap:wrap;align-items:center;width:100%}
+.fam-tag .ft-amt{font-family:var(--fnum);font-weight:600;color:var(--g2);margin-left:4px;font-size:10px}
+.fam-move{height:18px;border:none;background:transparent;font-size:10px;color:var(--g3);cursor:pointer;max-width:30px;padding:0}
+.fam-move:hover{color:var(--blue)}
+.fm-assign{height:28px;font-size:11px;padding:0 6px;max-width:170px}
+.fm-unassigned{background:#fff;border:1.5px dashed var(--blue);border-radius:var(--rl);margin-bottom:12px;overflow:hidden}
+.fm-unassigned summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:10px 14px;font-size:13px;font-weight:800;color:var(--navy);background:var(--blue-xp)}
+.fm-unassigned summary::-webkit-details-marker{display:none}
+.fm-unassigned summary::before{content:'▸';transition:transform .15s}
+.fm-unassigned[open] summary::before{transform:rotate(90deg)}
+.fm-unassigned .hint-inline{font-size:11px;font-weight:500;color:var(--g2);margin-left:auto}
+.fm-un-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--g5);background:#fafcff}
+.fm-un-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px;padding:10px 14px;max-height:260px;overflow-y:auto}
+.fm-un-item{display:flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid var(--g5);border-radius:6px;font-size:12px;cursor:pointer;background:#fff}
+.fm-un-item:hover{border-color:var(--blue)}
+.fm-un-item:has(input:checked){border-color:var(--navy);background:var(--blue-xp)}
+.fm-un-item input{accent-color:var(--navy)}
+.fm-un-item .n{flex:1;font-weight:700;color:var(--g1);display:flex;flex-direction:column;line-height:1.1}
+.fm-un-item .a{font-family:var(--fnum);font-size:11px;color:var(--g2)}
+.fm-sug-chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #f0dca8;border-radius:20px;padding:2px 4px 2px 10px;font-size:11px;font-weight:700;color:var(--navy)}
+.fm-sug-chip button{height:20px;border:none;border-radius:12px;background:var(--navy);color:#fff;font-size:10px;font-weight:700;padding:0 8px;cursor:pointer;font-family:var(--fn)}
+.fm-excl-card{margin-top:14px;border-style:dashed}
+.fam-settings{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#fff;border:1px solid var(--g4);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px}
+.b-red{background:var(--red-l);color:var(--red)}
+@media (max-width:900px){.mb-layout{grid-template-columns:1fr}.mb-picker{position:static}.dp-list{max-height:40vh}.fam-settings{grid-template-columns:1fr}}
+
 /* 숫자 강조 복사 피드백 토스트 */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;
   border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:all .25s;z-index:9999}
@@ -842,7 +917,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       if(snap.exists()) {
         const data = snap.data();
         ['offeringTypes','deptTypes','sponsorTypes','recipients',
-         'annualBudget','bankActual','deptOfficers','carryover','writers','families','transferDone'].forEach(k => {
+         'annualBudget','bankActual','deptOfficers','carryover','writers','families','transferDone','famExclude','nameIgnorePrefixes'].forEach(k => {
           if(data[k] !== undefined) {
             try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
           }
@@ -924,7 +999,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       if(!snap.exists()) return;
       const data = snap.data();
       ['offeringTypes','deptTypes','sponsorTypes','recipients',
-       'annualBudget','bankActual','deptOfficers','carryover','writers','families','transferDone'].forEach(k => {
+       'annualBudget','bankActual','deptOfficers','carryover','writers','families','transferDone','famExclude','nameIgnorePrefixes'].forEach(k => {
         if(data[k] !== undefined) {
           try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e){}
         }
@@ -1602,57 +1677,50 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 <div id="tab-member" class="tab-pane">
   <div class="pg-hd">
     <div class="pg-title">👤 성도별 헌금내역</div>
-    <div class="pg-desc">성도를 선택하면 기간 내 헌금을 <strong>일자 · 헌금명 · 금액</strong>으로 정리합니다. 연말정산 기부금 확인 등에 사용하세요.</div>
+    <div class="pg-desc">왼쪽 <strong>가나다순 헌금자 목록</strong>에서 이름을 클릭해 추가하세요. 헌금을 <strong>헌금명별로 묶은 뒤 날짜순</strong>으로 보여줍니다. ("월삭- 김재일"처럼 접두어가 붙은 이름은 같은 사람으로 합산)</div>
   </div>
-  <div class="search-panel no-print">
-    <div class="panel-title">조회 조건</div>
-    <div class="g3 mb8">
-      <div class="fg"><div class="flbl">성도명</div>
-        <div class="combo-wrap">
-          <input class="finp" id="mb-name" placeholder="이름 입력 또는 선택" list="mb-name-list" autocomplete="off" oninput="mbNameTyping(this)" onkeydown="if(event.key==='Enter')doMemberSearch()">
-          <datalist id="mb-name-list"></datalist>
+  <div class="mb-layout">
+    <!-- 좌: 헌금자 선택 -->
+    <aside class="card mb-picker no-print">
+      <div class="card-hd" style="margin-bottom:8px"><div class="card-title">헌금자 선택</div><span id="mb-donor-count" class="badge b-navy"></span></div>
+      <input class="finp" id="mb-donor-search" placeholder="이름 검색" oninput="mbDonorTyping()" style="margin-bottom:6px">
+      <div class="cho-bar" id="mb-chosung-bar"></div>
+      <div class="dp-list" id="mb-donor-list"></div>
+    </aside>
+    <!-- 우: 조건 + 결과 -->
+    <section style="min-width:0">
+      <div class="search-panel no-print" style="margin-bottom:10px">
+        <div class="flex gap8 items-c" style="flex-wrap:wrap;margin-bottom:8px">
+          <span class="flbl" style="margin-right:2px">선택된 헌금자</span>
+          <div id="mb-selected" class="flex gap4 items-c" style="flex-wrap:wrap;flex:1"></div>
         </div>
-        <div id="mb-name-hint" class="hint"></div>
-      </div>
-      <div class="fg"><div class="flbl">시작일</div><input type="date" class="finp" id="mb-from"></div>
-      <div class="fg"><div class="flbl">종료일</div><input type="date" class="finp" id="mb-to"></div>
-    </div>
-    <div class="flex gap8 items-c" style="flex-wrap:wrap">
-      <div class="quick-dates">
-        <button class="qd-btn" onclick="setMemberRange('ytd')">올해 (1/1~오늘)</button>
-        <button class="qd-btn" onclick="setMemberRange('lastyear')">작년 전체</button>
-        <button class="qd-btn" onclick="setMemberRange('month')">이번 달</button>
-        <button class="qd-btn" onclick="setMemberRange('all')">전체 기간</button>
-      </div>
-      <span style="flex:1"></span>
-      <button class="btn btn-navy" onclick="doMemberSearch()">🔍 조회</button>
-      <button class="btn btn-outline" onclick="resetMemberSearch()">초기화</button>
-      <button class="btn btn-outline btn-sm" onclick="printMember()">🖨️ 인쇄</button>
-      <button class="btn btn-outline btn-sm" onclick="exportMemberXlsx()">📤 엑셀</button>
-    </div>
-  </div>
-  <div class="result-section" id="mb-result">
-    <div class="g4 mb12" id="mb-stats"></div>
-    <div class="g2 mb12" style="grid-template-columns:2fr 1fr;align-items:start">
-      <div class="card" style="margin:0">
-        <div class="card-hd">
-          <div class="card-title">헌금 내역 <span id="mb-title-badge" class="badge b-navy" style="margin-left:6px"></span></div>
+        <div class="flex gap8 items-c" style="flex-wrap:wrap">
+          <span class="flbl">기간</span>
+          <input type="date" class="finp" id="mb-from" style="max-width:150px" onchange="doMemberSearch()">
+          <span style="color:var(--g3)">~</span>
+          <input type="date" class="finp" id="mb-to" style="max-width:150px" onchange="doMemberSearch()">
+          <div class="quick-dates">
+            <button class="qd-btn on" data-k="ytd" onclick="setMemberRange('ytd')">올해 (1/1~오늘)</button>
+            <button class="qd-btn" data-k="lastyear" onclick="setMemberRange('lastyear')">작년</button>
+            <button class="qd-btn" data-k="month" onclick="setMemberRange('month')">이번 달</button>
+            <button class="qd-btn" data-k="all" onclick="setMemberRange('all')">전체</button>
+          </div>
+          <span style="flex:1"></span>
           <div class="seg" id="mb-view-seg">
-            <button class="seg-btn on" onclick="setMemberView('list',this)">일자별</button>
+            <button class="seg-btn on" onclick="setMemberView('type',this)">헌금명별</button>
+            <button class="seg-btn" onclick="setMemberView('list',this)">일자별</button>
             <button class="seg-btn" onclick="setMemberView('month',this)">월별</button>
           </div>
+          <button class="btn btn-outline btn-sm" onclick="printMember()">🖨️ 인쇄</button>
+          <button class="btn btn-outline btn-sm" onclick="exportMemberXlsx()">📤 엑셀</button>
         </div>
-        <div class="tbl-wrap"><table class="tbl" id="mb-tbl">
-          <thead><tr><th>#</th><th>일자</th><th>헌금명</th><th class="nc">금액(원)</th><th>입금</th><th>비고</th></tr></thead>
-          <tbody id="mb-tbody"></tbody>
-          <tfoot><tr><td colspan="3" style="text-align:center">합계</td><td class="nc" id="mb-foot-total"></td><td colspan="2"></td></tr></tfoot>
-        </table></div>
       </div>
-      <div class="card" style="margin:0">
-        <div class="card-title" style="margin-bottom:10px">헌금명별 합계</div>
-        <div id="mb-by-type"></div>
+      <div class="result-section" id="mb-result">
+        <div class="g4 mb12" id="mb-stats"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px 2px"><span class="flbl">조회 기간</span><span id="mb-title-badge" class="badge b-navy"></span></div>
+        <div id="mb-persons"></div>
       </div>
-    </div>
+    </section>
   </div>
 </div>
 
@@ -1660,43 +1728,46 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
 <div id="tab-family" class="tab-pane">
   <div class="pg-hd">
     <div class="pg-title">👨‍👩‍👧 가족별 누적헌금</div>
-    <div class="pg-desc">가족 단위로 묶어 헌금별 합계를 <strong>총액 내림차순</strong>으로 보여줍니다. 가족 등록은 <a href="#" onclick="openFamilyMgr();return false;" style="color:var(--blue);font-weight:700">관리 → 가족 관리</a>에서 할 수 있습니다.</div>
+    <div class="pg-desc">가족 단위로 묶어 헌금별 합계를 <strong>총액 내림차순</strong>으로 보여줍니다. 카드의 <strong>✎</strong>로 구성원을 바로 고치고, <strong>미등록 헌금자</strong>는 체크해서 한 번에 가족에 넣을 수 있습니다. <strong>⊘</strong>로 화면에서 제외한 내역은 따로 볼 수 있습니다.</div>
   </div>
   <div class="search-panel no-print">
-    <div class="panel-title">조회 조건</div>
     <div class="flex gap8 items-c" style="flex-wrap:wrap">
       <div class="fg" style="margin:0"><div class="flbl">연도</div>
         <select class="fsel" id="fm-year" style="min-width:110px" onchange="doFamilySearch()"></select></div>
       <div class="fg" style="margin:0"><div class="flbl">기간 (선택)</div>
         <div class="flex gap4 items-c">
-          <input type="date" class="finp" id="fm-from" style="max-width:150px" onchange="doFamilySearch()">
+          <input type="date" class="finp" id="fm-from" style="max-width:150px" onchange="document.getElementById('fm-year').value='custom';doFamilySearch()">
           <span style="color:var(--g3)">~</span>
-          <input type="date" class="finp" id="fm-to" style="max-width:150px" onchange="doFamilySearch()">
+          <input type="date" class="finp" id="fm-to" style="max-width:150px" onchange="document.getElementById('fm-year').value='custom';doFamilySearch()">
         </div></div>
       <div class="fg" style="margin:0"><div class="flbl">헌금명</div>
         <select class="fsel" id="fm-type" style="min-width:140px" onchange="doFamilySearch()"><option value="">전체</option></select></div>
       <div class="fg" style="margin:0"><div class="flbl">검색</div>
         <input class="finp" id="fm-search" placeholder="가족명/성도명" style="max-width:150px" oninput="doFamilySearch()"></div>
+      <div class="fg" style="margin:0"><div class="flbl">제외 키워드 <small style="color:var(--g3);font-weight:500">(쉼표 구분, 이름에 포함되면 제외)</small></div>
+        <input class="finp" id="fm-exclude-kw" placeholder="예: 월세, 임대" style="max-width:200px" onchange="saveExcludeKeywords(this.value)"></div>
       <label class="chk-pill" style="align-self:flex-end"><input type="checkbox" id="fm-incl-single" checked onchange="doFamilySearch()"> 미등록 개인 포함</label>
       <span style="flex:1"></span>
-      <button class="btn btn-navy" style="align-self:flex-end" onclick="doFamilySearch()">🔍 조회</button>
+      <div class="seg" id="fm-view-seg" style="align-self:flex-end">
+        <button class="seg-btn on" onclick="setFamilyView('card',this)">카드</button>
+        <button class="seg-btn" onclick="setFamilyView('table',this)">표(피벗)</button>
+      </div>
       <button class="btn btn-outline btn-sm" style="align-self:flex-end" onclick="printFamily()">🖨️ 인쇄</button>
       <button class="btn btn-outline btn-sm" style="align-self:flex-end" onclick="exportFamilyXlsx()">📤 엑셀</button>
     </div>
   </div>
   <div class="result-section" id="fm-result">
     <div class="g4 mb12" id="fm-stats"></div>
+    <div id="fm-unassigned-wrap"></div>
     <div id="fm-suggest-wrap"></div>
     <div class="card">
       <div class="card-hd">
         <div class="card-title">가족별 누적헌금 <span id="fm-title-badge" class="badge b-navy" style="margin-left:6px"></span></div>
-        <div class="seg">
-          <button class="seg-btn on" onclick="setFamilyView('card',this)">카드</button>
-          <button class="seg-btn" onclick="setFamilyView('table',this)">표(피벗)</button>
-        </div>
+        <a href="#" class="no-print" onclick="openFamilyMgr();return false;" style="font-size:11px;font-weight:700;color:var(--blue)">관리 › 가족 관리 →</a>
       </div>
       <div id="fm-list"></div>
     </div>
+    <div id="fm-excluded-wrap"></div>
   </div>
 </div>
 
@@ -1840,7 +1911,7 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
       <div class="card-title">가족 관리</div>
       <span id="fam-count-badge" class="badge b-navy"></span>
     </div>
-    <div class="alert alert-info">가족명(대표자)과 구성원을 등록하면 <strong>가족별 누적헌금</strong> 화면에서 합산됩니다. 한 성도는 한 가족에만 속할 수 있습니다.</div>
+    <div class="alert alert-info">가족명(대표자)과 구성원을 등록하면 <strong>가족별 누적헌금</strong> 화면에서 합산됩니다. 한 성도는 한 가족에만 속할 수 있습니다. 구성원 옆 <strong>→</strong>로 다른 가족으로 옮기고, <strong>×</strong>로 뺄 수 있습니다.</div>
 
     <div class="fam-add-box">
       <div class="g3" style="gap:8px">
@@ -1850,12 +1921,19 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
           <input class="finp" id="fam-new-members" placeholder="홍길동, 김영희, 홍철수" list="fam-member-list" onkeydown="if(event.key==='Enter')addFamily()"></div>
         <datalist id="fam-member-list"></datalist>
       </div>
-      <div class="flex gap8 mt8">
+      <div class="flex gap8 mt8" style="flex-wrap:wrap">
         <button class="btn btn-navy" onclick="addFamily()">+ 가족 추가</button>
         <button class="btn btn-outline" onclick="renderFamilySuggestions()">💡 추천 보기 (성씨/계좌 기반)</button>
         <span style="flex:1"></span>
         <input class="finp" id="fam-filter" placeholder="가족/성도 검색" style="max-width:180px" oninput="renderFamilyList()">
       </div>
+    </div>
+
+    <div class="fam-settings">
+      <div class="fg" style="margin:0"><div class="flbl">이름에서 무시할 접두어 <small style="color:var(--g3);font-weight:500">(쉼표 구분 · "월삭- 김재일" → "김재일")</small></div>
+        <input class="finp" id="fam-ignore-prefix" placeholder="월삭" onchange="saveNameIgnore(this.value)"></div>
+      <div class="fg" style="margin:0"><div class="flbl">가족별 누적에서 제외할 키워드 <small style="color:var(--g3);font-weight:500">(이름에 포함되면 제외 · 제외 내역은 따로 조회 가능)</small></div>
+        <input class="finp" id="fam-exclude-kw" placeholder="월세" onchange="saveExcludeKeywords(this.value)"></div>
     </div>
 
     <div id="fam-suggest-box" class="hidden"></div>
@@ -2162,7 +2240,7 @@ const ST={
   set(k,v){
     try{localStorage.setItem(k,JSON.stringify(v));}catch{}
     // Firebase 동기화 (설정값만)
-    const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers','carryover','writers','families','transferDone'];
+    const configKeys=['offeringTypes','deptTypes','sponsorTypes','recipients','annualBudget','bankActual','deptOfficers','carryover','writers','families','transferDone','famExclude','nameIgnorePrefixes'];
     if(configKeys.includes(k) && window._fbSaveConfig){
       window._fbSaveConfig(k,v);
     }
@@ -5132,10 +5210,30 @@ function surnameOf(name){
   for(const d of DOUBLE_SURNAMES){if(n.startsWith(d)) return d;}
   return n[0];
 }
-// 헌금자 이름 목록 (빈도순)
+// ── 헌금자명 정규화: "월삭- 김재일", "(월삭)김재일", "김재일 월삭" → "김재일" ──
+const DEF_NAME_IGNORE=['월삭'];
+function getNameIgnore(){const v=ST.get('nameIgnorePrefixes',null);return Array.isArray(v)?v:DEF_NAME_IGNORE.slice();}
+function _escRe(s){return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function normDonorName(n){
+  let s=String(n||'').replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  const pres=getNameIgnore().filter(Boolean);
+  let changed=true, guard=0;
+  while(changed&&guard++<6){
+    changed=false;
+    for(const p of pres){
+      const re1=new RegExp('^[\\(\\[]?'+_escRe(p)+'[\\)\\]]?\\s*[-–—:·.]*\\s*','u');
+      if(re1.test(s)){const t=s.replace(re1,'').trim(); if(t&&t!==s){s=t;changed=true;}}
+      const re2=new RegExp('\\s*[-–—:·.]*\\s*[\\(\\[]?'+_escRe(p)+'[\\)\\]]?$','u');
+      if(re2.test(s)){const t=s.replace(re2,'').trim(); if(t&&t!==s){s=t;changed=true;}}
+    }
+  }
+  return s.replace(/^[-–—:·.\s]+|[-–—:·.\s]+$/g,'').replace(/\s+/g,' ').trim()||String(n||'').trim();
+}
+// 헌금자 이름 목록 (정규화명, 빈도순)
 function getDonorNames(){
   const cnt={};
-  getOfferings().forEach(function(e){const n=(e.name||'').trim();if(n) cnt[n]=(cnt[n]||0)+1;});
+  getOfferings().forEach(function(e){const n=normDonorName(e.name);if(n) cnt[n]=(cnt[n]||0)+1;});
   return Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b,'ko');});
 }
 
@@ -5294,36 +5392,90 @@ window.printTransfer=function(){
 };
 
 // ============================================================
-// 👤 성도별 헌금내역
+// 👤 성도별 헌금내역 (v2) — 가나다 헌금자 목록에서 선택 → 헌금명별 묶음 → 날짜별
 // ============================================================
-let _mbView='list';
+let _mbView='type';          // type | list | month
+let _mbSelected=[];          // 선택된 헌금자(정규화명) 목록
+let _mbChosung='';           // 초성 필터
+const CHOSUNG=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const CHO_LIST=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function chosungOf(s){
+  const c=(s||'').charCodeAt(0); if(c<0xAC00||c>0xD7A3) return /[A-Za-z]/.test(s||'')?'A':'#';
+  let ch=CHO_LIST[Math.floor((c-0xAC00)/588)];
+  if(ch==='ㄲ') ch='ㄱ'; if(ch==='ㄸ') ch='ㄷ'; if(ch==='ㅃ') ch='ㅂ'; if(ch==='ㅆ') ch='ㅅ'; if(ch==='ㅉ') ch='ㅈ';
+  return ch;
+}
+// 헌금자 통계 (정규화명 기준): {name, count, total, ytd, raws:[원본표기들], last}
+function donorStats(){
+  const m={};
+  getOfferings().forEach(function(e){
+    const raw=(e.name||'').trim(); const n=normDonorName(raw); if(!n) return;
+    if(!m[n]) m[n]={name:n,count:0,total:0,ytd:0,raws:new Set(),last:''};
+    const d=m[n]; d.count++; d.total+=Number(e.amount||0);
+    if((e.date||'').slice(0,4)===String(CUR_YEAR)) d.ytd+=Number(e.amount||0);
+    if(raw!==n) d.raws.add(raw);
+    if((e.date||'')>d.last) d.last=e.date||'';
+  });
+  return Object.values(m).map(function(d){d.raws=[...d.raws];return d;}).sort(function(a,b){return a.name.localeCompare(b.name,'ko');});
+}
 window.initMemberTab=function(){
-  // 성도명 datalist
-  const dl=document.getElementById('mb-name-list');
-  if(dl) dl.innerHTML=getDonorNames().map(function(n){return '<option value="'+escH(n)+'">';}).join('');
   const fd=document.getElementById('mb-from');const td=document.getElementById('mb-to');
   if(fd&&!fd.value) fd.value=CUR_YEAR+'-01-01';
   if(td&&!td.value) td.value=TODAY;
-  // 이미 이름이 있으면 바로 조회
-  if(document.getElementById('mb-name')?.value.trim()) doMemberSearch();
+  renderDonorPicker();
+  renderMbSelected();
+  if(_mbSelected.length) doMemberSearch();
 };
-window.mbNameTyping=function(el){
-  const v=el.value.trim();const hint=document.getElementById('mb-name-hint');
-  if(!hint) return;
-  if(!v){hint.textContent='';return;}
-  const names=getDonorNames();
-  const exact=names.includes(v);
-  const sim=names.filter(function(n){return n.includes(v)&&n!==v;}).slice(0,6);
-  hint.innerHTML=(exact?'<span style="color:var(--green);font-weight:700">✓ 등록된 헌금자</span>':'<span style="color:var(--gold)">일치하는 헌금자 없음</span>')
-    +(sim.length?' · 유사: '+sim.map(function(n){return '<a href="#" onclick="document.getElementById(\'mb-name\').value=\''+escH(n).replace(/'/g,"\\'")+'\';doMemberSearch();return false;" style="color:var(--blue);font-weight:700;margin-right:6px">'+escH(n)+'</a>';}).join(''):'');
+window.renderDonorPicker=function(){
+  const list=document.getElementById('mb-donor-list'); if(!list) return;
+  const q=(document.getElementById('mb-donor-search')?.value||'').trim();
+  const all=donorStats();
+  // 초성 바
+  const bar=document.getElementById('mb-chosung-bar');
+  if(bar){
+    const present=new Set(all.map(function(d){return chosungOf(d.name);}));
+    bar.innerHTML='<button class="cho-btn'+(_mbChosung===''?' on':'')+'" onclick="setMbChosung(\'\')">전체</button>'
+      +CHOSUNG.map(function(c){return '<button class="cho-btn'+(_mbChosung===c?' on':'')+(present.has(c)?'':' dim')+'" onclick="setMbChosung(\''+c+'\')">'+c+'</button>';}).join('');
+  }
+  let rows=all;
+  if(_mbChosung) rows=rows.filter(function(d){return chosungOf(d.name)===_mbChosung;});
+  if(q) rows=rows.filter(function(d){return d.name.includes(q)||d.raws.some(function(r){return r.includes(q);});});
+  const cnt=document.getElementById('mb-donor-count'); if(cnt) cnt.textContent=rows.length+' / '+all.length+'명';
+  if(!rows.length){list.innerHTML='<div class="tbl-empty" style="padding:18px">헌금자가 없습니다</div>';return;}
+  let lastCho='';
+  list.innerHTML=rows.map(function(d){
+    const cho=chosungOf(d.name); const head=(cho!==lastCho&&!_mbChosung&&!q)?'<div class="dp-head">'+cho+'</div>':''; lastCho=cho;
+    const sel=_mbSelected.includes(d.name);
+    return head+'<div class="dp-item'+(sel?' sel':'')+'" onclick="toggleMbDonor(\''+escH(d.name).replace(/'/g,"\\'")+'\')">'
+      +'<span class="dp-chk">'+(sel?'✓':'')+'</span>'
+      +'<span class="dp-name">'+escH(d.name)+(d.raws.length?'<span class="dp-raw" title="원본 표기: '+escH(d.raws.join(', '))+'">+'+d.raws.length+'</span>':'')+'</span>'
+      +'<span class="dp-meta"><b>'+fmtN(d.ytd)+'</b><small>올해 · '+d.count+'건</small></span>'
+    +'</div>';
+  }).join('');
 };
+window.setMbChosung=function(c){_mbChosung=c;renderDonorPicker();};
+window.toggleMbDonor=function(name){
+  const i=_mbSelected.indexOf(name);
+  if(i>=0) _mbSelected.splice(i,1); else _mbSelected.push(name);
+  renderDonorPicker(); renderMbSelected(); doMemberSearch();
+};
+window.clearMbSelected=function(){_mbSelected=[];renderDonorPicker();renderMbSelected();
+  const r=document.getElementById('mb-result');if(r){r.classList.remove('show');r.style.display='';}};
+function renderMbSelected(){
+  const el=document.getElementById('mb-selected'); if(!el) return;
+  if(!_mbSelected.length){el.innerHTML='<span style="font-size:12px;color:var(--g3)">왼쪽 목록에서 헌금자를 클릭해 추가하세요 (여러 명 선택 가능)</span>';return;}
+  el.innerHTML=_mbSelected.map(function(n){return '<span class="sel-chip">'+escH(n)+'<button onclick="toggleMbDonor(\''+escH(n).replace(/'/g,"\\'")+'\')" title="제외">×</button></span>';}).join('')
+    +'<button class="btn btn-outline btn-xs" onclick="clearMbSelected()" style="margin-left:4px">모두 지우기</button>';
+}
+window.mbDonorTyping=function(){renderDonorPicker();};
 window.setMemberRange=function(k){
   const fd=document.getElementById('mb-from');const td=document.getElementById('mb-to');
   if(k==='ytd'){fd.value=CUR_YEAR+'-01-01';td.value=TODAY;}
   else if(k==='lastyear'){fd.value=(CUR_YEAR-1)+'-01-01';td.value=(CUR_YEAR-1)+'-12-31';}
   else if(k==='month'){fd.value=TODAY.slice(0,7)+'-01';td.value=TODAY;}
   else if(k==='all'){const all=getOfferings().map(function(e){return e.date;}).filter(Boolean).sort();fd.value=all[0]||CUR_YEAR+'-01-01';td.value=TODAY;}
-  if(document.getElementById('mb-name')?.value.trim()) doMemberSearch();
+  document.querySelectorAll('#tab-member .qd-btn').forEach(function(b){b.classList.toggle('on',b.dataset.k===k);});
+  if(_mbSelected.length) doMemberSearch();
 };
 window.setMemberView=function(v,btn){
   _mbView=v;
@@ -5331,127 +5483,134 @@ window.setMemberView=function(v,btn){
   if(btn) btn.classList.add('on');
   doMemberSearch();
 };
-window.resetMemberSearch=function(){
-  const n=document.getElementById('mb-name');if(n) n.value='';
-  const h=document.getElementById('mb-name-hint');if(h) h.textContent='';
-  setMemberRange('ytd');
-  const r=document.getElementById('mb-result');if(r){r.classList.remove('show');r.style.display='';}
-};
+window.resetMemberSearch=function(){ clearMbSelected(); setMemberRange('ytd'); _mbChosung=''; const s=document.getElementById('mb-donor-search'); if(s) s.value=''; renderDonorPicker(); };
 function _mbQuery(){
-  const name=(document.getElementById('mb-name')?.value||'').trim();
   const from=document.getElementById('mb-from')?.value||CUR_YEAR+'-01-01';
   const to=document.getElementById('mb-to')?.value||TODAY;
-  if(!name) return null;
-  const books=getOfferings().filter(function(e){return (e.name||'').trim()===name&&e.date>=from&&e.date<=to;})
+  if(!_mbSelected.length) return null;
+  const sel=new Set(_mbSelected);
+  const books=getOfferings().filter(function(e){const n=normDonorName(e.name);return sel.has(n)&&e.date>=from&&e.date<=to;})
+    .map(function(e){return Object.assign({},e,{_norm:normDonorName(e.name)});})
     .sort(function(a,b){return (a.date||'').localeCompare(b.date||'')||(a.type||'').localeCompare(b.type||'','ko');});
-  return {name:name,from:from,to:to,books:books};
+  return {names:_mbSelected.slice(),from:from,to:to,books:books};
+}
+// 한 사람의 헌금을 헌금명별로 묶고 → 날짜순 행
+function _mbTypeGroups(books){
+  const g={};
+  books.forEach(function(e){ if(!g[e.type]) g[e.type]={type:e.type,rows:[],total:0}; g[e.type].rows.push(e); g[e.type].total+=Number(e.amount||0); });
+  return Object.values(g).sort(function(a,b){return b.total-a.total;}).map(function(x){x.rows.sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});return x;});
 }
 window.doMemberSearch=function(){
   const q=_mbQuery();
-  if(!q){showToast('성도명을 입력하세요');document.getElementById('mb-name')?.focus();return;}
+  if(!q){ const r=document.getElementById('mb-result'); if(r){r.classList.remove('show');r.style.display='';} return; }
   const books=q.books;
   const total=books.reduce(function(s,e){return s+Number(e.amount||0);},0);
   const onlineTot=books.filter(isOnlinePayment).reduce(function(s,e){return s+Number(e.amount||0);},0);
   const byType={};books.forEach(function(e){byType[e.type]=(byType[e.type]||0)+Number(e.amount||0);});
   const typeOrder=Object.keys(byType).sort(function(a,b){return byType[b]-byType[a];});
   const months=new Set(books.map(function(e){return monthOf(e.date);}));
-  const avgMonth=months.size?Math.round(total/months.size):0;
-
   const st=document.getElementById('mb-stats');
   if(st) st.innerHTML=
-    '<div class="stat navy"><div class="stat-lbl">총 헌금</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원 · '+books.length+'건</div></div>'
-    +'<div class="stat blue"><div class="stat-lbl">월평균</div><div class="stat-val">'+fmtN(avgMonth)+'</div><div class="stat-sub">원 (헌금한 '+months.size+'개월 기준)</div></div>'
+    '<div class="stat navy"><div class="stat-lbl">총 헌금</div><div class="stat-val">'+fmtN(total)+'</div><div class="stat-sub">원 · '+books.length+'건 · '+q.names.length+'명</div></div>'
+    +'<div class="stat blue"><div class="stat-lbl">월평균</div><div class="stat-val">'+fmtN(months.size?total/months.size:0)+'</div><div class="stat-sub">원 (헌금한 '+months.size+'개월)</div></div>'
     +'<div class="stat gold"><div class="stat-lbl">헌금 종류</div><div class="stat-val">'+typeOrder.length+'</div><div class="stat-sub">'+(typeOrder[0]?'최다: '+escH(typeOrder[0]):'—')+'</div></div>'
     +'<div class="stat green"><div class="stat-lbl">온라인 비중</div><div class="stat-val">'+(total?Math.round(onlineTot/total*100):0)+'%</div><div class="stat-sub">'+fmtN(onlineTot)+'원</div></div>';
+  const badge=document.getElementById('mb-title-badge'); if(badge) badge.textContent=q.from+' ~ '+q.to;
 
-  const badge=document.getElementById('mb-title-badge');
-  if(badge) badge.textContent=q.name+' · '+q.from+' ~ '+q.to;
-
-  const tb=document.getElementById('mb-tbody');
-  const thead=document.querySelector('#mb-tbl thead tr');
-  if(_mbView==='list'){
-    if(thead) thead.innerHTML='<th>#</th><th>일자</th><th>헌금명</th><th class="nc">금액(원)</th><th>입금</th><th>비고</th>';
-    if(tb) tb.innerHTML=books.map(function(e,i){
-      const ci=getTypeColorIdx(e.type);
-      return '<tr><td>'+(i+1)+'</td>'
-        +'<td style="font-family:var(--fnum)">'+e.date+' <span style="color:var(--g3);font-size:10px">('+dayKor(e.date)+')</span></td>'
-        +'<td><span class="off-color-badge off-color-'+ci+'">'+escH(e.type)+'</span></td>'
-        +'<td class="nc" style="font-weight:700">'+fmtN(e.amount)+'</td>'
-        +'<td>'+(isOnlinePayment(e)?'<span class="badge b-blue">온라인</span>':'<span class="badge b-gray">현금</span>')+'</td>'
-        +'<td style="font-size:11px;color:var(--g2)">'+escH(e.memo||'')+'</td></tr>';
-    }).join('')||'<tr><td colspan="6" class="tbl-empty">해당 기간 헌금 내역이 없습니다</td></tr>';
-  } else {
-    // 월별 피벗: 월 × 헌금명
-    if(thead) thead.innerHTML='<th>월</th>'+typeOrder.map(function(t){return '<th class="nc">'+escH(t)+'</th>';}).join('')+'<th class="nc">월 합계</th>';
-    const byMonth={};
-    books.forEach(function(e){const m=monthOf(e.date);if(!byMonth[m]) byMonth[m]={};byMonth[m][e.type]=(byMonth[m][e.type]||0)+Number(e.amount||0);});
-    const ms=Object.keys(byMonth).sort();
-    if(tb) tb.innerHTML=ms.map(function(m){
-      const row=byMonth[m];const mt=Object.values(row).reduce(function(s,v){return s+v;},0);
-      return '<tr><td style="font-weight:700;font-family:var(--fnum)">'+m.replace('-','년 ')+'월</td>'
-        +typeOrder.map(function(t){return '<td class="nc">'+(row[t]?fmtN(row[t]):'<span style="color:var(--g4)">—</span>')+'</td>';}).join('')
-        +'<td class="nc" style="font-weight:800;color:var(--navy)">'+fmtN(mt)+'</td></tr>';
-    }).join('')||'<tr><td colspan="'+(typeOrder.length+2)+'" class="tbl-empty">해당 기간 헌금 내역이 없습니다</td></tr>';
-  }
-  const tfoot=document.querySelector('#mb-tbl tfoot tr');
-  if(tfoot){
-    if(_mbView==='list') tfoot.innerHTML='<td colspan="3" style="text-align:center">합계</td><td class="nc" id="mb-foot-total">'+fmtN(total)+'원</td><td colspan="2">'+books.length+'건</td>';
-    else tfoot.innerHTML='<td style="text-align:center">합계</td>'+typeOrder.map(function(t){return '<td class="nc">'+fmtN(byType[t])+'</td>';}).join('')+'<td class="nc">'+fmtN(total)+'</td>';
-  }
-  // 헌금명별 합계 (우측 카드)
-  const bt=document.getElementById('mb-by-type');
-  if(bt) bt.innerHTML=typeOrder.length?typeOrder.map(function(t){
-    const v=byType[t];const pct=total?Math.round(v/total*100):0;const ci=getTypeColorIdx(t);
-    return '<div class="fm-row" style="display:block;padding:7px 0">'
-      +'<div style="display:flex;justify-content:space-between"><span class="t"><span class="dot off-color-'+ci+'" style="border:1px solid #ccc"></span>'+escH(t)+'</span><span class="v">'+fmtN(v)+'<span class="pct">'+pct+'%</span></span></div>'
-      +'<div class="fm-bar"><i style="width:'+pct+'%"></i></div></div>';
-  }).join(''):'<div class="tbl-empty">없음</div>';
+  const wrap=document.getElementById('mb-persons'); if(!wrap) return;
+  wrap.innerHTML=q.names.map(function(name){
+    const mine=books.filter(function(e){return e._norm===name;});
+    const mt=mine.reduce(function(s,e){return s+Number(e.amount||0);},0);
+    const raws=[...new Set(mine.map(function(e){return (e.name||'').trim();}).filter(function(r){return r!==name;}))];
+    let body='';
+    if(!mine.length){ body='<div class="tbl-empty">해당 기간 헌금 내역이 없습니다</div>'; }
+    else if(_mbView==='type'){
+      body=_mbTypeGroups(mine).map(function(g){
+        const ci=getTypeColorIdx(g.type);
+        return '<div class="mb-tgroup">'
+          +'<div class="mb-tgroup-hd off-color-'+ci+'"><span class="off-color-badge off-color-'+ci+'">'+escH(g.type)+'</span>'
+            +'<span class="mb-tgroup-sub">'+g.rows.length+'건 · '+(mt?Math.round(g.total/mt*100):0)+'%</span>'
+            +'<span class="mb-tgroup-tot">'+fmtN(g.total)+'원</span></div>'
+          +'<table class="tbl mb-tbl"><tbody>'
+          +g.rows.map(function(e){return '<tr><td class="d">'+e.date+' <small>('+dayKor(e.date)+')</small></td>'
+            +'<td class="nc amt">'+fmtN(e.amount)+'</td>'
+            +'<td class="pay">'+(isOnlinePayment(e)?'<span class="badge b-blue">온라인</span>':'<span class="badge b-gray">현금</span>')+'</td>'
+            +'<td class="memo">'+escH(e.memo||'')+'</td></tr>';}).join('')
+          +'</tbody></table></div>';
+      }).join('');
+    } else if(_mbView==='list'){
+      body='<table class="tbl mb-tbl"><thead><tr><th>#</th><th>일자</th><th>헌금명</th><th class="nc">금액(원)</th><th>입금</th><th>비고</th></tr></thead><tbody>'
+        +mine.map(function(e,i){const ci=getTypeColorIdx(e.type);return '<tr><td>'+(i+1)+'</td><td class="d">'+e.date+' <small>('+dayKor(e.date)+')</small></td><td><span class="off-color-badge off-color-'+ci+'">'+escH(e.type)+'</span></td><td class="nc amt">'+fmtN(e.amount)+'</td><td>'+(isOnlinePayment(e)?'<span class="badge b-blue">온라인</span>':'<span class="badge b-gray">현금</span>')+'</td><td class="memo">'+escH(e.memo||'')+'</td></tr>';}).join('')
+        +'</tbody></table>';
+    } else {
+      const types=Object.keys(mine.reduce(function(o,e){o[e.type]=1;return o;},{})).sort();
+      const bm={}; mine.forEach(function(e){const m=monthOf(e.date);(bm[m]=bm[m]||{})[e.type]=(bm[m][e.type]||0)+Number(e.amount||0);});
+      body='<div class="tbl-wrap"><table class="tbl mb-tbl"><thead><tr><th>월</th>'+types.map(function(t){return '<th class="nc">'+escH(t)+'</th>';}).join('')+'<th class="nc">월 합계</th></tr></thead><tbody>'
+        +Object.keys(bm).sort().map(function(m){const r=bm[m];const s=Object.values(r).reduce(function(a,b){return a+b;},0);return '<tr><td class="d">'+m.replace('-','년 ')+'월</td>'+types.map(function(t){return '<td class="nc">'+(r[t]?fmtN(r[t]):'<span style="color:var(--g4)">—</span>')+'</td>';}).join('')+'<td class="nc amt">'+fmtN(s)+'</td></tr>';}).join('')
+        +'</tbody></table></div>';
+    }
+    return '<div class="card mb-person">'
+      +'<div class="mb-person-hd"><div><div class="mb-person-name">👤 '+escH(name)+(raws.length?' <span class="dp-raw" title="원본 표기 포함">'+escH(raws.join(', '))+'</span>':'')+'</div>'
+        +'<div class="mb-person-sub">'+mine.length+'건 · '+Object.keys(mine.reduce(function(o,e){o[e.type]=1;return o;},{})).length+'종</div></div>'
+        +'<div class="mb-person-tot">'+fmtN(mt)+'<small>원</small></div></div>'
+      +body+'</div>';
+  }).join('');
   showResult('mb-result');
 };
 window.printMember=function(){
-  const q=_mbQuery();if(!q){alert('성도명을 입력하세요.');return;}
-  const books=q.books;const total=books.reduce(function(s,e){return s+Number(e.amount||0);},0);
-  const byType={};books.forEach(function(e){byType[e.type]=(byType[e.type]||0)+Number(e.amount||0);});
+  const q=_mbQuery();if(!q){alert('헌금자를 선택하세요.');return;}
   const w=window.open('','_blank','width=800,height=700');
-  w.document.write('<html><head><title>헌금내역 '+escH(q.name)+'</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap" rel="stylesheet">'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;font-size:12px;padding:24px;color:#1e293b}'
-    +'h1{font-size:18px;text-align:center}.sub{text-align:center;color:#64748b;font-size:11px;margin:4px 0 18px}'
-    +'table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1e3a5f;color:#fff;padding:7px 10px;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    +'td{padding:6px 10px;border-bottom:1px solid #e2e8f0}.r{text-align:right;font-family:Arial}tfoot td{font-weight:800;background:#dbeafe;font-size:13px}'
-    +'.box{border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc}'
-    +'.box .tot{font-size:20px;font-weight:800;font-family:Arial;color:#1e3a5f}'
-    +'@media print{@page{margin:12mm}}</style></head><body>'
-    +'<h1>헌 금 내 역 확 인 서</h1><div class="sub">서부광성교회 · 성도 <b>'+escH(q.name)+'</b> · 기간 '+q.from+' ~ '+q.to+' · 출력 '+TODAY+'</div>'
-    +'<div class="box"><div>기간 총 헌금액 ('+books.length+'건)</div><div class="tot">'+fmtN(total)+'원</div></div>'
-    +'<table><thead><tr><th style="width:40px">#</th><th style="width:120px">일자</th><th>헌금명</th><th style="width:130px;text-align:right">금액(원)</th><th style="width:70px">입금</th></tr></thead><tbody>'
-    +books.map(function(e,i){return '<tr><td style="text-align:center">'+(i+1)+'</td><td style="font-family:Arial">'+e.date+'</td><td>'+escH(e.type)+'</td><td class="r">'+fmtN(e.amount)+'</td><td style="text-align:center;font-size:11px">'+(isOnlinePayment(e)?'온라인':'현금')+'</td></tr>';}).join('')
-    +'</tbody><tfoot><tr><td colspan="3" style="text-align:right">합계</td><td class="r">'+fmtN(total)+'</td><td></td></tr></tfoot></table>'
-    +'<table style="width:60%"><thead><tr><th>헌금명별 합계</th><th style="text-align:right">금액(원)</th></tr></thead><tbody>'
-    +Object.keys(byType).sort(function(a,b){return byType[b]-byType[a];}).map(function(t){return '<tr><td>'+escH(t)+'</td><td class="r">'+fmtN(byType[t])+'</td></tr>';}).join('')
-    +'</tbody></table>'
-    +'<div style="text-align:right;margin-top:30px;font-size:13px">서부광성교회 재정부 (인)</div>'
-    +'</body></html>');
+  const pages=q.names.map(function(name){
+    const mine=q.books.filter(function(e){return e._norm===name;});
+    const total=mine.reduce(function(s,e){return s+Number(e.amount||0);},0);
+    const groups=_mbTypeGroups(mine);
+    return '<div class="pg"><h1>헌 금 내 역 확 인 서</h1><div class="sub">서부광성교회 · 성도 <b>'+escH(name)+'</b> · 기간 '+q.from+' ~ '+q.to+' · 출력 '+TODAY+'</div>'
+      +'<div class="box"><div>기간 총 헌금액 ('+mine.length+'건)</div><div class="tot">'+fmtN(total)+'원</div></div>'
+      +groups.map(function(g){return '<h3>'+escH(g.type)+' <span>'+fmtN(g.total)+'원 · '+g.rows.length+'건</span></h3><table><thead><tr><th style="width:130px">일자</th><th style="text-align:right;width:140px">금액(원)</th><th style="width:70px">입금</th><th>비고</th></tr></thead><tbody>'
+        +g.rows.map(function(e){return '<tr><td style="font-family:Arial">'+e.date+'</td><td class="r">'+fmtN(e.amount)+'</td><td style="text-align:center;font-size:11px">'+(isOnlinePayment(e)?'온라인':'현금')+'</td><td>'+escH(e.memo||'')+'</td></tr>';}).join('')
+        +'</tbody></table>';}).join('')
+      +'<table style="width:60%;margin-top:14px"><thead><tr><th>헌금명별 합계</th><th style="text-align:right">금액(원)</th></tr></thead><tbody>'+groups.map(function(g){return '<tr><td>'+escH(g.type)+'</td><td class="r">'+fmtN(g.total)+'</td></tr>';}).join('')+'<tr><td><b>합계</b></td><td class="r"><b>'+fmtN(total)+'</b></td></tr></tbody></table>'
+      +'<div style="text-align:right;margin-top:30px;font-size:13px">서부광성교회 재정부 (인)</div></div>';
+  }).join('');
+  w.document.write('<html><head><title>헌금내역 확인서</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap" rel="stylesheet">'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;font-size:12px;padding:24px;color:#1e293b}.pg{page-break-after:always}.pg:last-child{page-break-after:auto}'
+    +'h1{font-size:18px;text-align:center}.sub{text-align:center;color:#64748b;font-size:11px;margin:4px 0 18px}h3{font-size:13px;margin:14px 0 6px;color:#1e3a5f;display:flex;justify-content:space-between;border-left:4px solid #1e3a5f;padding-left:8px}h3 span{font-family:Arial;font-weight:700}'
+    +'table{width:100%;border-collapse:collapse}th{background:#1e3a5f;color:#fff;padding:6px 10px;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}td{padding:5px 10px;border-bottom:1px solid #e2e8f0}.r{text-align:right;font-family:Arial}'
+    +'.box{border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc}.box .tot{font-size:20px;font-weight:800;font-family:Arial;color:#1e3a5f}@media print{@page{margin:12mm}}</style></head><body>'+pages+'</body></html>');
   w.document.close();setTimeout(function(){w.print();},500);
 };
 window.exportMemberXlsx=function(){
-  const q=_mbQuery();if(!q){alert('성도명을 입력하세요.');return;}
+  const q=_mbQuery();if(!q){alert('헌금자를 선택하세요.');return;}
   if(typeof XLSX==='undefined'){alert('엑셀 라이브러리를 불러오지 못했습니다.');return;}
-  const rows=[['일자','요일','헌금명','금액','입금방식','비고']];
-  q.books.forEach(function(e){rows.push([e.date,dayKor(e.date),e.type,Number(e.amount||0),isOnlinePayment(e)?'온라인입금':'현금입금',e.memo||'']);});
-  rows.push([]);rows.push(['합계','','',q.books.reduce(function(s,e){return s+Number(e.amount||0);},0)]);
-  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:12},{wch:5},{wch:16},{wch:14},{wch:10},{wch:24}];
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'헌금내역');
-  XLSX.writeFile(wb,'헌금내역_'+q.name+'_'+q.from+'_'+q.to+'.xlsx');
+  const wb=XLSX.utils.book_new();
+  q.names.forEach(function(name){
+    const mine=q.books.filter(function(e){return e._norm===name;});
+    const rows=[['헌금명','일자','요일','금액','입금방식','비고']];
+    _mbTypeGroups(mine).forEach(function(g){g.rows.forEach(function(e){rows.push([g.type,e.date,dayKor(e.date),Number(e.amount||0),isOnlinePayment(e)?'온라인입금':'현금입금',e.memo||'']);});rows.push([g.type+' 소계','','',g.total]);rows.push([]);});
+    rows.push(['합계','','',mine.reduce(function(s,e){return s+Number(e.amount||0);},0)]);
+    const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:16},{wch:12},{wch:5},{wch:14},{wch:10},{wch:24}];
+    XLSX.utils.book_append_sheet(wb,ws,name.replace(/[\\/?*\[\]:]/g,'_').slice(0,31));
+  });
+  XLSX.writeFile(wb,'헌금내역_'+(q.names.length===1?q.names[0]:q.names.length+'명')+'_'+q.from+'_'+q.to+'.xlsx');
 };
 
 // ============================================================
-// 👨‍👩‍👧 가족 관리 + 가족별 누적헌금
+// 👨‍👩‍👧 가족 관리 + 가족별 누적헌금 (v2)
 // ============================================================
-// families: [{id, name, members:[...], main:'대표자명'}]
+// families: [{id, name, members:[정규화명...], main}]
 const getFamilies=function(){const f=ST.get('families',[]);return Array.isArray(f)?f:[];};
 const setFamilies=function(v){ST.set('families',v);};
+// 제외 설정: {keywords:['월세'], names:[]}
+const DEF_FAM_EXCLUDE={keywords:['월세'],names:[]};
+const getFamExclude=function(){const x=ST.get('famExclude',null);return (x&&typeof x==='object')?{keywords:x.keywords||[],names:x.names||[]}:JSON.parse(JSON.stringify(DEF_FAM_EXCLUDE));};
+const setFamExclude=function(v){ST.set('famExclude',v);};
+function isExcludedName(n){
+  const x=getFamExclude(); const nn=normDonorName(n);
+  if(x.names.includes(nn)) return true;
+  return x.keywords.some(function(k){return k&&nn.includes(k);});
+}
 function memberFamilyMap(){
-  const m={};getFamilies().forEach(function(f){(f.members||[]).forEach(function(n){m[n]=f;});});
+  const m={};getFamilies().forEach(function(f){(f.members||[]).forEach(function(n){m[normDonorName(n)]=f;});});
   return m;
 }
 window.openFamilyMgr=function(){
@@ -5464,7 +5623,18 @@ window.openFamilyMgr=function(){
 window.renderFamilyMgr=function(){
   const dl=document.getElementById('fam-member-list');
   if(dl) dl.innerHTML=getDonorNames().map(function(n){return '<option value="'+escH(n)+'">';}).join('');
+  const pre=document.getElementById('fam-ignore-prefix'); if(pre) pre.value=getNameIgnore().join(', ');
+  const kw=document.getElementById('fam-exclude-kw'); if(kw) kw.value=getFamExclude().keywords.join(', ');
   renderFamilyList();
+};
+window.saveNameIgnore=function(v){
+  const arr=[...new Set(String(v||'').split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean))];
+  ST.set('nameIgnorePrefixes',arr); showToast('무시할 접두어 저장: '+(arr.join(', ')||'(없음)')); renderFamilyList();
+};
+window.saveExcludeKeywords=function(v){
+  const x=getFamExclude(); x.keywords=[...new Set(String(v||'').split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean))];
+  setFamExclude(x); showToast('제외 키워드 저장: '+(x.keywords.join(', ')||'(없음)'));
+  if(document.getElementById('tab-family')?.style.display==='block') doFamilySearch();
 };
 window.renderFamilyList=function(){
   const q=(document.getElementById('fam-filter')?.value||'').trim();
@@ -5473,15 +5643,16 @@ window.renderFamilyList=function(){
   if(q) fams=fams.filter(function(f){return f.name.includes(q)||(f.members||[]).some(function(m){return m.includes(q);});});
   const el=document.getElementById('fam-list');if(!el) return;
   if(!fams.length){el.innerHTML='<div class="tbl-empty">'+(q?'검색 결과가 없습니다':'등록된 가족이 없습니다. 위에서 추가하거나 💡 추천을 눌러보세요.')+'</div>';return;}
-  const donors=new Set(getDonorNames());
+  const stats={}; donorStats().forEach(function(d){stats[d.name]=d;});
   el.innerHTML=fams.sort(function(a,b){return a.name.localeCompare(b.name,'ko');}).map(function(f){
     return '<div class="fam-item" data-fid="'+escH(f.id)+'">'
       +'<div class="nm" contenteditable="true" spellcheck="false" onblur="renameFamily(\''+escH(f.id)+'\',this.textContent)" title="클릭하여 가족명 수정">'+escH(f.name)+'</div>'
       +'<div class="mem">'
-        +(f.members||[]).map(function(m){
-          return '<span class="fam-tag'+(m===f.main?' main':'')+(donors.has(m)?'':' ')+'" title="'+(m===f.main?'대표자':'클릭하면 대표자로 지정')+(donors.has(m)?'':' · 헌금기록 없음')+'">'
-            +'<span onclick="setFamilyMain(\''+escH(f.id)+'\',\''+escH(m).replace(/'/g,"\\'")+'\')" style="cursor:pointer">'+(m===f.main?'★ ':'')+escH(m)+(donors.has(m)?'':' <span style="color:var(--gold)">?</span>')+'</span>'
-            +'<button class="x" onclick="removeFamilyMember(\''+escH(f.id)+'\',\''+escH(m).replace(/'/g,"\\'")+'\')" title="제외">×</button></span>';
+        +(f.members||[]).map(function(m){const s=stats[normDonorName(m)];
+          return '<span class="fam-tag'+(m===f.main?' main':'')+'" title="'+(m===f.main?'대표자':'클릭하면 대표자로 지정')+(s?' · 올해 '+fmtN(s.ytd)+'원':' · 헌금기록 없음')+'">'
+            +'<span onclick="setFamilyMain(\''+escH(f.id)+'\',\''+escH(m).replace(/'/g,"\\'")+'\')" style="cursor:pointer">'+(m===f.main?'★ ':'')+escH(m)+(s?'<small class="ft-amt">'+fmtN(s.ytd)+'</small>':' <span style="color:var(--gold)">?</span>')+'</span>'
+            +'<select class="fam-move" title="다른 가족으로 이동" onchange="moveMember(\''+escH(m).replace(/'/g,"\\'")+'\',this.value);this.selectedIndex=0"><option value="">→</option>'+getFamilies().filter(function(x){return x.id!==f.id;}).map(function(x){return '<option value="'+escH(x.id)+'">'+escH(x.name)+'</option>';}).join('')+'</select>'
+            +'<button class="x" onclick="removeFamilyMember(\''+escH(f.id)+'\',\''+escH(m).replace(/'/g,"\\'")+'\')" title="가족에서 제외">×</button></span>';
         }).join('')
         +'<span class="fam-tag add" onclick="promptAddMember(\''+escH(f.id)+'\')">+ 구성원</span>'
       +'</div>'
@@ -5489,21 +5660,36 @@ window.renderFamilyList=function(){
     +'</div>';
   }).join('');
 };
+function _normMembers(arr){return [...new Set(arr.map(function(s){return normDonorName(s);}).filter(Boolean))];}
 window.addFamily=function(){
   const nameEl=document.getElementById('fam-new-name');const memEl=document.getElementById('fam-new-members');
   const name=(nameEl?.value||'').trim();
-  const members=[...new Set((memEl?.value||'').split(/[,，\s]+/).map(function(s){return s.trim();}).filter(Boolean))];
+  const members=_normMembers((memEl?.value||'').split(/[,，\n]+/));
   if(!members.length){showToast('구성원을 1명 이상 입력하세요');memEl?.focus();return;}
+  addFamilyWith(name,members); if(nameEl) nameEl.value='';if(memEl) memEl.value='';
+};
+// 공통: 가족 생성 (중복 소속 처리 포함) → id 반환
+function addFamilyWith(name,members,silent){
   const fams=getFamilies();const map=memberFamilyMap();
   const dup=members.filter(function(m){return map[m];});
-  if(dup.length){if(!confirm(dup.join(', ')+' 님은 이미 다른 가족('+map[dup[0]].name+')에 속해 있습니다.\n기존 가족에서 빼고 새 가족으로 옮길까요?')) return;
-    dup.forEach(function(m){const f=map[m];f.members=f.members.filter(function(x){return x!==m;});if(f.main===m) f.main=f.members[0]||'';});}
-  const fname=name||members[0]+' 가정';
-  fams.push({id:uid(),name:fname,members:members,main:members[0]});
+  if(dup.length&&!silent){ if(!confirm(dup.join(', ')+' 님은 이미 다른 가족('+map[dup[0]].name+')에 속해 있습니다.\n기존 가족에서 빼고 새 가족으로 옮길까요?')) return null; }
+  dup.forEach(function(m){const f=map[m];f.members=f.members.filter(function(x){return normDonorName(x)!==m;});if(normDonorName(f.main)===m) f.main=f.members[0]||'';});
+  const fname=(name||'').trim()||members[0]+' 가정';
+  const id=uid(); fams.push({id:id,name:fname,members:members,main:members[0]});
   setFamilies(fams.filter(function(f){return f.members.length;}));
-  if(nameEl) nameEl.value='';if(memEl) memEl.value='';
-  showToast('가족 추가: '+fname);renderFamilyList();
-};
+  showToast('가족 추가: '+fname); renderFamilyList(); return id;
+}
+// 공통: 기존 가족에 구성원 일괄 추가
+function addMembersToFamily(fid,members,silent){
+  const fams=getFamilies();const f=fams.find(function(x){return x.id===fid;});if(!f) return false;
+  const map=memberFamilyMap(); const norm=_normMembers(members);
+  const dup=norm.filter(function(m){return map[m]&&map[m].id!==fid;});
+  if(dup.length&&!silent){ if(!confirm(dup.join(', ')+' 님은 이미 "'+map[dup[0]].name+'"에 속해 있습니다. 옮길까요?')) return false; }
+  dup.forEach(function(m){const g=map[m];g.members=g.members.filter(function(x){return normDonorName(x)!==m;});if(normDonorName(g.main)===m) g.main=g.members[0]||'';});
+  norm.forEach(function(m){ if(!f.members.map(normDonorName).includes(m)) f.members.push(m); });
+  if(!f.main) f.main=f.members[0]||'';
+  setFamilies(fams.filter(function(x){return x.members.length;})); return true;
+}
 window.renameFamily=function(id,txt){
   const fams=getFamilies();const f=fams.find(function(x){return x.id===id;});if(!f) return;
   const nm=String(txt||'').trim();if(!nm||nm===f.name){renderFamilyList();return;}
@@ -5518,16 +5704,15 @@ window.removeFamilyMember=function(id,m){
   f.members=(f.members||[]).filter(function(x){return x!==m;});
   if(f.main===m) f.main=f.members[0]||'';
   setFamilies(fams.filter(function(x){return x.members.length;}));renderFamilyList();
+  if(document.getElementById('tab-family')?.style.display==='block') doFamilySearch();
+};
+window.moveMember=function(m,toId){
+  if(!toId) return;
+  if(addMembersToFamily(toId,[m],true)){ showToast(m+' → '+(getFamilies().find(function(f){return f.id===toId;})||{}).name); renderFamilyList(); if(document.getElementById('tab-family')?.style.display==='block') doFamilySearch(); }
 };
 window.promptAddMember=function(id){
   const m=prompt('추가할 구성원 이름 (헌금자명과 동일하게)');if(!m) return;
-  const nm=m.trim();if(!nm) return;
-  const fams=getFamilies();const map=memberFamilyMap();
-  if(map[nm]&&map[nm].id!==id){if(!confirm(nm+' 님은 이미 "'+map[nm].name+'"에 속해 있습니다. 옮길까요?')) return;
-    map[nm].members=map[nm].members.filter(function(x){return x!==nm;});if(map[nm].main===nm) map[nm].main=map[nm].members[0]||'';}
-  const f=fams.find(function(x){return x.id===id;});if(!f) return;
-  if(!f.members.includes(nm)) f.members.push(nm);
-  setFamilies(fams.filter(function(x){return x.members.length;}));renderFamilyList();
+  if(addMembersToFamily(id,[m])) renderFamilyList();
 };
 window.deleteFamily=function(id){
   const fams=getFamilies();const f=fams.find(function(x){return x.id===id;});if(!f) return;
@@ -5535,15 +5720,14 @@ window.deleteFamily=function(id){
   setFamilies(fams.filter(function(x){return x.id!==id;}));renderFamilyList();
 };
 
-// ── 가족 추천 (학습형): 미등록 헌금자 중 같은 성씨 + 동일 입금계좌/메모 패턴 ──
+// ── 가족 추천 (학습형): 미등록 헌금자 중 같은 성씨+같은 날 헌금 / 동일 입금메모 ──
 function familySuggestions(limit){
   const map=memberFamilyMap();
-  const donors=getDonorNames().filter(function(n){return !map[n];});
+  const donors=getDonorNames().filter(function(n){return !map[n]&&!isExcludedName(n);});
   const sug=[];const used=new Set();
-  // 1) 동일 비고(계좌/송금인) 패턴: 온라인입금 memo에 같은 토큰이 있는 이름들
   const memoIdx={};
   getOfferings().forEach(function(e){
-    if(!isOnlinePayment(e)) return;const n=(e.name||'').trim();if(!n||map[n]) return;
+    if(!isOnlinePayment(e)) return;const n=normDonorName(e.name);if(!n||map[n]||isExcludedName(n)) return;
     const toks=String(e.memo||'').match(/[0-9]{4,}|[가-힣]{2,4}/g)||[];
     toks.forEach(function(t){if(t===n) return;if(!memoIdx[t]) memoIdx[t]=new Set();memoIdx[t].add(n);});
   });
@@ -5551,19 +5735,16 @@ function familySuggestions(limit){
     const names=[...memoIdx[t]].filter(function(n){return !used.has(n);});
     if(names.length>=2&&names.length<=6){names.forEach(function(n){used.add(n);});sug.push({names:names,why:'입금 메모 공통: '+t,score:3});}
   });
-  // 2) 같은 성씨 + 동일 날짜에 함께 헌금한 빈도
   const bySur={};donors.forEach(function(n){if(used.has(n)) return;const s=surnameOf(n);if(!s) return;(bySur[s]=bySur[s]||[]).push(n);});
-  const dateSets={};getOfferings().forEach(function(e){const n=(e.name||'').trim();if(!n) return;(dateSets[n]=dateSets[n]||new Set()).add(e.date);});
+  const dateSets={};getOfferings().forEach(function(e){const n=normDonorName(e.name);if(!n) return;(dateSets[n]=dateSets[n]||new Set()).add(e.date);});
   Object.keys(bySur).forEach(function(s){
     const names=bySur[s];if(names.length<2||names.length>8) return;
-    // 공동 헌금일 2회 이상인 쌍만 묶기
     const pairs=[];
     for(let i=0;i<names.length;i++) for(let j=i+1;j<names.length;j++){
       const a=dateSets[names[i]]||new Set(),b=dateSets[names[j]]||new Set();let co=0;a.forEach(function(d){if(b.has(d)) co++;});
       if(co>=2) pairs.push([names[i],names[j],co]);
     }
     if(!pairs.length) return;
-    // union-find 간단 군집
     const grp={};const find=function(x){while(grp[x]&&grp[x]!==x) x=grp[x];return x;};
     pairs.forEach(function(p){const a=find(p[0]),b=find(p[1]);grp[a]=grp[a]||a;grp[b]=grp[b]||b;if(a!==b) grp[b]=a;});
     const clusters={};pairs.forEach(function(p){p.slice(0,2).forEach(function(n){const r=find(n);(clusters[r]=clusters[r]||new Set()).add(n);});});
@@ -5582,23 +5763,21 @@ window.renderFamilySuggestions=function(){
   const sug=familySuggestions(20);
   box.classList.remove('hidden');
   if(!sug.length){box.innerHTML='<div class="fam-sug">💡 추천할 가족 묶음이 없습니다. (이미 등록되었거나 패턴이 부족합니다)</div>';return;}
-  box.innerHTML='<div class="fam-sug"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-    +'<b style="color:#8a6022">💡 가족 추천 '+sug.length+'건</b><span style="font-size:11px;color:#8a6022">같은 성씨로 같은 날 헌금했거나, 온라인 입금 메모가 겹치는 성도를 묶었습니다. 확인 후 등록하세요.</span>'
+  box.innerHTML='<div class="fam-sug"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">'
+    +'<b style="color:#8a6022">💡 가족 추천 '+sug.length+'건</b><span style="font-size:11px;color:#8a6022;flex:1">같은 성씨로 같은 날 헌금했거나, 온라인 입금 메모가 겹치는 성도를 묶었습니다. 확인 후 등록하세요.</span>'
     +'<button class="btn btn-outline btn-xs" onclick="document.getElementById(\'fam-suggest-box\').classList.add(\'hidden\')">닫기</button></div>'
     +sug.map(function(s,i){
-      return '<div class="fam-sug-row">'
-        +'<span class="why">'+escH(s.why)+'</span>'
-        +'<span class="names">'+s.names.map(escH).join(' · ')+'</span>'
+      return '<div class="fam-sug-row"><span class="why">'+escH(s.why)+'</span><span class="names">'+s.names.map(escH).join(' · ')+'</span>'
         +'<button class="btn btn-navy btn-xs" onclick="acceptSuggestion('+i+')">등록</button>'
-        +'<button class="btn btn-outline btn-xs" onclick="editSuggestion('+i+')">수정 후 등록</button>'
-      +'</div>';
+        +'<button class="btn btn-outline btn-xs" onclick="editSuggestion('+i+')">수정 후 등록</button></div>';
     }).join('')+'</div>';
   window._famSug=sug;
 };
 window.acceptSuggestion=function(i){
   const s=(window._famSug||[])[i];if(!s) return;
-  const fams=getFamilies();fams.push({id:uid(),name:s.names[0]+' 가정',members:s.names.slice(),main:s.names[0]});
-  setFamilies(fams);showToast('가족 등록: '+s.names[0]+' 가정');renderFamilySuggestions();renderFamilyList();
+  addFamilyWith(s.names[0]+' 가정',s.names.slice(),true);
+  renderFamilySuggestions();
+  if(document.getElementById('tab-family')?.style.display==='block') doFamilySearch();
 };
 window.editSuggestion=function(i){
   const s=(window._famSug||[])[i];if(!s) return;
@@ -5609,6 +5788,8 @@ window.editSuggestion=function(i){
 
 // ── 가족별 누적헌금 화면 ──
 let _fmView='card';
+let _fmShowExcluded=false;
+let _fmEditing={};   // 카드 편집모드 {key:true}
 window.initFamilyTab=function(){
   const ys=document.getElementById('fm-year');
   if(ys&&!ys.options.length){
@@ -5618,16 +5799,16 @@ window.initFamilyTab=function(){
   }
   const ts=document.getElementById('fm-type');
   if(ts&&ts.options.length<=1) ts.innerHTML='<option value="">전체</option>'+getOffTypes().map(function(t){return '<option value="'+escH(t)+'">'+escH(t)+'</option>';}).join('');
+  const kw=document.getElementById('fm-exclude-kw'); if(kw) kw.value=getFamExclude().keywords.join(', ');
   doFamilySearch();
 };
 window.setFamilyView=function(v,btn){
-  _fmView=v;document.querySelectorAll('#tab-family .seg-btn').forEach(function(b){b.classList.remove('on');});if(btn) btn.classList.add('on');doFamilySearch();
+  _fmView=v;document.querySelectorAll('#fm-view-seg .seg-btn').forEach(function(b){b.classList.remove('on');});if(btn) btn.classList.add('on');doFamilySearch();
 };
 function _fmRange(){
   const y=document.getElementById('fm-year')?.value||String(CUR_YEAR);
   let from=document.getElementById('fm-from')?.value||'';let to=document.getElementById('fm-to')?.value||'';
   if(y!=='custom'){
-    // 연도 선택 시 기간 입력이 비어있거나 연도와 다르면 연도 기준
     if(!from||from.slice(0,4)!==y) from=y+'-01-01';
     if(!to||to.slice(0,4)!==y) to=(y==String(CUR_YEAR))?TODAY:y+'-12-31';
     const fe=document.getElementById('fm-from'),te=document.getElementById('fm-to');if(fe) fe.value=from;if(te) te.value=to;
@@ -5645,84 +5826,195 @@ function _fmCompute(){
   if(type) books=books.filter(function(e){return e.type===type;});
   const groups={};
   books.forEach(function(e){
-    const n=(e.name||'').trim();if(!n) return;
+    const n=normDonorName(e.name);if(!n) return;
     const f=map[n];
     const key=f?'F:'+f.id:'S:'+n;
-    if(!groups[key]){groups[key]={key:key,isFamily:!!f,name:f?f.name:n,members:f?f.members.slice():[n],main:f?f.main:n,total:0,count:0,byType:{},byMember:{}};}
+    if(!groups[key]){groups[key]={key:key,id:f?f.id:null,isFamily:!!f,name:f?f.name:n,members:f?_normMembers(f.members):[n],main:f?normDonorName(f.main):n,total:0,count:0,byType:{},byMember:{},raws:new Set()};}
     const g=groups[key];g.total+=Number(e.amount||0);g.count++;
     g.byType[e.type]=(g.byType[e.type]||0)+Number(e.amount||0);
     g.byMember[n]=(g.byMember[n]||0)+Number(e.amount||0);
+    const raw=(e.name||'').trim(); if(raw!==n) g.raws.add(raw);
   });
-  let list=Object.values(groups);
+  let list=Object.values(groups).map(function(g){g.raws=[...g.raws];return g;});
+  // 제외 처리: 개인은 이름 기준, 가족은 모든 구성원이 제외대상이거나 가족명이 제외명단일 때
+  const excl=[]; list=list.filter(function(g){
+    const ex=g.isFamily?(isExcludedName(g.name)||g.members.every(isExcludedName)):isExcludedName(g.name);
+    if(ex) excl.push(g); return !ex;
+  });
   if(!inclSingle) list=list.filter(function(g){return g.isFamily;});
-  if(q) list=list.filter(function(g){return g.name.includes(q)||g.members.some(function(m){return m.includes(q);});});
+  if(q){ const f=function(g){return g.name.includes(q)||g.members.some(function(m){return m.includes(q);});}; list=list.filter(f); }
   list.sort(function(a,b){return b.total-a.total||a.name.localeCompare(b.name,'ko');});
-  return {range:r,type:type,list:list,grand:list.reduce(function(s,g){return s+g.total;},0),allTypes:[...new Set(books.map(function(e){return e.type;}))]};
+  excl.sort(function(a,b){return b.total-a.total;});
+  return {range:r,type:type,list:list,excluded:excl,grand:list.reduce(function(s,g){return s+g.total;},0),allTypes:[...new Set(books.map(function(e){return e.type;}))]};
+}
+function _fmFamilyOptions(exceptId){
+  return getFamilies().filter(function(f){return f.id!==exceptId;}).sort(function(a,b){return a.name.localeCompare(b.name,'ko');}).map(function(f){return '<option value="'+escH(f.id)+'">'+escH(f.name)+' ('+(f.members||[]).length+')</option>';}).join('');
+}
+function _fmCard(g,i,d,muted){
+  const types=Object.keys(g.byType).sort(function(a,b){return g.byType[b]-g.byType[a];});
+  const rk=i+1; const editing=!!_fmEditing[g.key];
+  const keyq=escH(g.key).replace(/'/g,"\\'");
+  let memberArea='';
+  if(g.isFamily){
+    // 구성원 표시 + 편집모드
+    memberArea='<div class="fm-card-ft">'
+      +(editing
+        ? '<div class="fm-edit">'
+          +g.members.map(function(m){const amt=g.byMember[m]||0;const isMain=m===g.main;
+            return '<span class="fam-tag'+(isMain?' main':'')+'" title="'+(isMain?'대표자':'')+'">'+(isMain?'★ ':'')+escH(m)+'<small class="ft-amt">'+fmtN(amt)+'</small>'
+              +'<select class="fam-move" title="다른 가족으로 이동" onchange="fmMove(\''+escH(m).replace(/'/g,"\\'")+'\',this.value)"><option value="">→</option>'+_fmFamilyOptions(g.id)+'<option value="__single">개인으로 분리</option></select>'
+              +'<button class="x" onclick="fmRemove(\''+escH(g.id)+'\',\''+escH(m).replace(/'/g,"\\'")+'\')" title="가족에서 제외">×</button></span>';}).join('')
+          +'<span class="fam-tag add" onclick="fmAddPrompt(\''+escH(g.id)+'\')">+ 구성원</span>'
+          +'<button class="btn btn-navy btn-xs" style="margin-left:auto" onclick="fmToggleEdit(\''+keyq+'\')">완료</button>'
+          +'</div>'
+        : g.members.map(function(m){const amt=g.byMember[m]||0;
+            return '<span class="fm-chip'+(amt?'':' zero')+'" onclick="gotoMember(\''+escH(m).replace(/'/g,"\\'")+'\',\''+d.range.from+'\',\''+d.range.to+'\')" title="성도별 내역 보기">'+(m===g.main?'★ ':'')+escH(m)+'<span class="sub">'+(amt?fmtN(amt):'0')+'</span></span>';}).join('')
+          +'<button class="fm-ico no-print" onclick="fmToggleEdit(\''+keyq+'\')" title="구성원 수정">✎</button>')
+      +'</div>';
+  } else {
+    memberArea='<div class="fm-card-ft">'
+      +'<span class="fm-chip" onclick="gotoMember(\''+escH(g.main).replace(/'/g,"\\'")+'\',\''+d.range.from+'\',\''+d.range.to+'\')">상세 내역 →</span>'
+      +'<select class="fsel fm-assign no-print" style="width:auto" title="기존 가족에 추가" onchange="fmAssignSingle(\''+escH(g.main).replace(/'/g,"\\'")+'\',this.value);this.selectedIndex=0"><option value="">가족에 추가…</option>'+_fmFamilyOptions(null)+'<option value="__new">+ 새 가족 만들기</option></select>'
+      +'</div>';
+  }
+  return '<div class="fm-card'+(g.isFamily?'':' single')+(muted?' muted':'')+'" data-key="'+escH(g.key)+'">'
+    +'<div class="fm-card-hd"><div class="fm-rank'+(!muted&&rk<=3?' r'+rk:'')+'">'+(muted?'–':rk)+'</div>'
+      +'<div style="flex:1;min-width:0"><div class="fm-name">'+escH(g.name)+(g.isFamily?'':' <span style="font-size:10px;opacity:.7">(개인)</span>')+(g.raws.length?' <span class="dp-raw" style="opacity:.85" title="원본 표기: '+escH(g.raws.join(', '))+'">'+escH(g.raws.join(', '))+'</span>':'')+'</div>'
+      +(g.isFamily?'<div class="fm-members">'+g.members.length+'명 · '+g.members.map(function(m){return (m===g.main?'★':'')+escH(m);}).join(' · ')+'</div>':'')+'</div>'
+      +'<div><div class="fm-total">'+fmtN(g.total)+'</div><div class="fm-total-sub">'+g.count+'건'+(muted?'':' · '+(d.grand?(g.total/d.grand*100).toFixed(1):0)+'%')+'</div></div>'
+      +'<button class="fm-ico hd no-print" onclick="fmToggleExclude(\''+escH(g.isFamily?g.name:g.main).replace(/'/g,"\\'")+'\','+(muted?'false':'true')+')" title="'+(muted?'제외 해제(복원)':'화면에서 제외')+'">'+(muted?'↩':'⊘')+'</button>'
+    +'</div>'
+    +'<div class="fm-body">'+types.map(function(t){const v=g.byType[t];const p=g.total?Math.round(v/g.total*100):0;const ci=getTypeColorIdx(t);
+        return '<div class="fm-row" style="display:block"><div style="display:flex;justify-content:space-between"><span class="t"><span class="dot off-color-'+ci+'" style="border:1px solid #ccc"></span>'+escH(t)+'</span><span class="v">'+fmtN(v)+'<span class="pct">'+p+'%</span></span></div><div class="fm-bar"><i style="width:'+p+'%"></i></div></div>';}).join('')+'</div>'
+    +memberArea
+  +'</div>';
 }
 window.doFamilySearch=function(){
   const d=_fmCompute();const list=d.list;
   const famCnt=list.filter(function(g){return g.isFamily;}).length;
+  const singles=list.filter(function(g){return !g.isFamily;});
   const st=document.getElementById('fm-stats');
   if(st) st.innerHTML=
-    '<div class="stat navy"><div class="stat-lbl">총 헌금</div><div class="stat-val">'+fmtN(d.grand)+'</div><div class="stat-sub">원 · '+d.range.from+' ~ '+d.range.to+'</div></div>'
-    +'<div class="stat blue"><div class="stat-lbl">가족 / 개인</div><div class="stat-val">'+famCnt+' / '+(list.length-famCnt)+'</div><div class="stat-sub">등록가족 '+getFamilies().length+'</div></div>'
+    '<div class="stat navy"><div class="stat-lbl">총 헌금 (제외분 뺀)</div><div class="stat-val">'+fmtN(d.grand)+'</div><div class="stat-sub">원 · '+d.range.from+' ~ '+d.range.to+'</div></div>'
+    +'<div class="stat blue"><div class="stat-lbl">가족 / 개인</div><div class="stat-val">'+famCnt+' / '+singles.length+'</div><div class="stat-sub">등록가족 '+getFamilies().length+' · 미등록 '+singles.length+'명</div></div>'
     +'<div class="stat gold"><div class="stat-lbl">1위</div><div class="stat-val" style="font-size:16px">'+(list[0]?escH(list[0].name):'—')+'</div><div class="stat-sub">'+(list[0]?fmtN(list[0].total)+'원':'')+'</div></div>'
-    +'<div class="stat green"><div class="stat-lbl">가구당 평균</div><div class="stat-val">'+fmtN(list.length?d.grand/list.length:0)+'</div><div class="stat-sub">원</div></div>';
+    +'<div class="stat '+(d.excluded.length?'red':'green')+'" style="cursor:pointer" onclick="fmToggleShowExcluded()"><div class="stat-lbl">제외된 내역</div><div class="stat-val">'+d.excluded.length+'</div><div class="stat-sub">'+fmtN(d.excluded.reduce(function(s,g){return s+g.total;},0))+'원 · 클릭하여 '+(_fmShowExcluded?'숨기기':'보기')+'</div></div>';
   const badge=document.getElementById('fm-title-badge');if(badge) badge.textContent=(d.type||'전체 헌금')+' · 총액 내림차순 · '+list.length+'가구';
 
-  // 추천 배너 (미등록이 많으면)
+  // ① 미등록 헌금자 일괄 배정 패널
+  const up=document.getElementById('fm-unassigned-wrap');
+  if(up){
+    if(!singles.length){ up.innerHTML=''; }
+    else {
+      const sorted=singles.slice().sort(function(a,b){return a.name.localeCompare(b.name,'ko');});
+      up.innerHTML='<details class="fm-unassigned no-print"'+(window._fmUnOpen?' open':'')+' ontoggle="window._fmUnOpen=this.open">'
+        +'<summary><span>🧩 가족 미등록 헌금자 <b>'+singles.length+'명</b></span><span class="hint-inline">체크 → 아래에서 기존 가족 선택 → 한 번에 추가</span></summary>'
+        +'<div class="fm-un-tools">'
+          +'<label class="chk-pill"><input type="checkbox" onchange="document.querySelectorAll(\'.fm-un-chk\').forEach(c=>c.checked=this.checked);fmUnCount()"> 전체 선택</label>'
+          +'<span id="fm-un-count" class="badge b-navy">0명 선택</span>'
+          +'<span style="flex:1"></span>'
+          +'<select class="fsel" id="fm-un-target" style="width:auto;min-width:220px;max-width:340px;height:32px"><option value="">→ 추가할 가족 선택</option>'+_fmFamilyOptions(null)+'<option value="__new">+ 선택한 사람들로 새 가족 만들기</option></select>'
+          +'<button class="btn btn-navy btn-sm" onclick="fmBulkAssign()">가족에 추가</button>'
+        +'</div>'
+        +'<div class="fm-un-grid">'+sorted.map(function(g){return '<label class="fm-un-item"><input type="checkbox" class="fm-un-chk" value="'+escH(g.main)+'" onchange="fmUnCount()"><span class="n">'+escH(g.main)+(g.raws.length?'<small class="dp-raw">'+escH(g.raws.join(', '))+'</small>':'')+'</span><span class="a">'+fmtN(g.total)+'</span></label>';}).join('')+'</div>'
+        +'</details>';
+    }
+  }
+  // ② 추천 배너
   const sw=document.getElementById('fm-suggest-wrap');
   if(sw){
-    const sug=familySuggestions(3);
-    sw.innerHTML=sug.length?'<div class="fam-sug no-print" style="margin:0 0 12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-      +'<b style="color:#8a6022">💡 가족으로 묶을 수 있는 성도가 있어요</b>'
-      +sug.map(function(s){return '<span class="fm-chip" onclick="openFamilyMgr();setTimeout(renderFamilySuggestions,200)" title="'+escH(s.why)+'">'+s.names.map(escH).join(' · ')+'</span>';}).join('')
-      +'<a href="#" onclick="openFamilyMgr();setTimeout(renderFamilySuggestions,200);return false;" style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">가족 관리에서 확인 →</a></div></div>':'';
+    const sug=familySuggestions(4); window._famSugInline=sug;
+    sw.innerHTML=sug.length?'<div class="fam-sug no-print" style="margin:0 0 12px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<b style="color:#8a6022">💡 가족으로 묶을 수 있는 성도</b>'
+      +sug.map(function(s,i){return '<span class="fm-sug-chip" title="'+escH(s.why)+'">'+s.names.map(escH).join(' · ')+'<button onclick="fmAcceptInline('+i+')" title="이대로 등록">등록</button></span>';}).join('')
+      +'<a href="#" onclick="openFamilyMgr();setTimeout(renderFamilySuggestions,200);return false;" style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">가족 관리에서 모두 보기 →</a></div></div>':'';
   }
 
   const el=document.getElementById('fm-list');if(!el) return;
-  if(!list.length){el.innerHTML='<div class="tbl-empty">해당 기간에 헌금 내역이 없습니다</div>';showResult('fm-result');return;}
-
-  if(_fmView==='card'){
-    el.innerHTML='<div class="fm-grid">'+list.map(function(g,i){
-      const types=Object.keys(g.byType).sort(function(a,b){return g.byType[b]-g.byType[a];});
-      const rk=i+1;
-      return '<div class="fm-card'+(g.isFamily?'':' single')+'">'
-        +'<div class="fm-card-hd"><div class="fm-rank'+(rk<=3?' r'+rk:'')+'">'+rk+'</div>'
-          +'<div style="flex:1;min-width:0"><div class="fm-name">'+escH(g.name)+(g.isFamily?'':' <span style="font-size:10px;opacity:.7">(개인)</span>')+'</div>'
-          +(g.isFamily?'<div class="fm-members">'+g.members.map(function(m){return (m===g.main?'★':'')+escH(m)+(g.byMember[m]?'':'<span style="opacity:.5">(0)</span>');}).join(' · ')+'</div>':'')+'</div>'
-          +'<div><div class="fm-total">'+fmtN(g.total)+'</div><div class="fm-total-sub">'+g.count+'건 · '+(d.grand?(g.total/d.grand*100).toFixed(1):0)+'%</div></div></div>'
-        +'<div class="fm-body">'+types.map(function(t){const v=g.byType[t];const p=g.total?Math.round(v/g.total*100):0;const ci=getTypeColorIdx(t);
-            return '<div class="fm-row" style="display:block"><div style="display:flex;justify-content:space-between"><span class="t"><span class="dot off-color-'+ci+'" style="border:1px solid #ccc"></span>'+escH(t)+'</span><span class="v">'+fmtN(v)+'<span class="pct">'+p+'%</span></span></div><div class="fm-bar"><i style="width:'+p+'%"></i></div></div>';}).join('')+'</div>'
-        +(g.isFamily&&g.members.length>1?'<div class="fm-card-ft">'+g.members.filter(function(m){return g.byMember[m];}).sort(function(a,b){return g.byMember[b]-g.byMember[a];}).map(function(m){
-            return '<span class="fm-chip" onclick="gotoMember(\''+escH(m).replace(/'/g,"\\'")+'\',\''+d.range.from+'\',\''+d.range.to+'\')" title="성도별 내역 보기">'+escH(m)+'<span class="sub">'+fmtN(g.byMember[m])+'</span></span>';}).join('')+'</div>'
-          :'<div class="fm-card-ft"><span class="fm-chip" onclick="gotoMember(\''+escH(g.main).replace(/'/g,"\\'")+'\',\''+d.range.from+'\',\''+d.range.to+'\')">상세 내역 보기 →</span>'+(g.isFamily?'':'<span class="fm-chip" onclick="openFamilyMgr();setTimeout(function(){document.getElementById(\'fam-new-members\').value=\''+escH(g.main).replace(/'/g,"\\'")+'\';},150)">가족으로 등록</span>')+'</div>')
-      +'</div>';
-    }).join('')+'</div>';
+  if(!list.length){el.innerHTML='<div class="tbl-empty">해당 기간에 헌금 내역이 없습니다</div>';}
+  else if(_fmView==='card'){
+    el.innerHTML='<div class="fm-grid">'+list.map(function(g,i){return _fmCard(g,i,d,false);}).join('')+'</div>';
   } else {
-    // 피벗 테이블: 가구 × 헌금명
     const cols=d.type?[d.type]:d.allTypes.slice().sort(function(a,b){
       const ta=list.reduce(function(s,g){return s+(g.byType[a]||0);},0),tb=list.reduce(function(s,g){return s+(g.byType[b]||0);},0);return tb-ta;});
     const colTot={};cols.forEach(function(c){colTot[c]=list.reduce(function(s,g){return s+(g.byType[c]||0);},0);});
-    el.innerHTML='<div class="tbl-wrap"><table class="tbl" style="min-width:'+(400+cols.length*110)+'px"><thead><tr><th style="width:40px">순위</th><th style="min-width:160px">가족 / 성도</th>'
-      +cols.map(function(c){return '<th class="nc">'+escH(c)+'</th>';}).join('')+'<th class="nc">합계</th><th class="nc">비중</th></tr></thead><tbody>'
+    el.innerHTML='<div class="tbl-wrap"><table class="tbl" style="min-width:'+(400+cols.length*110)+'px"><thead><tr><th style="width:40px">순위</th><th style="min-width:180px">가족 / 성도</th>'
+      +cols.map(function(c){return '<th class="nc">'+escH(c)+'</th>';}).join('')+'<th class="nc">합계</th><th class="nc">비중</th><th class="no-print" style="width:40px"></th></tr></thead><tbody>'
       +list.map(function(g,i){
         return '<tr><td style="text-align:center;font-family:var(--fnum);font-weight:800;color:'+(i<3?'var(--gold)':'var(--g2)')+'">'+(i+1)+'</td>'
-          +'<td><b style="color:var(--navy)">'+escH(g.name)+'</b>'+(g.isFamily?'<div style="font-size:10px;color:var(--g3)">'+g.members.map(escH).join(' · ')+'</div>':'<span class="badge b-gray" style="margin-left:4px">개인</span>')+'</td>'
+          +'<td><b style="color:var(--navy)">'+escH(g.name)+'</b>'+(g.isFamily?'<div style="font-size:10px;color:var(--g3)">'+g.members.map(function(m){return escH(m)+' '+fmtN(g.byMember[m]||0);}).join(' · ')+'</div>':'<span class="badge b-gray" style="margin-left:4px">개인</span>')+'</td>'
           +cols.map(function(c){return '<td class="nc">'+(g.byType[c]?fmtN(g.byType[c]):'<span style="color:var(--g4)">—</span>')+'</td>';}).join('')
-          +'<td class="nc" style="font-weight:800;color:var(--navy)">'+fmtN(g.total)+'</td><td class="nc" style="color:var(--g2)">'+(d.grand?(g.total/d.grand*100).toFixed(1):0)+'%</td></tr>';
+          +'<td class="nc" style="font-weight:800;color:var(--navy)">'+fmtN(g.total)+'</td><td class="nc" style="color:var(--g2)">'+(d.grand?(g.total/d.grand*100).toFixed(1):0)+'%</td>'
+          +'<td class="no-print"><button class="fm-ico" onclick="fmToggleExclude(\''+escH(g.isFamily?g.name:g.main).replace(/'/g,"\\'")+'\',true)" title="제외">⊘</button></td></tr>';
       }).join('')
-      +'</tbody><tfoot><tr><td colspan="2" style="text-align:center">합계</td>'+cols.map(function(c){return '<td class="nc">'+fmtN(colTot[c])+'</td>';}).join('')+'<td class="nc">'+fmtN(d.grand)+'</td><td class="nc">100%</td></tr></tfoot></table></div>';
+      +'</tbody><tfoot><tr><td colspan="2" style="text-align:center">합계</td>'+cols.map(function(c){return '<td class="nc">'+fmtN(colTot[c])+'</td>';}).join('')+'<td class="nc">'+fmtN(d.grand)+'</td><td class="nc">100%</td><td></td></tr></tfoot></table></div>';
+  }
+  // ③ 제외 내역 (별도 보기)
+  const ex=document.getElementById('fm-excluded-wrap');
+  if(ex){
+    ex.innerHTML=(_fmShowExcluded&&d.excluded.length)
+      ? '<div class="card fm-excl-card"><div class="card-hd"><div class="card-title">⊘ 제외된 내역 <span class="badge b-red" style="margin-left:6px">'+d.excluded.length+'건 · '+fmtN(d.excluded.reduce(function(s,g){return s+g.total;},0))+'원</span></div>'
+        +'<div style="font-size:11px;color:var(--g2)">키워드: '+(getFamExclude().keywords.map(escH).join(', ')||'없음')+' · 개별 제외: '+(getFamExclude().names.length)+'명 · 위 합계·순위에는 포함되지 않습니다</div></div>'
+        +'<div class="fm-grid">'+d.excluded.map(function(g,i){return _fmCard(g,i,d,true);}).join('')+'</div></div>'
+      : (d.excluded.length&&!_fmShowExcluded?'<div class="no-print" style="text-align:center;margin-top:10px"><button class="btn btn-outline btn-sm" onclick="fmToggleShowExcluded()">⊘ 제외된 내역 '+d.excluded.length+'건 보기</button></div>':'');
   }
   showResult('fm-result');
+};
+window.fmToggleShowExcluded=function(){_fmShowExcluded=!_fmShowExcluded;doFamilySearch();};
+window.fmToggleEdit=function(key){_fmEditing[key]=!_fmEditing[key];doFamilySearch();};
+window.fmRemove=function(fid,m){
+  const fams=getFamilies();const f=fams.find(function(x){return x.id===fid;});if(!f) return;
+  if(!confirm('"'+m+'" 님을 "'+f.name+"\" 가족에서 뺄까요? (개인으로 표시됩니다)")) return;
+  f.members=f.members.filter(function(x){return normDonorName(x)!==normDonorName(m);});
+  if(normDonorName(f.main)===normDonorName(m)) f.main=f.members[0]||'';
+  setFamilies(fams.filter(function(x){return x.members.length;})); showToast(m+' 분리됨'); doFamilySearch();
+};
+window.fmMove=function(m,toId){
+  if(!toId) return;
+  if(toId==='__single'){ const map=memberFamilyMap(); const f=map[normDonorName(m)]; if(f) fmRemove(f.id,m); return; }
+  if(addMembersToFamily(toId,[m],true)){ showToast(m+' → '+(getFamilies().find(function(f){return f.id===toId;})||{}).name); doFamilySearch(); }
+};
+window.fmAddPrompt=function(fid){
+  const m=prompt('추가할 구성원 이름 (헌금자명과 동일하게)'); if(!m) return;
+  if(addMembersToFamily(fid,[m])){ showToast('추가됨'); doFamilySearch(); }
+};
+window.fmAssignSingle=function(name,toId){
+  if(!toId) return;
+  if(toId==='__new'){ const fn=prompt('새 가족 이름', name+' 가정'); if(fn===null) return; addFamilyWith(fn,[name],true); doFamilySearch(); return; }
+  if(addMembersToFamily(toId,[name],true)){ showToast(name+' → '+(getFamilies().find(function(f){return f.id===toId;})||{}).name); doFamilySearch(); }
+};
+window.fmUnCount=function(){const n=document.querySelectorAll('.fm-un-chk:checked').length;const el=document.getElementById('fm-un-count');if(el) el.textContent=n+'명 선택';};
+window.fmBulkAssign=function(){
+  const names=Array.from(document.querySelectorAll('.fm-un-chk:checked')).map(function(c){return c.value;});
+  const to=document.getElementById('fm-un-target')?.value||'';
+  if(!names.length){showToast('먼저 헌금자를 체크하세요');return;}
+  if(!to){showToast('추가할 가족을 선택하세요');document.getElementById('fm-un-target')?.focus();return;}
+  if(to==='__new'){ const fn=prompt('새 가족 이름', names[0]+' 가정'); if(fn===null) return; addFamilyWith(fn,names,true); window._fmUnOpen=true; doFamilySearch(); return; }
+  if(addMembersToFamily(to,names,true)){ showToast(names.length+'명 → '+(getFamilies().find(function(f){return f.id===to;})||{}).name); window._fmUnOpen=true; doFamilySearch(); }
+};
+window.fmAcceptInline=function(i){
+  const s=(window._famSugInline||[])[i]; if(!s) return;
+  if(!confirm(s.names.join(', ')+' 을(를) "'+s.names[0]+' 가정"으로 등록할까요?')) return;
+  addFamilyWith(s.names[0]+' 가정',s.names.slice(),true); doFamilySearch();
+};
+window.fmToggleExclude=function(name,exclude){
+  const x=getFamExclude(); const n=normDonorName(name);
+  if(exclude){ if(!x.names.includes(n)) x.names.push(n); showToast('"'+n+'" 화면에서 제외 (제외 내역에서 복원 가능)'); }
+  else {
+    x.names=x.names.filter(function(v){return v!==n;});
+    const hitKw=x.keywords.filter(function(k){return n.includes(k);});
+    if(hitKw.length){ if(confirm('"'+n+'"은(는) 제외 키워드('+hitKw.join(', ')+')에 해당합니다.\n키워드도 함께 삭제할까요? (취소하면 복원되지 않습니다)')) x.keywords=x.keywords.filter(function(k){return !hitKw.includes(k);}); else { return; } }
+    showToast('"'+n+'" 복원');
+  }
+  setFamExclude(x); const kw=document.getElementById('fm-exclude-kw'); if(kw) kw.value=x.keywords.join(', '); doFamilySearch();
 };
 window.gotoMember=function(name,from,to){
   document.querySelector('[data-tab="member"]')?.click();
   setTimeout(function(){
-    const n=document.getElementById('mb-name');if(n) n.value=name;
+    const n=normDonorName(name); if(!_mbSelected.includes(n)) _mbSelected=[n];
     if(from){const f=document.getElementById('mb-from');if(f) f.value=from;}
     if(to){const t=document.getElementById('mb-to');if(t) t.value=to;}
-    doMemberSearch();
+    renderDonorPicker(); renderMbSelected(); doMemberSearch();
   },60);
 };
 window.printFamily=function(){
@@ -5734,10 +6026,10 @@ window.printFamily=function(){
     +'table{width:100%;border-collapse:collapse}th{background:#1e3a5f;color:#fff;padding:7px 8px;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'td{padding:6px 8px;border-bottom:1px solid #e2e8f0;vertical-align:top}.r{text-align:right;font-family:Arial}tfoot td{font-weight:800;background:#dbeafe}'
     +'.m{font-size:10px;color:#64748b}@media print{@page{margin:10mm;size:A4 landscape}}</style></head><body>'
-    +'<h1>가족별 누적헌금 현황</h1><div class="sub">서부광성교회 · '+d.range.from+' ~ '+d.range.to+(d.type?' · '+escH(d.type):'')+' · 총액 내림차순 · 출력 '+TODAY+'</div>'
+    +'<h1>가족별 누적헌금 현황</h1><div class="sub">서부광성교회 · '+d.range.from+' ~ '+d.range.to+(d.type?' · '+escH(d.type):'')+' · 총액 내림차순 · 출력 '+TODAY+(d.excluded.length?' · 제외 '+d.excluded.length+'건 미포함':'')+'</div>'
     +'<table><thead><tr><th style="width:36px">순위</th><th>가족 / 성도</th><th>헌금명별 합계</th><th style="width:130px;text-align:right">합계(원)</th><th style="width:60px;text-align:right">비중</th></tr></thead><tbody>'
     +d.list.map(function(g,i){const types=Object.keys(g.byType).sort(function(a,b){return g.byType[b]-g.byType[a];});
-      return '<tr><td style="text-align:center">'+(i+1)+'</td><td><b>'+escH(g.name)+'</b>'+(g.isFamily?'<div class="m">'+g.members.map(escH).join(' · ')+'</div>':'<div class="m">개인</div>')+'</td>'
+      return '<tr><td style="text-align:center">'+(i+1)+'</td><td><b>'+escH(g.name)+'</b>'+(g.isFamily?'<div class="m">'+g.members.map(function(m){return escH(m)+' '+fmtN(g.byMember[m]||0);}).join(' · ')+'</div>':'<div class="m">개인</div>')+'</td>'
         +'<td>'+types.map(function(t){return escH(t)+' <span style="font-family:Arial">'+fmtN(g.byType[t])+'</span>';}).join(' / ')+'</td>'
         +'<td class="r"><b>'+fmtN(g.total)+'</b></td><td class="r">'+(d.grand?(g.total/d.grand*100).toFixed(1):0)+'%</td></tr>';}).join('')
     +'</tbody><tfoot><tr><td colspan="3" style="text-align:right">합계 ('+d.list.length+'가구)</td><td class="r">'+fmtN(d.grand)+'</td><td class="r">100%</td></tr></tfoot></table></body></html>');
@@ -5747,11 +6039,11 @@ window.exportFamilyXlsx=function(){
   const d=_fmCompute();if(!d.list.length){alert('조회 결과가 없습니다.');return;}
   if(typeof XLSX==='undefined'){alert('엑셀 라이브러리를 불러오지 못했습니다.');return;}
   const cols=d.type?[d.type]:d.allTypes.slice();
-  const rows=[['순위','가족/성도','구분','구성원'].concat(cols,['합계','비중%'])];
-  d.list.forEach(function(g,i){rows.push([i+1,g.name,g.isFamily?'가족':'개인',g.members.join(', ')].concat(cols.map(function(c){return g.byType[c]||0;}),[g.total,d.grand?Number((g.total/d.grand*100).toFixed(1)):0]));});
-  rows.push([]);rows.push(['합계','','',''].concat(cols.map(function(c){return d.list.reduce(function(s,g){return s+(g.byType[c]||0);},0);}),[d.grand,100]));
-  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:5},{wch:16},{wch:6},{wch:28}].concat(cols.map(function(){return {wch:12};}),[{wch:14},{wch:7}]);
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'가족별누적');
+  const mk=function(list){const rows=[['순위','가족/성도','구분','구성원'].concat(cols,['합계','비중%'])];
+    list.forEach(function(g,i){rows.push([i+1,g.name,g.isFamily?'가족':'개인',g.members.join(', ')].concat(cols.map(function(c){return g.byType[c]||0;}),[g.total,d.grand?Number((g.total/d.grand*100).toFixed(1)):0]));});
+    const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:5},{wch:16},{wch:6},{wch:28}].concat(cols.map(function(){return {wch:12};}),[{wch:14},{wch:7}]);return ws;};
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,mk(d.list),'가족별누적');
+  if(d.excluded.length) XLSX.utils.book_append_sheet(wb,mk(d.excluded),'제외내역');
   XLSX.writeFile(wb,'가족별누적헌금_'+d.range.from+'_'+d.range.to+'.xlsx');
 };
 
@@ -7542,8 +7834,8 @@ window.printSection=function(areaId){
     {k:'monthly',label:'월간보고',          hint:'일반/특별회계 보고서'},
     {k:'deptreport',label:'부서보고서',     hint:'부서별 월간 보고'},
     {k:'bankbal',label:'통장잔액',          hint:'은행 잔액 대조'},
-    {k:'member', label:'성도별 헌금',       hint:'성도 1명의 기간 헌금내역'},
-    {k:'family', label:'가족별 누적',       hint:'가족 단위 누적헌금 순위'},
+    {k:'member', label:'성도별 헌금',       hint:'가나다 목록에서 선택 · 헌금명별 묶음'},
+    {k:'family', label:'가족별 누적',       hint:'가족 단위 누적 순위 · 미등록 일괄 배정 · 제외'},
     {k:'manage', label:'관리',              hint:'헌금종류·부서·계좌·가족·예산·데이터'}
   ];
   function ensurePalette(){
