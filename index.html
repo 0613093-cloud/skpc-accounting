@@ -745,6 +745,35 @@ table.fm-tbl tr.row-edit td{background:#fffbeb!important}
 .fm-merge-opts .chk-pill input[type=radio]{accent-color:var(--navy)}
 .fm-row-chk{width:16px;height:16px;accent-color:var(--navy);cursor:pointer}
 
+/* ── 가족별 구성원 요약 버튼 + 플로팅 패널 ── */
+.fm-sum{display:inline-flex;align-items:center;gap:8px;max-width:260px;height:28px;padding:0 10px;border:1px solid var(--g4);border-radius:14px;background:#fff;
+  font-family:var(--fn);font-size:12px;color:var(--g1);cursor:pointer;white-space:nowrap;transition:all .15s}
+.fm-sum:hover,.fm-sum.open{border-color:var(--navy);background:var(--blue-xp)}
+.fm-sum-names{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.fm-sum-names b{color:var(--navy)}
+.fm-sum-more{color:var(--g2);font-size:11px}
+.fm-sum-arr{color:var(--g3);font-size:10px;flex-shrink:0}
+.fm-raw-line{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.fm-raw-line .dp-raw{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
+.fm-pop{position:fixed;z-index:9000;display:none;background:#fff;border:1.5px solid var(--navy);border-radius:12px;box-shadow:0 12px 36px rgba(15,35,71,.28);overflow:hidden;font-size:12px}
+.fm-pop.show{display:block;animation:palIn .15s ease-out}
+.fm-pop-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:linear-gradient(90deg,var(--navy),var(--navy-m));color:#fff}
+.fm-pop-hd b{font-size:13px}.fm-pop-hd small{display:block;font-size:10px;opacity:.75;margin-top:1px}
+.fm-pop-hd .fm-ico{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;margin:0}
+.fm-pop-list{max-height:46vh;overflow-y:auto}
+.fm-pop-row{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--g5);cursor:pointer}
+.fm-pop-row:hover{background:var(--blue-xp)}
+.fm-pop-row.zero{opacity:.55}
+.fm-pop-row .n{flex:1;font-weight:700;color:var(--g1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fm-pop-row .a{font-family:var(--fnum);font-weight:700;color:var(--navy);white-space:nowrap}
+.fm-pop-row .a small{font-family:var(--fn);color:var(--g3);margin-left:5px;font-size:10px}
+.fm-pop-list.edit .fm-pop-row{cursor:default}
+.fm-pop-move{height:26px;font-size:11px;padding:0 6px;width:auto;max-width:120px}
+.fm-pop-row .fm-ico{margin:0;width:24px;height:24px}
+.fm-pop-ft{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--g6);border-top:1px solid var(--g5)}
+table.fm-tbl td{height:44px}
+@media print{.fm-sum{border:none;padding:0;height:auto}.fm-sum-arr{display:none}}
+
 /* 숫자 강조 복사 피드백 토스트 */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;
   border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:all .25s;z-index:9999}
@@ -2579,6 +2608,7 @@ function updateActiveGroup(tab){
 }
 
 function onTabActivate(tab){
+  if(window.fmPopClose) try{fmPopClose();}catch(e){}
   if(tab==='offering') initOfferingTab();
   if(tab==='expense'){initExpenseTab();}
   if(tab==='sponsor') initSponsorTab();
@@ -5890,19 +5920,67 @@ function _fmMembersCell(g,d){
     return '<div class="fm-mem-line"><span class="fm-chip" onclick="gotoMember(\''+_q(g.main)+'\',\''+d.range.from+'\',\''+d.range.to+'\')" title="성도별 내역 보기">상세 →</span>'
       +'<select class="fsel fm-assign no-print" style="width:auto" title="기존 가족에 추가" onchange="fmAssignSingle(\''+_q(g.main)+'\',this.value);this.selectedIndex=0"><option value="">가족에 추가…</option>'+_fmFamilyOptions(null)+'<option value="__new">+ 새 가족 만들기</option></select></div>';
   }
+  // 가족: 한 줄 요약(칸 높이 고정) → 클릭하면 떠 있는 패널에서 구성원 전체 + 수정
+  const open=_fmPop.key===g.key;
+  const others=g.members.filter(function(m){return m!==g.main;});
+  const label='<b>★ '+escH(g.main)+'</b>'+(others.length?' <span class="fm-sum-more">외 '+others.length+'명</span>':'');
+  return '<button class="fm-sum'+(open?' open':'')+'" data-key="'+escH(g.key)+'" onclick="fmPopToggle(event,\''+_q(g.key)+'\')" title="클릭하여 구성원 보기/수정">'
+    +'<span class="fm-sum-names">'+label+'</span><span class="fm-sum-arr">'+(open?'▴':'▾')+'</span></button>';
+}
+// ── 구성원 플로팅 패널 (표 칸 크기 영향 없음) ──
+const _fmPop={key:null,el:null};
+function _fmPopEnsure(){
+  if(_fmPop.el) return _fmPop.el;
+  const el=document.createElement('div'); el.id='fm-pop'; el.className='fm-pop'; document.body.appendChild(el);
+  document.addEventListener('mousedown',function(ev){ if(_fmPop.key&&!el.contains(ev.target)&&!ev.target.closest('.fm-sum')) fmPopClose(); });
+  document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') fmPopClose(); });
+  window.addEventListener('resize',function(){ if(_fmPop.key) _fmPopPlace(); });
+  document.addEventListener('scroll',function(){ if(_fmPop.key) _fmPopPlace(); },true);
+  _fmPop.el=el; return el;
+}
+function _fmPopContent(g,d){
   const editing=!!_fmEditing[g.key];
+  const tot=g.total;
+  let body;
   if(!editing){
-    return '<div class="fm-mem-line">'
-      +g.members.map(function(m){const amt=g.byMember[m]||0;return '<span class="fm-chip'+(amt?'':' zero')+'" onclick="gotoMember(\''+_q(m)+'\',\''+d.range.from+'\',\''+d.range.to+'\')" title="성도별 내역 보기">'+(m===g.main?'★ ':'')+escH(m)+'<span class="sub">'+(amt?fmtN(amt):'0')+'</span></span>';}).join('')
-      +'<button class="fm-ico no-print" onclick="fmToggleEdit(\''+_q(g.key)+'\')" title="구성원 수정 (이동/분리/추가)">✎</button></div>';
+    body='<div class="fm-pop-list">'+g.members.map(function(m){const amt=g.byMember[m]||0;const p=tot?Math.round(amt/tot*100):0;
+      return '<div class="fm-pop-row'+(amt?'':' zero')+'" onclick="gotoMember(\''+_q(m)+'\',\''+d.range.from+'\',\''+d.range.to+'\')" title="성도별 내역 보기">'
+        +'<span class="n">'+(m===g.main?'★ ':'')+escH(m)+'</span><span class="a">'+fmtN(amt)+'<small>'+p+'%</small></span></div>';}).join('')+'</div>'
+      +'<div class="fm-pop-ft no-print"><button class="btn btn-outline btn-xs" onclick="fmToggleEdit(\''+_q(g.key)+'\')">✎ 구성원 수정</button></div>';
+  } else {
+    body='<div class="fm-pop-list edit">'+g.members.map(function(m){const amt=g.byMember[m]||0;const isMain=m===g.main;
+      return '<div class="fm-pop-row">'
+        +'<span class="n" title="클릭=대표자 지정" onclick="setFamilyMain(\''+_q(g.id)+'\',\''+_q(m)+'\');doFamilySearch()" style="cursor:pointer">'+(isMain?'★ ':'☆ ')+escH(m)+'</span><span class="a">'+fmtN(amt)+'</span>'
+        +'<select class="fsel fm-pop-move" title="다른 가족으로 이동" onchange="fmMove(\''+_q(m)+'\',this.value)"><option value="">이동 →</option>'+_fmFamilyOptions(g.id)+'<option value="__single">개인으로 분리</option></select>'
+        +'<button class="fm-ico" onclick="fmRemove(\''+_q(g.id)+'\',\''+_q(m)+'\')" title="가족에서 제외">×</button></div>';}).join('')+'</div>'
+      +'<div class="fm-pop-ft no-print"><button class="btn btn-outline btn-xs" onclick="fmAddPrompt(\''+_q(g.id)+'\')">+ 구성원</button><span style="flex:1"></span><button class="btn btn-navy btn-xs" onclick="fmToggleEdit(\''+_q(g.key)+'\')">완료</button></div>';
   }
-  return '<div class="fm-edit">'
-    +g.members.map(function(m){const amt=g.byMember[m]||0;const isMain=m===g.main;
-      return '<span class="fam-tag'+(isMain?' main':'')+'">'+(isMain?'★ ':'')+escH(m)+'<small class="ft-amt">'+fmtN(amt)+'</small>'
-        +'<select class="fam-move" title="다른 가족으로 이동" onchange="fmMove(\''+_q(m)+'\',this.value)"><option value="">→</option>'+_fmFamilyOptions(g.id)+'<option value="__single">개인으로 분리</option></select>'
-        +'<button class="x" onclick="fmRemove(\''+_q(g.id)+'\',\''+_q(m)+'\')" title="가족에서 제외">×</button></span>';}).join('')
-    +'<span class="fam-tag add" onclick="fmAddPrompt(\''+_q(g.id)+'\')">+ 구성원</span>'
-    +'<button class="btn btn-navy btn-xs" onclick="fmToggleEdit(\''+_q(g.key)+'\')">완료</button></div>';
+  return '<div class="fm-pop-hd"><div><b>'+escH(g.name)+'</b><small>'+g.members.length+'명 · '+fmtN(tot)+'원</small></div><button class="fm-ico" onclick="fmPopClose()" title="닫기">×</button></div>'+body;
+}
+function _fmPopPlace(){
+  const el=_fmPop.el; const btn=document.querySelector('.fm-sum[data-key="'+(_fmPop.key||'').replace(/"/g,'\\"')+'"]');
+  if(!el||!btn){ fmPopClose(); return; }
+  const r=btn.getBoundingClientRect(); const W=Math.min(380,window.innerWidth-16); el.style.width=W+'px';
+  let left=Math.max(8,Math.min(r.left,window.innerWidth-W-8));
+  const h=el.offsetHeight||240; let top=r.bottom+6;
+  if(top+h>window.innerHeight-8&&r.top-h-6>8) top=r.top-h-6;
+  el.style.left=left+'px'; el.style.top=top+'px';
+}
+window.fmPopToggle=function(ev,key){
+  if(ev) ev.stopPropagation();
+  if(_fmPop.key===key){ fmPopClose(); return; }
+  _fmPop.key=key; _fmPopRefresh();
+};
+window.fmPopClose=function(){ if(!_fmPop.key) return; _fmPop.key=null; if(_fmPop.el){_fmPop.el.classList.remove('show');} document.querySelectorAll('.fm-sum.open').forEach(function(b){b.classList.remove('open');const a=b.querySelector('.fm-sum-arr');if(a) a.textContent='▾';}); };
+function _fmPopRefresh(){
+  if(!_fmPop.key) return;
+  const d=_fmCompute(); const g=d.list.concat(d.excluded).find(function(x){return x.key===_fmPop.key;});
+  const btn=document.querySelector('.fm-sum[data-key="'+_fmPop.key.replace(/"/g,'\\"')+'"]');
+  if(!g||!btn){ fmPopClose(); return; }
+  const el=_fmPopEnsure(); el.innerHTML=_fmPopContent(g,d); el.classList.add('show');
+  document.querySelectorAll('.fm-sum.open').forEach(function(b){b.classList.remove('open');const a=b.querySelector('.fm-sum-arr');if(a) a.textContent='▾';});
+  btn.classList.add('open'); const arr=btn.querySelector('.fm-sum-arr'); if(arr) arr.textContent='▴';
+  _fmPopPlace();
 }
 function _fmTable(list,d,opts){
   opts=opts||{};
@@ -5922,7 +6000,7 @@ function _fmTable(list,d,opts){
       +(muted?'':'<td class="no-print"><input type="checkbox" class="fm-row-chk" '+(sel?'checked':'')+' onchange="fmSelRow(\''+_q(g.key)+'\',this.checked)"></td>')
       +'<td style="text-align:center;font-family:var(--fnum);font-weight:800;color:'+(!muted&&i<3?'var(--gold)':'var(--g2)')+'">'+(muted?'–':i+1)+'</td>'
       +'<td><b style="color:var(--navy);font-size:13px">'+escH(g.name)+'</b> '+(g.isFamily?'<span class="badge b-navy">가족 '+g.members.length+'</span>':'<span class="badge b-gray">개인</span>')
-        +(g.raws.length?'<div><span class="dp-raw" title="원본 표기">'+escH(g.raws.join(', '))+'</span></div>':'')+'</td>'
+        +(g.raws.length?'<div class="fm-raw-line"><span class="dp-raw" title="원본 표기: '+escH(g.raws.join(', '))+'">'+escH(g.raws.join(', '))+'</span></div>':'')+'</td>'
       +'<td>'+_fmMembersCell(g,d)+'</td>'
       +cols.map(function(c){return '<td class="nc">'+_fmRowCell(g,c,cc.rest||[])+'</td>';}).join('')
       +'<td class="nc" style="font-weight:800;color:var(--navy);font-size:13px">'+fmtN(g.total)+'</td>'
@@ -6004,6 +6082,7 @@ window.doFamilySearch=function(){
     else ex.innerHTML='<div class="no-print" style="text-align:center;margin-top:10px"><button class="btn btn-outline btn-sm" onclick="fmToggleShowExcluded()">▼ 제외된 내역 '+d.excluded.length+'건 · '+fmtN(exTot)+'원 펼치기</button></div>';
   }
   showResult('fm-result');
+  if(_fmPop.key) setTimeout(_fmPopRefresh,0);
 };
 // 선택 묶기 툴바 (행 체크 시 표 전체 재렌더 없이 이것만 갱신)
 function _fmRenderMergeBar(list){
@@ -6031,7 +6110,7 @@ function _fmRenderMergeBar(list){
   } else { mt.innerHTML=''; _fmMergeOpen=false; }
 }
 window.fmToggleShowExcluded=function(){_fmShowExcluded=!_fmShowExcluded;doFamilySearch();};
-window.fmToggleEdit=function(key){_fmEditing[key]=!_fmEditing[key];doFamilySearch();};
+window.fmToggleEdit=function(key){_fmEditing[key]=!_fmEditing[key]; if(_fmPop.key!==key) _fmPop.key=key; _fmPopRefresh();};
 window.fmSelRow=function(key,on){
   if(on) _fmRowSel[key]=true; else delete _fmRowSel[key];
   // 행 클래스만 갱신 + 툴바 갱신 (표 재렌더 없음 → 연속 체크 가능)
