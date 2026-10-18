@@ -6174,13 +6174,23 @@ window.fmAssignSingle=function(name,toId){
   if(addMembersToFamily(toId,[name],true)){ showToast(name+' → '+(getFamilies().find(function(f){return f.id===toId;})||{}).name); doFamilySearch(); }
 };
 // 미등록 체크 상태는 전역에 보관 → 표 재렌더 후에도 유지
+// 체크박스 변경 시: 체크 목록은 다시 그리지 않음(스크롤 유지) → 개수 표시 + 표만 갱신
+function _fmUnLightRefresh(){
+  fmUnCount();
+  const el=document.getElementById('fm-list'); if(!el) return;
+  const wrap=el.querySelector('.tbl-wrap'); const sx=wrap?wrap.scrollLeft:0;
+  const d=_fmCompute();
+  el.innerHTML=d.list.length?_fmTable(d.list,d,{checkedUn:(window._fmUnChecked||[]).length}):'<div class="tbl-empty">해당 기간에 헌금 내역이 없습니다</div>';
+  const w2=el.querySelector('.tbl-wrap'); if(w2) w2.scrollLeft=sx;
+}
 window.fmUnChanged=function(){
   window._fmUnChecked=Array.from(document.querySelectorAll('.fm-un-chk:checked')).map(function(c){return c.value;});
-  window._fmUnOpen=true; doFamilySearch();
+  window._fmUnOpen=true; _fmUnLightRefresh();
 };
 window.fmUnSelAll=function(on){
+  document.querySelectorAll('.fm-un-chk').forEach(function(c){c.checked=!!on;});
   window._fmUnChecked=on?Array.from(document.querySelectorAll('.fm-un-chk')).map(function(c){return c.value;}):[];
-  window._fmUnOpen=true; doFamilySearch();
+  window._fmUnOpen=true; _fmUnLightRefresh();
 };
 window.fmUnCount=function(){const n=(window._fmUnChecked||[]).length;const el=document.getElementById('fm-un-count');if(el) el.textContent=n+'명 선택';};
 window.fmBulkAssign=function(){
