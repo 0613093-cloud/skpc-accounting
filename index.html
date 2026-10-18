@@ -4042,7 +4042,7 @@ window.printMonthlyAll=function(){
   try{ renderMonthlyGeneral(ym); generalHTML=el.innerHTML; }catch(e){console.error(e);}
 
   // 2) 특별회계 3계정 각각 1장씩 (건축/전도/지역봉사)
-  const specialTitle='<div style="text-align:center;margin-bottom:16px">'
+  const specialTitle='<div class="rpt-main-hd" style="text-align:center;margin-bottom:16px">'
     +'<div style="font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px">'+yr+'년 '+mo+'월 특별 회계보고</div>'
     +'<div style="font-size:11px;color:#94a3b8;margin-top:3px">서부광성교회 · Seobukwangseong Presbyterian Church</div>'
     +'</div>';
@@ -4561,7 +4561,7 @@ function buildSpecialSection(conf,rptType,ym,sectionNo){
 
     // 소타이틀 볼드
     +'<div style="background:#1e3a5f;padding:10px 16px;display:flex;align-items:center;justify-content:space-between">'
-    +'<strong style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.5px">'+conf.label+' 회계보고</strong>'
+    +'<strong class="sp-acct-title" style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.5px">'+conf.label+' 회계보고</strong>'
     +'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600">'+yr+'. '+String(mo).padStart(2,'0')+'</span>'
     +'</div>'
 
@@ -8092,6 +8092,98 @@ window.switchFmtTab=function(tab){
 window.clearOffering=function(){if(!confirm('헌금 전체 데이터를 삭제하시겠습니까?')) return;ST.set('accountBook',[]);alert('삭제 완료');};
 window.clearExpense=function(){if(!confirm('지출 전체 데이터를 삭제하시겠습니까?')) return;ST.set('expenseBook',[]);alert('삭제 완료');};
 
+// ── 월간보고 출력 정규화: 글자·숫자 크기, 칸 너비/높이 통일 ──
+const MONTHLY_PRINT_CSS=`
+body.mrpt *{font-size:11.5px!important;line-height:1.3!important;letter-spacing:0!important;text-shadow:none!important;box-shadow:none!important}
+body.mrpt h2{font-size:15px!important;margin-bottom:2px!important;padding-bottom:6px!important}
+body.mrpt .print-date{font-size:10px!important;margin-bottom:8px!important}
+body.mrpt .rpt-wrap{max-width:none!important;margin:0!important}
+body.mrpt .rpt-main-hd{padding:6px 0 8px!important;margin:0 0 10px!important;border:none!important;border-bottom:2px solid #000!important;border-radius:0!important}
+body.mrpt .rpt-main-hd > div:first-child{font-size:16px!important;font-weight:800!important}
+body.mrpt .rpt-main-hd > div + div{font-size:9.5px!important;margin-top:2px!important}
+body.mrpt .rpt-section{margin:0 0 10px!important;border:none!important;border-radius:0!important;overflow:visible!important}
+body.mrpt .rpt-section-title,body.mrpt .sp-sub-title{font-size:12.5px!important;font-weight:800!important;padding:5px 2px!important;margin:0!important;border:none!important;border-bottom:1.5px solid #000!important;border-radius:0!important;display:flex!important;justify-content:space-between!important}
+body.mrpt .rpt-section-title .badge,body.mrpt .sp-sub-title span{font-size:10.5px!important;font-weight:700!important}
+body.mrpt .sp-acct-title{font-size:13.5px!important}
+body.mrpt table{width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;margin:0!important}
+body.mrpt td,body.mrpt th{height:26px!important;padding:3px 8px!important;border:1px solid #777!important;vertical-align:middle!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
+body.mrpt th{font-weight:700!important;text-align:center!important;background:#eef1f5!important}
+body.mrpt td.lbl,body.mrpt td.rpt-item{text-align:left!important;font-weight:600!important}
+body.mrpt td.pnum,body.mrpt td.rpt-num,body.mrpt .pnum{font-family:Arial,'Helvetica Neue',sans-serif!important;font-size:11.5px!important;font-weight:600!important;text-align:right!important;font-variant-numeric:tabular-nums}
+body.mrpt tfoot td,body.mrpt tr.sum1 td,body.mrpt tr.sum2 td,body.mrpt td.tot{font-weight:800!important;border-top:1.5px solid #000!important;background:#f3f5f8!important}
+body.mrpt td.memo{font-size:10.5px!important;text-align:left!important}
+body.mrpt .sp-block{border:1px solid #000!important;border-radius:0!important;margin:0 0 14px!important;padding:0!important;overflow:visible!important}
+body.mrpt .sp-block > div:first-child{padding:5px 8px!important;border-bottom:1.5px solid #000!important}
+body.mrpt .sp-block div[style*="grid-template-columns"]{gap:0!important}
+body.mrpt .sp-block div[style*="grid-template-columns"] > div{border:none!important}
+body.mrpt .sp-block div[style*="grid-template-columns"] > div + div table{border-left:none!important}
+body.mrpt .sum-tbl td.lbl{width:auto}
+body.mrpt td,body.mrpt th,body.mrpt .rpt-item{font-family:'Nanum Gothic','Malgun Gothic',sans-serif!important;color:#000!important}
+body.mrpt td.pnum,body.mrpt td.rpt-num,body.mrpt .pnum,body.mrpt .rpt-cu,body.mrpt .rpt-mo,body.mrpt .rpt-bud{color:#000!important;font-family:Arial,'Helvetica Neue',sans-serif!important}
+body.mrpt .rpt-section-title{background:#e3e8ef!important;color:#000!important;padding:5px 8px!important}
+body.mrpt .rpt-section-title *{color:#000!important}
+body.mrpt tr.blank td{color:transparent!important}
+`;
+function _normalizeMonthlyPrint(area){
+  const root=area.cloneNode(true);
+  // 1) 화면 전용 요소 제거, 입력칸 → 값 텍스트
+  root.querySelectorAll('.no-print,button,select,script').forEach(function(e){e.remove();});
+  root.querySelectorAll('input').forEach(function(inp){ const s=document.createElement('span'); s.textContent=inp.value||''; inp.replaceWith(s); });
+  // 2) 일반회계 총계 카드(div) → 표로 변환
+  const sw=root.querySelector('#monthly-summary-wrapper');
+  if(sw){
+    const pair=function(row){ if(!row) return ['','']; const sp=row.querySelectorAll(':scope > span'); const lab=sp[0]?(sp[0].childNodes[0]?sp[0].childNodes[0].textContent:sp[0].textContent):''; return [lab.trim(), sp[1]?sp[1].textContent.trim():'']; };
+    const rows=sw.querySelectorAll(':scope > div');
+    const carry=pair(rows[0]);
+    const cols=rows[1]?rows[1].querySelectorAll(':scope > div'):[];
+    const L=cols[0]?Array.from(cols[0].querySelectorAll(':scope > div')).map(pair):[];
+    const R=cols[1]?Array.from(cols[1].querySelectorAll(':scope > div')).map(pair):[];
+    let h='<table class="sum-tbl"><colgroup><col style="width:18%"><col style="width:32%"><col style="width:18%"><col style="width:32%"></colgroup><tbody>';
+    h+='<tr><td class="lbl">'+escH(carry[0])+'</td><td class="pnum">'+escH(carry[1])+'</td><td class="lbl"></td><td class="pnum"></td></tr>';
+    for(let i=0;i<Math.max(L.length,R.length);i++){ const a=L[i]||['',''],b=R[i]||['','']; h+='<tr><td class="lbl">'+escH(a[0])+'</td><td class="pnum">'+escH(a[1])+'</td><td class="lbl">'+escH(b[0])+'</td><td class="pnum'+(i===Math.max(L.length,R.length)-1?' tot':'')+'">'+escH(b[1])+'</td></tr>'; }
+    h+='</tbody></table>';
+    const t=document.createElement('div'); t.innerHTML=h; sw.replaceWith(t.firstChild);
+  }
+  // 3) 특별회계 블록 표시
+  root.querySelectorAll('.sp-acct-title').forEach(function(t){ const blk=t.closest('.rpt-section'); if(blk) blk.classList.add('sp-block'); });
+  root.querySelectorAll('div[style*="linear-gradient"]').forEach(function(d){ if(d.querySelector('span')) d.classList.add('sp-sub-title'); });
+  // 3-1) 라벨 칸의 보조설명(예: "10월 1일 기준") 제거 → 행 높이 통일
+  root.querySelectorAll('td > div, td small').forEach(function(x){ if(x.closest('td') && !/\d{1,3}(,\d{3})/.test(x.textContent)) x.remove(); });
+  // 3-2) 좌우로 나란한 수입/지출 표의 행 수 맞추기 (빈 행 채움)
+  root.querySelectorAll('div[style*="grid-template-columns"]').forEach(function(g){
+    const tbs=Array.from(g.querySelectorAll(':scope > div table'));
+    if(tbs.length!==2) return;
+    const bodies=tbs.map(function(t){return t.querySelector('tbody');}); if(!bodies[0]||!bodies[1]) return;
+    const n=Math.max(bodies[0].rows.length,bodies[1].rows.length);
+    bodies.forEach(function(tb){ const cols=tb.rows[0]?tb.rows[0].cells.length:4; while(tb.rows.length<n){ const tr=tb.insertRow(); tr.className='blank'; for(let i=0;i<cols;i++){ tr.insertCell().textContent='-'; } } });
+  });
+  // 4) 표 셀: 숫자/라벨 클래스 지정 후 인라인 크기 스타일 제거
+  root.querySelectorAll('td,th').forEach(function(cell){
+    const st=cell.getAttribute('style')||'';
+    const txt=cell.textContent.trim();
+    if(cell.tagName==='TD'){
+      if(/text-align\s*:\s*right/.test(st)||cell.classList.contains('rpt-num')||/^[-−]?[\d,]+(원)?$/.test(txt)||txt==='—'||/^\d+%$/.test(txt)) cell.classList.add('pnum');
+      else if(cell.classList.contains('rpt-note')) cell.classList.add('memo');
+      else cell.classList.add('lbl');
+    }
+  });
+  root.querySelectorAll('[style]').forEach(function(el){
+    ['font-size','height','min-height','padding','padding-top','padding-bottom','padding-left','padding-right','width','min-width','max-width','line-height','letter-spacing','font-family'].forEach(function(p){el.style.removeProperty(p);});
+  });
+  // 5) 표 열 너비 통일 (colgroup 재작성)
+  root.querySelectorAll('table').forEach(function(tb){
+    if(tb.classList.contains('sum-tbl')) return;
+    tb.querySelectorAll('colgroup').forEach(function(cg){cg.remove();});
+    const first=tb.querySelector('tr'); if(!first) return;
+    let n=0; first.querySelectorAll('th,td').forEach(function(c){n+=parseInt(c.getAttribute('colspan')||'1');});
+    let w=null;
+    if(tb.classList.contains('rpt-tbl')&&n===6) w=[20,16,16,16,10,22];      // 일반: 항목·예산·누계·월계·진도·비고
+    else if(tb.classList.contains('rpt-tbl')&&n===4) w=[30,25,25,20];       // 특별 수입/지출: 항목·누계·월계·비고
+    else if(n===4) w=[18,32,18,32];                                         // 특별 총계
+    if(w){ const cg=document.createElement('colgroup'); w.forEach(function(x){const c=document.createElement('col');c.style.width=x+'%';cg.appendChild(c);}); tb.insertBefore(cg,tb.firstChild); }
+  });
+  return root.innerHTML;
+}
 window.printSection=function(areaId){
   const area=document.getElementById(areaId);
   if(!area) return;
@@ -8202,9 +8294,13 @@ window.printSection=function(areaId){
   <\/head>\u003cbody>`);
   const now=nowKST();
   const dateStr=now.getUTCFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일';
+  const isMonthly=(areaId==='monthly-print-area');
+  if(isMonthly) printWin.document.write('\u003cstyle>'+MONTHLY_PRINT_CSS+'<\/style>');
+  printWin.document.write(isMonthly?'<div class="mrpt-wrap">':'');
   printWin.document.write('<h2>'+title+'</h2>');
   printWin.document.write('<div class="print-date">출력일: '+dateStr+'</div>');
-  printWin.document.write(area.innerHTML);
+  printWin.document.write(isMonthly?_normalizeMonthlyPrint(area):area.innerHTML);
+  if(isMonthly) printWin.document.write('</div><script>document.body.classList.add("mrpt")<\/script>');
   printWin.document.write('<\/body><\/html>');
   printWin.document.close();
   printWin.focus();
