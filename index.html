@@ -1845,7 +1845,7 @@ table.fm-tbl td{height:44px}
     </div>
   </div>
   <div class="result-section" id="fm-result">
-    <div class="g4 mb12" id="fm-stats"></div>
+    <div class="g3 mb12" id="fm-stats"></div>
     <div id="fm-unassigned-wrap"></div>
     <div id="fm-suggest-wrap"></div>
     <div id="fm-merge-bar"></div>
@@ -6087,7 +6087,6 @@ window.doFamilySearch=function(){
   if(st) st.innerHTML=
     '<div class="stat navy"><div class="stat-lbl">총 헌금 (제외분 뺀)</div><div class="stat-val">'+fmtN(d.grand)+'</div><div class="stat-sub">원 · '+d.range.from+' ~ '+d.range.to+'</div></div>'
     +'<div class="stat blue"><div class="stat-lbl">가족 / 개인</div><div class="stat-val">'+famCnt+' / '+singles.length+'</div><div class="stat-sub">등록가족 '+getFamilies().length+' · 미등록 '+singles.length+'명</div></div>'
-    +'<div class="stat gold"><div class="stat-lbl">1위</div><div class="stat-val" style="font-size:16px">'+(list[0]?escH(list[0].name):'—')+'</div><div class="stat-sub">'+(list[0]?fmtN(list[0].total)+'원':'')+'</div></div>'
     +'<div class="stat '+(d.excluded.length?'red':'green')+'" style="cursor:pointer" onclick="fmToggleShowExcluded()"><div class="stat-lbl">제외된 내역</div><div class="stat-val">'+d.excluded.length+'</div><div class="stat-sub">'+fmtN(d.excluded.reduce(function(s,g){return s+g.total;},0))+'원 · 클릭하여 '+(_fmShowExcluded?'접기':'펼치기')+'</div></div>';
   const badge=document.getElementById('fm-title-badge');if(badge) badge.textContent=(d.type||'전체 헌금')+' · 총액 내림차순 · '+list.length+'가구';
 
