@@ -8094,35 +8094,53 @@ window.clearExpense=function(){if(!confirm('지출 전체 데이터를 삭제하
 
 // ── 월간보고 출력 정규화: 글자·숫자 크기, 칸 너비/높이 통일 ──
 const MONTHLY_PRINT_CSS=`
-body.mrpt *{font-size:11.5px!important;line-height:1.3!important;letter-spacing:0!important;text-shadow:none!important;box-shadow:none!important}
-body.mrpt h2{font-size:15px!important;margin-bottom:2px!important;padding-bottom:6px!important}
-body.mrpt .print-date{font-size:10px!important;margin-bottom:8px!important}
-body.mrpt .rpt-wrap{max-width:none!important;margin:0!important}
-body.mrpt .rpt-main-hd{padding:6px 0 8px!important;margin:0 0 10px!important;border:none!important;border-bottom:2px solid #000!important;border-radius:0!important}
-body.mrpt .rpt-main-hd > div:first-child{font-size:16px!important;font-weight:800!important}
-body.mrpt .rpt-main-hd > div + div{font-size:9.5px!important;margin-top:2px!important}
-body.mrpt .rpt-section{margin:0 0 10px!important;border:none!important;border-radius:0!important;overflow:visible!important}
-body.mrpt .rpt-section-title,body.mrpt .sp-sub-title{font-size:12.5px!important;font-weight:800!important;padding:5px 2px!important;margin:0!important;border:none!important;border-bottom:1.5px solid #000!important;border-radius:0!important;display:flex!important;justify-content:space-between!important}
-body.mrpt .rpt-section-title .badge,body.mrpt .sp-sub-title span{font-size:10.5px!important;font-weight:700!important}
-body.mrpt .sp-acct-title{font-size:13.5px!important}
-body.mrpt table{width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;margin:0!important}
-body.mrpt td,body.mrpt th{height:26px!important;padding:3px 8px!important;border:1px solid #777!important;vertical-align:middle!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
-body.mrpt th{font-weight:700!important;text-align:center!important;background:#eef1f5!important}
-body.mrpt td.lbl,body.mrpt td.rpt-item{text-align:left!important;font-weight:600!important}
-body.mrpt td.pnum,body.mrpt td.rpt-num,body.mrpt .pnum{font-family:Arial,'Helvetica Neue',sans-serif!important;font-size:11.5px!important;font-weight:600!important;text-align:right!important;font-variant-numeric:tabular-nums}
-body.mrpt tfoot td,body.mrpt tr.sum1 td,body.mrpt tr.sum2 td,body.mrpt td.tot{font-weight:800!important;border-top:1.5px solid #000!important;background:#f3f5f8!important}
-body.mrpt td.memo{font-size:10.5px!important;text-align:left!important}
-body.mrpt .sp-block{border:1px solid #000!important;border-radius:0!important;margin:0 0 14px!important;padding:0!important;overflow:visible!important}
-body.mrpt .sp-block > div:first-child{padding:5px 8px!important;border-bottom:1.5px solid #000!important}
+@page{size:A4 portrait;margin:8mm}
+body.mrpt{padding:0!important;background:#fff!important}
+body.mrpt *{font-size:12px!important;line-height:1.3!important;letter-spacing:0!important;text-shadow:none!important;box-shadow:none!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+body.mrpt .mpage{width:194mm;margin:0 auto;break-after:page;page-break-after:always;overflow:hidden}
+body.mrpt .mpage:last-child{break-after:auto;page-break-after:auto}
+body.mrpt .mpage [style*="page-break-before"],body.mrpt .mpage [style*="break-before"]{break-before:auto!important;page-break-before:auto!important;padding:0!important}
+body.mrpt h2{font-size:12px!important;font-weight:700!important;color:#5b6b80!important;text-align:left!important;border:none!important;margin:0!important;padding:0 0 2px!important}
+body.mrpt .print-date{font-size:10px!important;color:#8593a6!important;margin:-15px 0 6px!important}
+body.mrpt .rpt-wrap{max-width:none!important;margin:0!important;background:transparent!important}
+/* 보고서 제목 */
+body.mrpt .rpt-main-hd{padding:10px 0 9px!important;margin:0 0 10px!important;border:none!important;border-radius:0!important;
+  background:linear-gradient(90deg,#1f3a5f,#34557f)!important;text-align:center!important}
+body.mrpt .rpt-main-hd *{color:#fff!important}
+body.mrpt .rpt-main-hd > div:first-child{font-size:17px!important;font-weight:800!important;letter-spacing:1px!important}
+body.mrpt .rpt-main-hd > div + div{font-size:9.5px!important;margin-top:2px!important;color:#c9d6e8!important}
+/* 섹션 */
+body.mrpt .rpt-section{margin:0 0 9px!important;border:none!important;border-radius:0!important;overflow:visible!important;background:transparent!important}
+body.mrpt .rpt-section-title,body.mrpt .sp-sub-title{font-size:12.5px!important;font-weight:800!important;padding:6px 10px!important;margin:0!important;border:none!important;border-radius:0!important;
+  display:flex!important;justify-content:space-between!important;align-items:center!important;background:#1f3a5f!important}
+body.mrpt .rpt-section-title *,body.mrpt .rpt-section-title{color:#fff!important}
+body.mrpt .rpt-section-title .badge{font-size:10.5px!important;font-weight:600!important;color:#c9d6e8!important;background:transparent!important}
+body.mrpt .sp-sub-title{background:#eef3f9!important;border-left:4px solid #1f3a5f!important;padding:5px 10px!important}
+body.mrpt .sp-sub-title *{color:#1f3a5f!important}
+body.mrpt .sp-sub-title.exp{background:#f9eeee!important;border-left-color:#8c2f39!important}
+body.mrpt .sp-sub-title.exp *{color:#8c2f39!important}
+body.mrpt .sp-acct-title{font-size:14px!important;color:#fff!important}
+body.mrpt .sp-block{border:1px solid #9fb0c6!important;border-radius:0!important;margin:0 0 12px!important;padding:0!important;overflow:visible!important;background:#fff!important}
+body.mrpt .sp-block > div:first-child{padding:7px 10px!important;background:linear-gradient(90deg,#1f3a5f,#34557f)!important;border:none!important}
+body.mrpt .sp-block > div:first-child *{color:#fff!important}
+body.mrpt .sp-block > div:not(:first-child){background:transparent!important;border:none!important}
 body.mrpt .sp-block div[style*="grid-template-columns"]{gap:0!important}
 body.mrpt .sp-block div[style*="grid-template-columns"] > div{border:none!important}
-body.mrpt .sp-block div[style*="grid-template-columns"] > div + div table{border-left:none!important}
-body.mrpt .sum-tbl td.lbl{width:auto}
-body.mrpt td,body.mrpt th,body.mrpt .rpt-item{font-family:'Nanum Gothic','Malgun Gothic',sans-serif!important;color:#000!important}
-body.mrpt td.pnum,body.mrpt td.rpt-num,body.mrpt .pnum,body.mrpt .rpt-cu,body.mrpt .rpt-mo,body.mrpt .rpt-bud{color:#000!important;font-family:Arial,'Helvetica Neue',sans-serif!important}
-body.mrpt .rpt-section-title{background:#e3e8ef!important;color:#000!important;padding:5px 8px!important}
-body.mrpt .rpt-section-title *{color:#000!important}
-body.mrpt tr.blank td{color:transparent!important}
+/* 표 */
+body.mrpt table{width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;margin:0!important;background:#fff!important}
+body.mrpt td,body.mrpt th{height:26px;padding:3px 9px!important;border:1px solid #c9d3e0!important;vertical-align:middle!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;color:#1d2735!important;background:#fff!important;
+  font-family:'Nanum Gothic','Malgun Gothic',sans-serif!important}
+body.mrpt th{font-weight:700!important;text-align:center!important;background:#e6ecf4!important;color:#1f3a5f!important;border-bottom:1.5px solid #8ea2bd!important}
+body.mrpt td.lbl,body.mrpt td.rpt-item{text-align:left!important;font-weight:600!important;background:#f6f8fb!important;color:#24364f!important}
+body.mrpt td.pnum,body.mrpt td.rpt-num,body.mrpt .pnum{font-family:Arial,'Helvetica Neue',sans-serif!important;font-size:12px!important;font-weight:600!important;text-align:right!important;color:#1d2735!important;font-variant-numeric:tabular-nums}
+body.mrpt tbody tr:nth-child(even) td.pnum,body.mrpt tbody tr:nth-child(even) td.memo{background:#fbfcfe!important}
+body.mrpt td.memo{font-size:10.5px!important;text-align:left!important;color:#4a5a70!important}
+body.mrpt tfoot td,body.mrpt tr.sum1 td,body.mrpt td.tot{font-weight:800!important;border-top:1.5px solid #1f3a5f!important;background:#e3eaf3!important;color:#1f3a5f!important}
+body.mrpt tr.edu td{background:#fbf6ea!important;color:#6b4f12!important;font-weight:700!important}
+body.mrpt tr.sum2 td{background:#1f3a5f!important;color:#fff!important;font-weight:800!important;border-color:#1f3a5f!important}
+body.mrpt .sum-tbl td.lbl{background:#eef3f9!important}
+body.mrpt .sum-tbl td.tot{background:#dfe8f3!important}
+body.mrpt tr.blank td{color:transparent!important;background:#fff!important}
 `;
 function _normalizeMonthlyPrint(area){
   const root=area.cloneNode(true);
@@ -8146,7 +8164,7 @@ function _normalizeMonthlyPrint(area){
   }
   // 3) 특별회계 블록 표시
   root.querySelectorAll('.sp-acct-title').forEach(function(t){ const blk=t.closest('.rpt-section'); if(blk) blk.classList.add('sp-block'); });
-  root.querySelectorAll('div[style*="linear-gradient"]').forEach(function(d){ if(d.querySelector('span')) d.classList.add('sp-sub-title'); });
+  root.querySelectorAll('div[style*="linear-gradient"]').forEach(function(d){ if(d.querySelector('span')&&!d.classList.contains('rpt-section-title')&&!d.classList.contains('rpt-main-hd')) d.classList.add('sp-sub-title'); });
   // 3-1) 라벨 칸의 보조설명(예: "10월 1일 기준") 제거 → 행 높이 통일
   root.querySelectorAll('td > div, td small').forEach(function(x){ if(x.closest('td') && !/\d{1,3}(,\d{3})/.test(x.textContent)) x.remove(); });
   // 3-2) 좌우로 나란한 수입/지출 표의 행 수 맞추기 (빈 행 채움)
@@ -8182,8 +8200,47 @@ function _normalizeMonthlyPrint(area){
     else if(n===4) w=[18,32,18,32];                                         // 특별 총계
     if(w){ const cg=document.createElement('colgroup'); w.forEach(function(x){const c=document.createElement('col');c.style.width=x+'%';cg.appendChild(c);}); tb.insertBefore(cg,tb.firstChild); }
   });
-  return root.innerHTML;
+  // 6) 페이지 단위로 묶기 (.mpage) → 인쇄창에서 페이지마다 행 높이를 늘려 공백 최소화
+  root.querySelectorAll('div[style*="linear-gradient"].sp-sub-title').forEach(function(d){ if(/③|지\s*출/.test(d.textContent)) d.classList.add('exp'); });
+  const units=Array.from(root.querySelectorAll('.rpt-main-hd, .rpt-section, [style*="page-break-before:always"], [style*="break-before:page"]'))
+    .filter(function(e){ const p=e.parentElement&&e.parentElement.closest('.rpt-section, .rpt-main-hd'); return !p; });
+  const pages=[]; let cur=[];
+  units.forEach(function(u){
+    const isBreak=/page-break-before:\s*always|break-before:\s*page/.test(u.getAttribute('style')||'') && !u.classList.contains('rpt-section') && !u.classList.contains('rpt-main-hd');
+    if(isBreak){ if(cur.length){pages.push(cur);cur=[];} return; }
+    cur.push(u.outerHTML);
+    if(u.classList.contains('rpt-inc-section')){ pages.push(cur); cur=[]; }
+  });
+  if(cur.length) pages.push(cur);
+  // 특별회계 페이지에 제목이 없으면(일반 2쪽 등) 그대로 둠
+  return pages.map(function(pg){return '<section class="mpage"><div class="rpt-wrap">'+pg.join('')+'</div></section>';}).join('');
 }
+// 인쇄창: 페이지마다 행 높이를 늘려 A4를 채움 (26px ~ 60px)
+const MONTHLY_FILL_JS=`(function(){
+  document.body.classList.add('mrpt');
+  var first=document.querySelector('.mpage'); var h2=document.querySelector('body > .mrpt-wrap > h2, body > h2'); var dt=document.querySelector('.print-date');
+  if(first){ if(dt) first.insertBefore(dt, first.firstChild); if(h2) first.insertBefore(h2, first.firstChild); }
+  var PAGE=Math.floor(281*96/25.4)-6;
+  function setRows(pg,x){ pg.querySelectorAll('td,th').forEach(function(c){ c.style.setProperty('height', x+'px','important'); }); }
+  // 특별회계 페이지가 이어지면, 한 장에 들어가는 경우 합쳐서 빈 페이지를 없앰
+  var pgs=[].slice.call(document.querySelectorAll('.mpage'));
+  for(var i=0;i<pgs.length-1;i++){
+    var a=pgs[i], b2=pgs[i+1];
+    if(!a.querySelector('.sp-block')||!b2.querySelector('.sp-block')) continue;
+    var wa=a.querySelector('.rpt-wrap'), moved=[].slice.call(b2.querySelectorAll('.rpt-wrap > .sp-block'));
+    moved.forEach(function(m){ wa.appendChild(m); });
+    setRows(a,26);
+    if(a.scrollHeight<=PAGE){ b2.parentNode.removeChild(b2); pgs.splice(i+1,1); i--; }
+    else { var wb=b2.querySelector('.rpt-wrap'); moved.forEach(function(m){ wb.appendChild(m); }); }
+  }
+  document.querySelectorAll('.mpage').forEach(function(pg){
+    var cells=pg.querySelectorAll('td,th');
+    function set(x){ cells.forEach(function(c){ c.style.setProperty('height', x+'px','important'); }); }
+    set(26); var h1=pg.scrollHeight; set(36); var h2v=pg.scrollHeight; var b=(h2v-h1)/10;
+    var x=b>0?26+(PAGE-h1)/b:26; x=Math.max(26,Math.min(60,Math.floor(x)));
+    set(x); while(x>26 && pg.scrollHeight>PAGE){ x--; set(x); }
+  });
+})();`;
 window.printSection=function(areaId){
   const area=document.getElementById(areaId);
   if(!area) return;
@@ -8300,7 +8357,7 @@ window.printSection=function(areaId){
   printWin.document.write('<h2>'+title+'</h2>');
   printWin.document.write('<div class="print-date">출력일: '+dateStr+'</div>');
   printWin.document.write(isMonthly?_normalizeMonthlyPrint(area):area.innerHTML);
-  if(isMonthly) printWin.document.write('</div><script>document.body.classList.add("mrpt")<\/script>');
+  if(isMonthly) printWin.document.write('</div><script>'+MONTHLY_FILL_JS+'<\/script>');
   printWin.document.write('<\/body><\/html>');
   printWin.document.close();
   printWin.focus();
