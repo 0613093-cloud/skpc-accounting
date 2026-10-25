@@ -948,6 +948,64 @@ table.fm-tbl td{height:44px}
 .ac-item .ac-hint{font-size:10px;color:#94a3b8;font-weight:400}
 .ac-item.active .ac-hint{color:var(--navy)}
 .ac-match{color:var(--blue);font-weight:800}
+/* ===== 입금확인 ===== */
+.dep-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.dep-up-btns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.dep-up-btn{cursor:pointer;padding:10px 18px;font-size:14px}
+.dep-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 12px}
+.dep-stats .stat-sub b{font-weight:800}
+.dep-ok{color:var(--green)!important}.dep-warn{color:#b9770e!important}.dep-bad{color:var(--red)!important}
+.dep-state{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.dep-state.ok{background:var(--green-l);color:var(--green)}
+.dep-state.warn{background:#fdf3e1;color:#9a6200}
+.dep-state.bad{background:var(--red-l);color:var(--red)}
+.dep-pend{border:2px dashed var(--blue-l);background:var(--blue-xp)}
+.dep-row{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--g5)}
+.dep-row:last-child{border-bottom:none}
+.dep-thumb{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--g4);cursor:zoom-in;background:var(--g6)}
+.dep-main{min-width:0}
+.dep-amt{font-family:var(--fnum);font-size:18px;font-weight:800;color:var(--navy)}
+.dep-time{font-family:var(--fnum);font-size:13px;font-weight:700;color:var(--g1);margin-right:8px}
+.dep-meta{font-size:11px;color:var(--g3);margin-top:3px;line-height:1.5}
+.dep-chain{font-size:11px;font-weight:700;margin-left:6px}
+.dep-acts{display:flex;flex-direction:column;gap:4px}
+.dep-pform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dep-pform .finp{font-family:var(--fnum)}
+.dep-empty{padding:22px;text-align:center;color:var(--g3);font-size:13px}
+.dep-total{display:flex;justify-content:space-between;padding:10px 6px 2px;border-top:2px solid var(--g4);margin-top:4px;font-weight:800;color:var(--navy)}
+.dep-total .n{font-family:var(--fnum);font-size:16px}
+.dep-issue{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--g5)}
+.dep-kind{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:#fdf3e1;color:#9a6200;white-space:nowrap}
+.dep-kind.k-초과입금{background:var(--blue-pale);color:var(--navy)}
+.dep-kind.k-기타{background:var(--g5);color:var(--g2)}
+.dep-issue.done .dep-kind{background:var(--green-l);color:var(--green)}
+.dep-issue.done .dep-ireason{text-decoration:line-through;color:var(--g3)}
+.dep-ireason{font-size:13px;color:var(--g1);line-height:1.45}
+.dep-isub{font-size:11px;color:var(--g3);margin-top:2px}
+.dep-iamt{font-family:var(--fnum);font-weight:800;color:var(--navy);margin-right:6px}
+.dep-issue-form{margin-top:10px;padding:12px;background:var(--g6);border-radius:var(--r)}
+.dep-presets{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.dep-if-grid{display:grid;grid-template-columns:160px 140px 150px 1fr;gap:8px}
+.dep-viewer{position:fixed;inset:0;background:rgba(10,20,40,.82);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+.dep-viewer.hidden{display:none}
+.dep-viewer-box{position:relative;max-width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;align-items:center}
+.dep-viewer-box img{max-width:100%;max-height:82vh;border-radius:8px;background:#fff}
+#dep-viewer-cap{color:#fff;font-size:12px;margin-top:8px;text-align:center}
+.dep-viewer-x{position:absolute;top:-12px;right:-12px;width:32px;height:32px;border-radius:50%;border:none;background:#fff;color:var(--navy);font-weight:900;cursor:pointer}
+.rct-dep-note{margin-top:8px;border:1px solid #e8c88a;background:#fffaf0;border-radius:6px;padding:6px 10px;font-size:10px;line-height:1.6;color:#5a4220}
+.rct-dep-note b{color:#8a5a00}
+@media (max-width:760px){
+  .dep-stats{grid-template-columns:1fr}
+  .dep-up-btns{margin-left:0;width:100%}
+  .dep-up-btn{flex:1;text-align:center}
+  .dep-row{grid-template-columns:64px 1fr}
+  .dep-thumb{width:64px;height:64px}
+  .dep-acts{grid-column:1/-1;flex-direction:row;justify-content:flex-end}
+  .dep-pform{grid-template-columns:1fr 1fr}
+  .dep-if-grid{grid-template-columns:1fr 1fr}
+  .dep-if-wide{grid-column:1/-1}
+  .dep-issue{grid-template-columns:1fr;gap:4px}
+}
 </style>
 
 <!-- Firebase SDK -->
@@ -955,7 +1013,7 @@ table.fm-tbl td{height:44px}
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
     getFirestore, doc, setDoc, getDoc, onSnapshot,
-    collection, getDocs, deleteDoc, writeBatch
+    collection, getDocs, deleteDoc, writeBatch, query, where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -1266,6 +1324,22 @@ table.fm-tbl td{height:44px}
     } catch(e) { console.error('[FB] 삭제 실패:', e.message); }
   };
 
+
+  // ── 입금확인증(ATM 명세표) 사진 + 일자별 특이사항 ──
+  const COL_DSLIP = collection(db, 'skpc_deposit_slips');
+  const COL_DDAY  = collection(db, 'skpc_deposit_days');
+  window._fbDep = {
+    listSlips: async function(date){
+      const s = await getDocs(query(COL_DSLIP, where('date','==',date)));
+      const a = []; s.forEach(d => a.push(d.data())); return a;
+    },
+    saveSlip: async function(o){ await setDoc(doc(db,'skpc_deposit_slips',String(o.id)), o); },
+    delSlip:  async function(id){ await deleteDoc(doc(db,'skpc_deposit_slips',String(id))); },
+    getDay:   async function(date){ const s = await getDoc(doc(db,'skpc_deposit_days',date)); return s.exists()? s.data() : null; },
+    saveDay:  async function(date,o){ await setDoc(doc(db,'skpc_deposit_days',date), o); },
+    listDays: async function(){ const s = await getDocs(COL_DDAY); const a = []; s.forEach(d => a.push(d.data())); return a; }
+  };
+
   // 상태 메시지 함수
   window._fbStatusMsg = function(msg) {
     const txt = document.getElementById('fbTxt');
@@ -1309,6 +1383,7 @@ table.fm-tbl td{height:44px}
     <div class="nav-group-label" data-group="weekly">주간</div>
     <div class="nav-item nav-input-tab" id="nav-input-1" onclick="selectInputSheet(1)">📋 헌금입력</div>
     <div class="nav-item" data-tab="receipt">🗒️ 입금전표</div>
+    <div class="nav-item" data-tab="deposit">🏧 입금확인</div>
     <div class="nav-item" data-tab="transfer">💳 송금내역</div>
     <div class="nav-item" data-tab="query">당일헌금내역</div>
     <div class="nav-item" data-tab="weekly">주보용 헌금내역</div>
@@ -1683,6 +1758,67 @@ table.fm-tbl td{height:44px}
         </table></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===== 입금확인 (ATM 명세표 사진 · 특이사항) ===== -->
+<div id="tab-deposit" class="tab-pane">
+  <div class="pg-hd">
+    <div class="pg-title">🏧 입금확인</div>
+    <div class="pg-desc">ATM에서 나온 <strong>입금 명세표를 휴대폰으로 찍어 올리고</strong>, 거래시간·금액을 기록합니다. 입금전표의 <strong>오늘 입금 대상액</strong>과 비교해 차액이 있으면 <strong>특이사항</strong>으로 남겨 두세요. (서버에 저장)</div>
+  </div>
+
+  <div class="search-panel no-print dep-top">
+    <div class="fg" style="margin:0"><div class="flbl">입금일</div>
+      <input type="date" class="finp" id="dep-date" onchange="depLoad()"></div>
+    <div class="dep-up-btns">
+      <label class="btn btn-navy dep-up-btn">📷 사진 찍기
+        <input type="file" accept="image/*" capture="environment" hidden onchange="depPick(this)"></label>
+      <label class="btn btn-outline dep-up-btn">🖼️ 앨범에서 선택
+        <input type="file" accept="image/*" multiple hidden onchange="depPick(this)"></label>
+    </div>
+  </div>
+
+  <div class="dep-stats" id="dep-stats"></div>
+  <div id="dep-pending"></div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title">입금 명세표 <span id="dep-count" class="badge b-navy" style="margin-left:6px"></span></div></div>
+    <div id="dep-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title">특이사항</div><span id="dep-issue-state"></span></div>
+    <div id="dep-issues"></div>
+    <div class="dep-issue-form">
+      <div class="dep-presets">
+        <span class="flbl" style="margin:0">빠른 입력</span>
+        <button class="btn btn-outline btn-xs" onclick="depPreset('check')">수표 ATM 입금불가</button>
+        <button class="btn btn-outline btn-xs" onclick="depPreset('limit')">ATM 한도 초과</button>
+        <button class="btn btn-outline btn-xs" onclick="depPreset('damaged')">훼손권 입금불가</button>
+      </div>
+      <div class="dep-if-grid">
+        <div class="fg" style="margin:0"><div class="flbl">구분</div>
+          <select class="fsel" id="dep-i-kind">
+            <option value="미입금">미입금 (추후 입금)</option>
+            <option value="초과입금">초과 입금</option>
+            <option value="기타">기타</option>
+          </select></div>
+        <div class="fg" style="margin:0"><div class="flbl">금액</div>
+          <input class="finp" id="dep-i-amt" inputmode="numeric" placeholder="0" oninput="fmtAmt(this)" style="text-align:right"></div>
+        <div class="fg" style="margin:0"><div class="flbl">처리 예정일</div>
+          <input type="date" class="finp" id="dep-i-plan"></div>
+        <div class="fg dep-if-wide" style="margin:0"><div class="flbl">내용</div>
+          <input class="finp" id="dep-i-reason" placeholder="예: 10만원 수표 1매 ATM 입금 불가 → 은행 영업시간에 창구 입금"></div>
+      </div>
+      <div style="text-align:right;margin-top:8px"><button class="btn btn-navy btn-sm" onclick="depAddIssue()">+ 특이사항 추가</button></div>
+    </div>
+  </div>
+
+  <div id="dep-open-wrap"></div>
+
+  <div id="dep-viewer" class="dep-viewer hidden" onclick="depCloseView(event)">
+    <div class="dep-viewer-box"><button class="dep-viewer-x" onclick="depCloseView()">✕</button><img id="dep-viewer-img" alt="입금 명세표"><div id="dep-viewer-cap"></div></div>
   </div>
 </div>
 
@@ -2693,6 +2829,7 @@ function onTabActivate(tab){
   }
   if(tab==='online-off') initOnlineTab();
   if(tab==='transfer') initTransferTab();
+  if(tab==='deposit') initDepositTab();
   if(tab==='member') initMemberTab();
   if(tab==='family') initFamilyTab();
   if(tab==='finsearch'){const today=nowKST();const first=new Date(today.getUTCFullYear(),today.getUTCMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
@@ -6878,13 +7015,323 @@ window.renderReceipt=function(){
     +'<tr><td rowspan="2" style="font-size:10px;font-weight:700">지출 총계</td><td style="font-size:10px;color:#2471a3">└송금 '+fmtN(remitOut)+'</td><td class="rc-n" style="font-size:11px;color:var(--red);font-weight:800">'+fmtN(totOut)+'</td></tr>'
     +'<tr><td style="font-size:10px;color:#a04000">└현금 '+fmtN(cashOut)+'</td><td></td></tr>'
     +'<tr style="background:#e8eff6;font-weight:800"><td colspan="2" style="text-align:center;font-size:11px">수입 - 지출 잔액</td><td class="rc-n" style="font-size:12px;font-weight:800;color:var(--navy)">'+fmtN(totInc-totOut)+'</td><td></td></tr>'
-    +'<tr style="background:#fff4e0;font-weight:800"><td colspan="2" style="text-align:center;font-size:11px;color:#a04000;white-space:nowrap">오늘 입금 대상액 <span style="font-size:9px;font-weight:600;color:#666">(현금입금 '+fmtN(cashInc)+' − 현금지출 '+fmtN(cashOut)+')</span></td>'
-    +'<td class="rc-n" style="font-size:12px;font-weight:900;color:'+(cashInc-cashOut<0?'var(--red)':'#a04000')+'">'+fmtN(cashInc-cashOut)+'</td></tr>'
+    +'<tr style="background:#fff4e0;font-weight:800"><td colspan="2" style="text-align:center;font-size:11px;color:#a04000">오늘 입금 대상액</td>'
+    +'<td class="rc-n" style="font-size:12px;font-weight:900;color:'+(cashInc-cashOut<0?'var(--red)':'#a04000')+'">'+fmtN(cashInc-cashOut)+'</td>'
+    +'<td style="font-size:10px;color:#666;padding-left:10px">= 현금입금 '+fmtN(cashInc)+' − 현금지출 '+fmtN(cashOut)+'</td></tr>'
     +'</tbody></table>'
+    +'<div id="rct-dep-note" class="rct-dep-note" style="display:none;margin-top:8px;border:1px solid #e8c88a;background:#fffaf0;border-radius:6px;padding:6px 10px;font-size:10px;line-height:1.6;color:#5a4220"></div>'
     +'<div style="margin-top:30px;padding-top:14px;border-top:2px solid #c8d8e8;text-align:center;font-size:15px;font-weight:900;color:var(--navy);letter-spacing:2px">서부광성교회</div>';
   showResult('rec-result');
+  try{ if(window.depFillReceiptNote) depFillReceiptNote(dateVal); }catch(e){}
 };
 
+
+
+// ════════════════════════════════════════════════════════════
+// 🏧 입금확인 — ATM 입금 명세표 사진 + 일자별 특이사항 (서버 저장)
+//   skpc_deposit_slips/{id} : {id,date,time,amount,balance,photo,photoInfo,uploadedAt}
+//   skpc_deposit_days/{date}: {date,issues:[{id,kind,amount,reason,plan,status,createdAt,doneAt}],updatedAt}
+// ════════════════════════════════════════════════════════════
+window._depPend=[]; window._depSlips=[]; window._depDay=null; window._depEdit=null;
+function _depEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function _depNowKST(){const d=new Date(Date.now()+9*3600e3);return d.toISOString().slice(0,19).replace('T',' ');}
+function _depAddDays(ds,n){const d=new Date(ds+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function _depMD(ds){return ds?(+ds.slice(5,7))+'/'+(+ds.slice(8,10)):'';}
+function _depLsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}}
+function _depLsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function _depWarn(e){
+  console.error('[입금확인] 서버 오류',e);
+  const msg=(e&&e.message)||'';
+  alert(msg.indexOf('ermission')>=0
+    ? '⚠️ 서버 저장 권한이 없습니다.\nFirebase 보안 규칙에 skpc_deposit_slips / skpc_deposit_days 컬렉션 쓰기 권한을 추가해 주세요.\n(이 기기에는 임시 저장됨)'
+    : '⚠️ 서버 저장에 실패했습니다. 인터넷 연결을 확인 후 다시 시도해 주세요.\n(이 기기에는 임시 저장됨)');
+}
+
+// 입금 대상액 = 현금입금 − 현금지출 (입금전표와 동일 기준)
+window.depTarget=function(date){
+  const offs=getOfferings().filter(function(e){return e.date===date;});
+  const exps=getExpenses().filter(function(e){return e.date===date;});
+  const cashInc=offs.filter(function(e){return !isOnlinePayment(e);}).reduce(function(s,e){return s+(+e.amount||0);},0);
+  const cashOut=exps.filter(function(e){return e.paytype==='현금지급'||e.transfer==='현금';}).reduce(function(s,e){return s+(+e.amount||0);},0);
+  return {cashInc:cashInc,cashOut:cashOut,target:cashInc-cashOut};
+};
+
+// ── 데이터 계층 (서버 우선, 실패 시 이 기기 임시 저장) ──
+const DEP={
+  slips:async function(date){
+    if(window._fbDep){try{const a=await window._fbDep.listSlips(date);_depLsSet('depSlips_'+date,a);return a;}catch(e){console.warn('[입금확인] 조회 실패',e);}}
+    return _depLsGet('depSlips_'+date)||[];
+  },
+  saveSlip:async function(o){
+    const k='depSlips_'+o.date;const a=(_depLsGet(k)||[]).filter(function(x){return x.id!==o.id;});a.push(o);_depLsSet(k,a);
+    if(window._fbDep){try{await window._fbDep.saveSlip(o);return true;}catch(e){_depWarn(e);return false;}}
+    return false;
+  },
+  delSlip:async function(o){
+    const k='depSlips_'+o.date;_depLsSet(k,(_depLsGet(k)||[]).filter(function(x){return x.id!==o.id;}));
+    if(window._fbDep){try{await window._fbDep.delSlip(o.id);}catch(e){_depWarn(e);}}
+  },
+  day:async function(date){
+    if(window._fbDep){try{const d=await window._fbDep.getDay(date);_depLsSet('depDay_'+date,d);return d;}catch(e){console.warn(e);}}
+    return _depLsGet('depDay_'+date);
+  },
+  saveDay:async function(date,o){
+    o.date=date;o.updatedAt=_depNowKST();_depLsSet('depDay_'+date,o);
+    if(window._fbDep){try{await window._fbDep.saveDay(date,o);return true;}catch(e){_depWarn(e);return false;}}
+    return false;
+  },
+  days:async function(){
+    if(window._fbDep){try{return await window._fbDep.listDays();}catch(e){console.warn(e);}}
+    const a=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('depDay_')===0){const v=_depLsGet(k);if(v)a.push(v);}}return a;
+  }
+};
+window.DEP=DEP;
+
+// ── 사진: EXIF 촬영시각 읽기 ──
+function _depExif(buf){
+  try{
+    const v=new DataView(buf); if(v.getUint16(0)!==0xFFD8) return null;
+    let off=2;
+    while(off<v.byteLength-10){
+      const mk=v.getUint16(off), len=v.getUint16(off+2);
+      if(mk===0xFFE1 && v.getUint32(off+4)===0x45786966){
+        const t=off+10, le=v.getUint16(t)===0x4949;
+        const g16=function(o){return v.getUint16(t+o,le);}, g32=function(o){return v.getUint32(t+o,le);};
+        const rd=function(io,tags){const n=g16(io),r={};for(let i=0;i<n;i++){const e=io+2+i*12,tag=g16(e);if(tags.indexOf(tag)<0)continue;const ty=g16(e+2),cnt=g32(e+4);
+          if(ty===2){const vo=cnt>4?g32(e+8):e+8;let s='';for(let k=0;k<cnt-1;k++)s+=String.fromCharCode(v.getUint8(t+vo+k));r[tag]=s;}else if(ty===4)r[tag]=g32(e+8);}return r;};
+        const i0=rd(g32(4),[0x8769,0x0132,0x010F,0x0110]);
+        let dt=null; if(i0[0x8769]) dt=rd(i0[0x8769],[0x9003])[0x9003];
+        dt=dt||i0[0x0132];
+        const m=dt&&dt.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):?(\d{2})?/);
+        return {taken:m?(m[1]+'-'+m[2]+'-'+m[3]+' '+m[4]+':'+m[5]+(m[6]?':'+m[6]:'')):null,
+                device:[i0[0x010F],i0[0x0110]].filter(Boolean).join(' ').trim()||null};
+      }
+      if((mk&0xFF00)!==0xFF00) break;
+      off+=2+len;
+    }
+  }catch(e){}
+  return null;
+}
+function _depCompress(file){
+  return new Promise(function(res,rej){
+    const url=URL.createObjectURL(file); const img=new Image();
+    img.onload=function(){
+      const M=1400; const w=img.naturalWidth,h=img.naturalHeight; const s=Math.min(1,M/Math.max(w,h));
+      const cw=Math.round(w*s),ch=Math.round(h*s); const c=document.createElement('canvas'); c.width=cw;c.height=ch;
+      const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,cw,ch); g.drawImage(img,0,0,cw,ch);
+      let q=0.72,d=c.toDataURL('image/jpeg',q); while(d.length>850000&&q>0.35){q-=0.1;d=c.toDataURL('image/jpeg',q);}
+      URL.revokeObjectURL(url); res({dataUrl:d,w:cw,h:ch,ow:w,oh:h});
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('이 사진 형식은 열 수 없습니다. (JPG/PNG로 다시 시도)'));};
+    img.src=url;
+  });
+}
+window.depPick=async function(inp){
+  const files=Array.from(inp.files||[]); inp.value='';
+  for(const f of files){
+    try{
+      const ex=_depExif(await f.slice(0,262144).arrayBuffer())||{};
+      const c=await _depCompress(f);
+      const lm=f.lastModified?new Date(f.lastModified+9*3600e3).toISOString().slice(0,19).replace('T',' '):null;
+      window._depPend.push({tmp:'p'+Date.now()+Math.random().toString(36).slice(2,6),dataUrl:c.dataUrl,
+        info:{name:f.name||'photo.jpg',type:f.type||'',origSize:f.size,size:Math.round(c.dataUrl.length*0.75),
+          width:c.ow,height:c.oh,savedWidth:c.w,savedHeight:c.h,takenAt:ex.taken||lm,takenSrc:ex.taken?'EXIF':'파일시각',device:ex.device||null}});
+    }catch(e){alert('⚠️ '+(f.name||'사진')+': '+e.message);}
+  }
+  depRenderPending();
+  const first=document.querySelector('#dep-pending .dep-p-time'); if(first) first.focus();
+};
+window.depRenderPending=function(){
+  const w=document.getElementById('dep-pending'); if(!w) return;
+  if(!window._depPend.length){w.innerHTML='';return;}
+  w.innerHTML='<div class="card dep-pend"><div class="card-hd"><div class="card-title">📥 새 명세표 '+window._depPend.length+'장 — 명세표에 찍힌 값을 입력하세요</div>'
+    +(window._depPend.length>1?'<button class="btn btn-navy btn-sm" onclick="depSaveAllPending()">모두 저장</button>':'')+'</div>'
+    +window._depPend.map(function(p){
+      return '<div class="dep-row" data-tmp="'+p.tmp+'"><img class="dep-thumb" src="'+p.dataUrl+'" onclick="depView(\''+p.tmp+'\',true)" alt="">'
+        +'<div class="dep-main"><div class="dep-pform">'
+        +'<div class="fg" style="margin:0"><div class="flbl">거래시간 *</div><input type="time" class="finp dep-p-time"></div>'
+        +'<div class="fg" style="margin:0"><div class="flbl">거래금액 *</div><input class="finp dep-p-amt" inputmode="numeric" placeholder="0" oninput="fmtAmt(this)" style="text-align:right"></div>'
+        +'<div class="fg" style="margin:0"><div class="flbl">거래후 잔액</div><input class="finp dep-p-bal" inputmode="numeric" placeholder="선택" oninput="fmtAmt(this)" style="text-align:right"></div>'
+        +'</div><div class="dep-meta">📷 촬영 '+_depEsc(p.info.takenAt||'-')+' · '+Math.round(p.info.size/1024)+'KB</div></div>'
+        +'<div class="dep-acts"><button class="btn btn-navy btn-xs" onclick="depSavePending(\''+p.tmp+'\')">저장</button>'
+        +'<button class="btn btn-outline btn-xs" onclick="depDropPending(\''+p.tmp+'\')">취소</button></div></div>';
+    }).join('')+'</div>';
+};
+window.depDropPending=function(tmp){window._depPend=window._depPend.filter(function(p){return p.tmp!==tmp;});depRenderPending();};
+async function _depSaveOnePending(tmp,quiet){
+  const row=document.querySelector('#dep-pending .dep-row[data-tmp="'+tmp+'"]'); const p=window._depPend.find(function(x){return x.tmp===tmp;});
+  if(!row||!p) return false;
+  const time=row.querySelector('.dep-p-time').value, amt=parseN(row.querySelector('.dep-p-amt').value||'0'), bal=row.querySelector('.dep-p-bal').value;
+  if(!time||!amt){ if(!quiet) alert('거래시간과 거래금액을 입력해 주세요.'); row.querySelector(time?'.dep-p-amt':'.dep-p-time').focus(); return false; }
+  const date=document.getElementById('dep-date').value||TODAY;
+  const o={id:'dep_'+date.replace(/-/g,'')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),date:date,time:time,amount:amt,
+    balance:bal?parseN(bal):null,photo:p.dataUrl,photoInfo:p.info,uploadedAt:_depNowKST()};
+  await DEP.saveSlip(o);
+  window._depPend=window._depPend.filter(function(x){return x.tmp!==tmp;});
+  return true;
+}
+window.depSavePending=async function(tmp){ if(await _depSaveOnePending(tmp)){depRenderPending();await depLoad(true);} };
+window.depSaveAllPending=async function(){
+  let miss=0; for(const p of window._depPend.slice()){ if(!(await _depSaveOnePending(p.tmp,true))) miss++; }
+  depRenderPending(); await depLoad(true);
+  if(miss) alert(miss+'장은 거래시간·금액이 비어 저장하지 않았습니다.');
+};
+
+// ── 화면 ──
+window.initDepositTab=function(){
+  const d=document.getElementById('dep-date'); if(d&&!d.value) d.value=TODAY;
+  depLoad();
+};
+window.depLoad=async function(keepPend){
+  const date=document.getElementById('dep-date').value||TODAY;
+  if(!keepPend && window._depPend.length && window._depLoadedDate && window._depLoadedDate!==date){/* 날짜 변경 시에도 미저장 사진은 유지 */}
+  window._depLoadedDate=date;
+  const [slips,day]=await Promise.all([DEP.slips(date),DEP.day(date)]);
+  window._depSlips=(slips||[]).sort(function(a,b){return (a.time||'').localeCompare(b.time||'');});
+  window._depDay=day||{date:date,issues:[]};
+  if(!window._depDay.issues) window._depDay.issues=[];
+  const pl=document.getElementById('dep-i-plan'); if(pl && (!pl.value || pl.dataset.base!==date)){pl.value=_depAddDays(date,1);pl.dataset.base=date;}
+  depRender(); depRenderOpen();
+};
+function _depIssueNet(issues){ // 대상액 − ATM입금 차액을 설명하는 금액
+  return (issues||[]).reduce(function(s,i){return s+(i.kind==='미입금'?(+i.amount||0):i.kind==='초과입금'?-(+i.amount||0):0);},0);
+}
+window.depRender=function(){
+  const date=document.getElementById('dep-date').value||TODAY;
+  const t=depTarget(date), slips=window._depSlips, issues=window._depDay.issues;
+  const atm=slips.reduce(function(s,e){return s+(+e.amount||0);},0), diff=t.target-atm, net=_depIssueNet(issues);
+  let st;
+  if(!slips.length) st='<span class="dep-state warn">명세표 미등록</span>';
+  else if(diff===0) st='<span class="dep-state ok">✓ 대상액과 일치</span>';
+  else if(diff===net) st='<span class="dep-state warn">특이사항으로 확인됨</span>';
+  else st='<span class="dep-state bad">차액 확인 필요 '+(net?'(특이사항 '+fmtN(net)+')':'')+'</span>';
+  document.getElementById('dep-stats').innerHTML=
+    '<div class="stat navy"><div class="stat-lbl">오늘 입금 대상액</div><div class="stat-val">'+fmtN(t.target)+'</div><div class="stat-sub">현금입금 '+fmtN(t.cashInc)+' − 현금지출 '+fmtN(t.cashOut)+'</div></div>'
+    +'<div class="stat blue"><div class="stat-lbl">ATM 입금 합계</div><div class="stat-val">'+fmtN(atm)+'</div><div class="stat-sub">명세표 <b>'+slips.length+'</b>장</div></div>'
+    +'<div class="stat '+(diff===0?'green':'gold')+'"><div class="stat-lbl">차액 (대상 − 입금)</div><div class="stat-val '+(diff===0?'dep-ok':diff===net?'dep-warn':'dep-bad')+'">'+fmtN(diff)+'</div><div class="stat-sub">'+st+'</div></div>';
+  document.getElementById('dep-count').textContent=slips.length+'장';
+  const L=document.getElementById('dep-list');
+  if(!slips.length){L.innerHTML='<div class="dep-empty">아직 올린 명세표가 없습니다.<br>위의 <b>📷 사진 찍기</b>로 ATM 명세표를 올려 주세요.</div>';}
+  else{
+    let prev=null;
+    L.innerHTML=slips.map(function(s){
+      let chain='';
+      if(prev&&prev.balance!=null&&s.balance!=null){chain=(prev.balance+s.amount===s.balance)?'<span class="dep-chain dep-ok">✓ 잔액 연속</span>':'<span class="dep-chain dep-warn">⚠ 사이에 다른 거래</span>';}
+      prev=s;
+      const pi=s.photoInfo||{};
+      if(window._depEdit===s.id){
+        return '<div class="dep-row" data-id="'+s.id+'"><img class="dep-thumb" src="'+s.photo+'" onclick="depView(\''+s.id+'\')" alt="">'
+          +'<div class="dep-main"><div class="dep-pform">'
+          +'<div class="fg" style="margin:0"><div class="flbl">거래시간</div><input type="time" class="finp dep-e-time" value="'+_depEsc(s.time)+'"></div>'
+          +'<div class="fg" style="margin:0"><div class="flbl">거래금액</div><input class="finp dep-e-amt" inputmode="numeric" value="'+fmtN(s.amount)+'" oninput="fmtAmt(this)" style="text-align:right"></div>'
+          +'<div class="fg" style="margin:0"><div class="flbl">거래후 잔액</div><input class="finp dep-e-bal" inputmode="numeric" value="'+(s.balance!=null?fmtN(s.balance):'')+'" oninput="fmtAmt(this)" style="text-align:right"></div>'
+          +'</div></div><div class="dep-acts"><button class="btn btn-navy btn-xs" onclick="depSaveEdit(\''+s.id+'\')">저장</button><button class="btn btn-outline btn-xs" onclick="window._depEdit=null;depRender()">취소</button></div></div>';
+      }
+      return '<div class="dep-row" data-id="'+s.id+'"><img class="dep-thumb" src="'+s.photo+'" onclick="depView(\''+s.id+'\')" alt="입금 명세표">'
+        +'<div class="dep-main"><div><span class="dep-time">'+_depEsc(s.time)+'</span><span class="dep-amt">'+fmtN(s.amount)+'</span><span style="color:var(--g3);font-size:12px"> 원</span></div>'
+        +'<div class="dep-meta">거래후 잔액 '+(s.balance!=null?fmtN(s.balance):'—')+chain+'<br>📷 촬영 '+_depEsc(pi.takenAt||'-')+' · 업로드 '+_depEsc(s.uploadedAt||'-')+' · '+Math.round((pi.size||0)/1024)+'KB</div></div>'
+        +'<div class="dep-acts"><button class="btn btn-outline btn-xs" onclick="window._depEdit=\''+s.id+'\';depRender()">수정</button><button class="btn btn-red btn-xs" onclick="depDelSlip(\''+s.id+'\')">삭제</button></div></div>';
+    }).join('')+'<div class="dep-total"><span>ATM 입금 합계</span><span class="n">'+fmtN(atm)+' 원</span></div>';
+  }
+  // 특이사항
+  const I=document.getElementById('dep-issues');
+  I.innerHTML=issues.length?issues.map(function(i){
+    const done=i.status==='완료';
+    return '<div class="dep-issue'+(done?' done':'')+'"><span class="dep-kind k-'+_depEsc(i.kind)+'">'+(done?'✓ 처리완료':_depEsc(i.kind))+'</span>'
+      +'<div><div class="dep-ireason"><span class="dep-iamt">'+(i.amount?fmtN(i.amount)+'원':'')+'</span>'+_depEsc(i.reason||'')+'</div>'
+      +'<div class="dep-isub">'+(i.plan?'처리 예정 '+_depEsc(i.plan):'')+(done&&i.doneAt?' · 완료 '+_depEsc(i.doneAt):'')+' · 기록 '+_depEsc(i.createdAt||'')+'</div></div>'
+      +'<div class="dep-acts" style="flex-direction:row"><button class="btn btn-outline btn-xs" onclick="depToggleIssue(\''+_depEsc(date)+'\',\''+i.id+'\')">'+(done?'되돌리기':'완료')+'</button>'
+      +'<button class="btn btn-red btn-xs" onclick="depDelIssue(\''+i.id+'\')">삭제</button></div></div>';
+  }).join(''):'<div class="dep-empty" style="padding:12px">기록된 특이사항이 없습니다.</div>';
+  const openN=issues.filter(function(i){return i.status!=='완료';}).length;
+  document.getElementById('dep-issue-state').innerHTML=openN?'<span class="badge" style="background:#fdf3e1;color:#9a6200">미처리 '+openN+'건</span>':'';
+};
+window.depSaveEdit=async function(id){
+  const row=document.querySelector('#dep-list .dep-row[data-id="'+id+'"]'); const s=window._depSlips.find(function(x){return x.id===id;}); if(!row||!s) return;
+  s.time=row.querySelector('.dep-e-time').value||s.time; s.amount=parseN(row.querySelector('.dep-e-amt').value||'0');
+  const b=row.querySelector('.dep-e-bal').value; s.balance=b?parseN(b):null; s.editedAt=_depNowKST();
+  window._depEdit=null; await DEP.saveSlip(s); await depLoad(true);
+};
+window.depDelSlip=async function(id){
+  const s=window._depSlips.find(function(x){return x.id===id;}); if(!s) return;
+  if(!confirm(s.time+' · '+fmtN(s.amount)+'원 명세표를 삭제할까요?')) return;
+  await DEP.delSlip(s); await depLoad(true);
+};
+window.depView=function(id,pend){
+  const s=pend?window._depPend.find(function(p){return p.tmp===id;}):window._depSlips.find(function(x){return x.id===id;}); if(!s) return;
+  document.getElementById('dep-viewer-img').src=pend?s.dataUrl:s.photo;
+  const pi=(pend?s.info:s.photoInfo)||{};
+  document.getElementById('dep-viewer-cap').textContent=(pend?'':(s.time+' · '+fmtN(s.amount)+'원 · '))+'촬영 '+(pi.takenAt||'-')+(pi.device?' · '+pi.device:'')+' · 원본 '+(pi.width||'?')+'×'+(pi.height||'?');
+  document.getElementById('dep-viewer').classList.remove('hidden');
+};
+window.depCloseView=function(ev){ if(ev&&ev.target&&ev.target.tagName==='IMG') return; document.getElementById('dep-viewer').classList.add('hidden'); };
+
+// 특이사항
+window.depPreset=function(k){
+  const P={check:['미입금',100000,'10만원 수표 1매 ATM 입금 불가 → 은행 영업시간에 창구 입금 예정'],
+           limit:['미입금','','ATM 1회 입금 한도 초과로 일부 미입금 → 추가 입금 예정'],
+           damaged:['미입금','','훼손권으로 ATM 입금 불가 → 은행 창구 교환 후 입금 예정']}[k];
+  if(!P) return;
+  document.getElementById('dep-i-kind').value=P[0];
+  document.getElementById('dep-i-amt').value=P[1]?fmtN(P[1]):'';
+  document.getElementById('dep-i-reason').value=P[2];
+  document.getElementById(P[1]?'dep-i-reason':'dep-i-amt').focus();
+};
+window.depAddIssue=async function(){
+  const date=document.getElementById('dep-date').value||TODAY;
+  const reason=document.getElementById('dep-i-reason').value.trim();
+  const amount=parseN(document.getElementById('dep-i-amt').value||'0');
+  if(!reason){alert('내용을 입력해 주세요.');document.getElementById('dep-i-reason').focus();return;}
+  const day=window._depDay||{issues:[]};
+  day.issues=(day.issues||[]).concat([{id:'i'+Date.now().toString(36),kind:document.getElementById('dep-i-kind').value,amount:amount,reason:reason,
+    plan:document.getElementById('dep-i-plan').value||'',status:'예정',createdAt:_depNowKST()}]);
+  const ok=await DEP.saveDay(date,day);
+  document.getElementById('dep-i-reason').value='';document.getElementById('dep-i-amt').value='';
+  await depLoad(true);
+  if(ok) _depToast('특이사항이 서버에 기록되었습니다');
+};
+window.depToggleIssue=async function(date,iid){
+  const day=(date===(document.getElementById('dep-date').value||TODAY))?window._depDay:await DEP.day(date);
+  if(!day) return; const it=(day.issues||[]).find(function(i){return i.id===iid;}); if(!it) return;
+  if(it.status==='완료'){it.status='예정';delete it.doneAt;}else{it.status='완료';it.doneAt=_depNowKST();}
+  await DEP.saveDay(date,day); await depLoad(true);
+};
+window.depDelIssue=async function(iid){
+  if(!confirm('이 특이사항을 삭제할까요?')) return;
+  const date=document.getElementById('dep-date').value||TODAY;
+  window._depDay.issues=window._depDay.issues.filter(function(i){return i.id!==iid;});
+  await DEP.saveDay(date,window._depDay); await depLoad(true);
+};
+window.depRenderOpen=async function(){
+  const w=document.getElementById('dep-open-wrap'); if(!w) return;
+  const cur=document.getElementById('dep-date').value||TODAY;
+  const days=await DEP.days(); const open=[];
+  (days||[]).forEach(function(d){ if(d.date===cur) return; (d.issues||[]).forEach(function(i){ if(i.status!=='완료') open.push({date:d.date,i:i}); }); });
+  open.sort(function(a,b){return a.date.localeCompare(b.date);});
+  w.innerHTML=open.length?'<div class="card"><div class="card-hd"><div class="card-title">⏳ 다른 날짜의 미처리 특이사항</div><span class="badge" style="background:#fdf3e1;color:#9a6200">'+open.length+'건</span></div>'
+    +open.map(function(o){return '<div class="dep-issue"><span class="dep-kind k-'+_depEsc(o.i.kind)+'">'+_depMD(o.date)+' '+_depEsc(o.i.kind)+'</span>'
+      +'<div><div class="dep-ireason"><span class="dep-iamt">'+(o.i.amount?fmtN(o.i.amount)+'원':'')+'</span>'+_depEsc(o.i.reason)+'</div><div class="dep-isub">'+(o.i.plan?'처리 예정 '+_depEsc(o.i.plan):'')+'</div></div>'
+      +'<div class="dep-acts" style="flex-direction:row"><button class="btn btn-navy btn-xs" onclick="depToggleIssue(\''+o.date+'\',\''+o.i.id+'\')">✓ 완료 처리</button>'
+      +'<button class="btn btn-outline btn-xs" onclick="document.getElementById(\'dep-date\').value=\''+o.date+'\';depLoad()">보기</button></div></div>';}).join('')+'</div>':'';
+};
+function _depToast(msg){
+  const t=document.createElement('div'); t.textContent='✓ '+msg;
+  t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+  document.body.appendChild(t); setTimeout(function(){t.remove();},2200);
+}
+
+// 입금전표 하단: ATM 입금 확인 · 특이사항 요약
+window.depFillReceiptNote=async function(date){
+  const el=document.getElementById('rct-dep-note'); if(!el) return;
+  const [slips,day]=await Promise.all([DEP.slips(date),DEP.day(date)]);
+  const issues=(day&&day.issues)||[];
+  if(!(slips&&slips.length)&&!issues.length){el.innerHTML='';el.style.display='none';return;}
+  const atm=(slips||[]).reduce(function(s,e){return s+(+e.amount||0);},0), t=depTarget(date), diff=t.target-atm;
+  el.style.display='block';
+  el.innerHTML='<div><b style="color:#8a5a00">ATM 입금 확인</b> '+fmtN(atm)+'원 ('+(slips||[]).length+'건'+((slips||[]).length?', '+slips.map(function(s){return s.time;}).sort()[0]+'~'+slips.map(function(s){return s.time;}).sort().slice(-1)[0]:'')+')'
+    +' · 입금 대상액 대비 차액 <b>'+fmtN(diff)+'</b>원</div>'
+    +issues.map(function(i){return '<div>• <b>['+_depEsc(i.status==='완료'?'처리완료':i.kind)+']</b> '+(i.amount?fmtN(i.amount)+'원 ':'')+_depEsc(i.reason)+(i.plan?' (처리 예정 '+_depMD(i.plan)+')':'')+'</div>';}).join('');
+};
 
 // ── 데이터 관리 탭 전환 ──────────────────────────────────────
 window.switchDataTab=function(tabId,btn,cardId){
