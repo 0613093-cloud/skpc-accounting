@@ -449,62 +449,78 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   position:relative;z-index:200;
 }
 
-/* 1행: 그룹 라벨 바 */
+/* 1행: 그룹 바 (주간 / 월간 / 조회 / 관리) */
 .nav-groups-row{
   display:flex;align-items:stretch;
   background:rgba(0,0,0,.25);
   border-bottom:1px solid rgba(255,255,255,.1);
-  flex-shrink:0;
+  flex-shrink:0;overflow-x:auto;
 }
+.nav-groups-row::-webkit-scrollbar{display:none}
 .nav-group-pill{
-  display:flex;align-items:center;justify-content:center;
-  padding:0 20px;height:28px;
-  font-size:11px;font-weight:900;letter-spacing:.6px;
-  color:rgba(255,255,255,.7);
-  white-space:nowrap;cursor:pointer;
-  border-right:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;gap:8px;
+  padding:0 18px;height:40px;
+  color:rgba(255,255,255,.62);
+  white-space:nowrap;cursor:pointer;flex-shrink:0;
+  border-right:1px solid rgba(255,255,255,.08);
   transition:all .2s;position:relative;
 }
+.nav-group-pill .gp-ico{font-size:15px;line-height:1;filter:grayscale(.4);opacity:.8}
+.nav-group-pill .gp-txt{display:flex;flex-direction:column;line-height:1.15}
+.nav-group-pill .gp-txt b{font-size:12px;font-weight:900;letter-spacing:.5px}
+.nav-group-pill .gp-txt small{font-size:9.5px;font-weight:500;color:rgba(255,255,255,.45);margin-top:2px;letter-spacing:0}
 /* 그룹별 배경 쉐이드 */
 #grp-weekly  { background:rgba(26,80,160,.45); }
 #grp-monthly { background:rgba(20,100,80,.45); }
+#grp-lookup  { background:rgba(24,96,120,.45); }
 #grp-manage  { background:rgba(80,40,120,.45); }
 .nav-group-pill:hover{ filter:brightness(1.25); color:#fff; }
-.nav-group-pill.active-group{
-  color:#fff;font-weight:900;filter:brightness(1.35);
-}
+.nav-group-pill.active-group{ color:#fff;filter:brightness(1.4); }
+.nav-group-pill.active-group .gp-ico{filter:none;opacity:1}
+.nav-group-pill.active-group .gp-txt small{color:rgba(255,255,255,.75)}
 .nav-group-pill::after{
-  content:'';position:absolute;bottom:-1px;left:10%;right:10%;
-  height:2px;background:var(--gold,#c8a84b);
-  opacity:0;transition:opacity .2s;border-radius:1px;
+  content:'';position:absolute;bottom:-1px;left:0;right:0;
+  height:3px;background:var(--gold,#c8a84b);
+  opacity:0;transition:opacity .2s;
 }
 .nav-group-pill.active-group::after{opacity:1;}
 
-/* 2행: 탭 아이템 바 */
+/* 2행: 선택된 그룹의 메뉴만 표시 (입력 / 출력 / 조회 소구분) */
 .nav-items-row{
   display:flex;align-items:stretch;
   overflow-x:auto;overflow-y:visible;flex-shrink:0;
-  position:relative;
+  position:relative;min-height:38px;
 }
 .nav-items-row::-webkit-scrollbar{height:3px;}
 .nav-items-row::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);}
+.nav-items-row>[data-grp]{display:none}
+.nav[data-grp="weekly"]  .nav-items-row>[data-grp="weekly"],
+.nav[data-grp="monthly"] .nav-items-row>[data-grp="monthly"],
+.nav[data-grp="lookup"]  .nav-items-row>[data-grp="lookup"],
+.nav[data-grp="manage"]  .nav-items-row>[data-grp="manage"]{display:flex}
+.nav-sub-lbl{
+  align-items:center;padding:0 8px 0 14px;height:38px;
+  font-size:10px;font-weight:800;letter-spacing:1px;
+  color:rgba(255,255,255,.42);white-space:nowrap;flex-shrink:0;
+  border-left:1px solid rgba(255,255,255,.14);
+}
+.nav-sub-lbl:first-child,.nav-sub-lbl:first-of-type{border-left:none}
+.nav-sub-lbl::after{content:'';display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--gold);margin-left:8px;opacity:.7}
+.nav[data-grp="weekly"]  .nav-items-row{background:rgba(26,80,160,.18)}
+.nav[data-grp="monthly"] .nav-items-row{background:rgba(20,100,80,.18)}
+.nav[data-grp="lookup"]  .nav-items-row{background:rgba(24,96,120,.18)}
+.nav[data-grp="manage"]  .nav-items-row{background:rgba(80,40,120,.18)}
 
-/* 탭 아이템 - 그룹별 쉐이드 배경 */
+/* 탭 아이템 */
 .nav-item{
   padding:0 14px;height:38px;
   display:flex;align-items:center;gap:4px;
-  color:rgba(255,255,255,.7);cursor:pointer;
+  color:rgba(255,255,255,.72);cursor:pointer;
   white-space:nowrap;font-size:12px;font-weight:700;
   transition:all .2s;border-bottom:3px solid transparent;
   flex-shrink:0;letter-spacing:.2px;
 }
-/* 주간업무 탭 (구분선 이전) */
-.nav-item.grp-weekly  { background:rgba(26,80,160,.18); }
-/* 월간업무 탭 */
-.nav-item.grp-monthly { background:rgba(20,100,80,.18); }
-/* 관리 탭 */
-.nav-item.grp-manage  { background:rgba(80,40,120,.18); }
-/* 헌금입력 탭 (입력1/2/3) - 이미지처럼 구분 강조 */
+/* 헌금입력 탭 - 구분 강조 */
 .nav-input-tab{
   background:rgba(200,150,62,.22);
   border-left:1px solid rgba(200,150,62,.3);
@@ -519,6 +535,8 @@ table.tbl tfoot td{background:linear-gradient(180deg,#dce6f0,#ccd9e8);font-weigh
   background:rgba(200,150,62,.35)!important;
   color:#fff!important;
 }
+/* 관리 화면 안의 소메뉴는 상단 메뉴로 통합 → 숨김 */
+#tab-manage>.sub-nav{display:none}
 
 /* 그룹 구분선 */
 .nav-group-sep{
@@ -876,6 +894,9 @@ table.fm-tbl td{height:44px}
   .tr-head{gap:8px}
   .tr-amt{font-size:17px}
   .nav-item{padding:0 10px;font-size:10.5px}
+  .nav-group-pill{padding:0 12px;height:36px;gap:6px}
+  .nav-group-pill .gp-txt small{display:none}
+  .nav-sub-lbl{padding:0 6px 0 10px;font-size:9px}
   .hdr{height:auto;min-height:52px;padding:8px 12px;flex-wrap:wrap;gap:6px}
   .hdr-title h1{font-size:14px;white-space:nowrap}
   .hdr-title p,.hdr-date,#fbStatus #fbTxt{display:none}
@@ -1386,36 +1407,52 @@ table.fm-tbl td{height:44px}
   </div>
 </header>
 
-<nav class="nav" id="mainNav">
+<nav class="nav" id="mainNav" data-grp="weekly">
   <div class="nav-groups-row" id="navGroupsRow">
-    <div class="nav-group-pill active-group" id="grp-weekly" onclick="scrollToGroup('weekly')">주간업무</div>
-    <div class="nav-group-pill" id="grp-monthly" onclick="scrollToGroup('monthly')">📅 월간업무</div>
-    <div class="nav-group-pill" id="grp-manage" onclick="scrollToGroup('manage')">관리</div>
+    <div class="nav-group-pill active-group" id="grp-weekly" onclick="scrollToGroup('weekly')"><span class="gp-ico">📋</span><span class="gp-txt"><b>주간업무</b><small>매주 입력 · 전표 · 송금</small></span></div>
+    <div class="nav-group-pill" id="grp-monthly" onclick="scrollToGroup('monthly')"><span class="gp-ico">📅</span><span class="gp-txt"><b>월간업무</b><small>월말 보고 · 대조</small></span></div>
+    <div class="nav-group-pill" id="grp-lookup" onclick="scrollToGroup('lookup')"><span class="gp-ico">🔍</span><span class="gp-txt"><b>조회·통계</b><small>수시 조회</small></span></div>
+    <div class="nav-group-pill" id="grp-manage" onclick="scrollToGroup('manage')"><span class="gp-ico">⚙️</span><span class="gp-txt"><b>관리</b><small>기준정보 · 설정</small></span></div>
   </div>
   <div class="nav-items-row" id="navItemsRow">
-    <!-- 주간업무 -->
-    <div class="nav-group-label" data-group="weekly">주간</div>
-    <div class="nav-item nav-input-tab" id="nav-input-1" onclick="selectInputSheet(1)">📋 헌금입력</div>
-    <div class="nav-item" data-tab="receipt">🗒️ 입금전표</div>
-    <div class="nav-item" data-tab="deposit">🏧 입금확인</div>
-    <div class="nav-item" data-tab="transfer">💳 송금내역</div>
-    <div class="nav-item" data-tab="query">당일헌금내역</div>
-    <div class="nav-item" data-tab="weekly">주보용 헌금내역</div>
-    <div class="nav-item" data-tab="online-off">온라인 입금내역</div>
-    <div class="nav-item" data-tab="offering">📊 누적헌금</div>
-    <div class="nav-item" data-tab="expense">💸 누적지출</div>
-    <div class="nav-item" data-tab="sponsor">찬조내역</div>
-    <!-- 월간업무 -->
-    <div class="nav-group-label" data-group="monthly">월간</div>
-    <div class="nav-item grp-monthly" data-tab="monthly">📊 월간보고</div>
-    <div class="nav-item grp-monthly" data-tab="deptreport">🏢 부서보고서</div>
-    <div class="nav-item grp-monthly" data-tab="bankbal">🏦 통장잔고</div>
-    <div class="nav-item grp-monthly" data-tab="member">👤 성도별 헌금</div>
-    <div class="nav-item grp-monthly" data-tab="family">👨‍👩‍👧 가족별 누적</div>
-
-    <!-- 관리 -->
-    <div class="nav-group-label" data-group="manage">관리</div>
-    <div class="nav-item" data-tab="manage">⚙️ 관리</div>
+    <!-- 주간업무: 입력 → 출력·처리 -->
+    <div class="nav-sub-lbl" data-grp="weekly">입력</div>
+    <div class="nav-item nav-input-tab grp-weekly" id="nav-input-1" data-grp="weekly" onclick="selectInputSheet(1)">📋 헌금입력</div>
+    <div class="nav-item grp-weekly" data-grp="weekly" data-tab="expense" data-focus="exp-input-card">💸 지출입력</div>
+    <div class="nav-item grp-weekly" data-grp="weekly" data-tab="deposit">🏧 입금확인</div>
+    <div class="nav-sub-lbl" data-grp="weekly">출력 · 처리</div>
+    <div class="nav-item grp-weekly" data-grp="weekly" data-tab="receipt">🗒️ 입금전표</div>
+    <div class="nav-item grp-weekly" data-grp="weekly" data-tab="transfer">💳 송금내역</div>
+    <div class="nav-item grp-weekly" data-grp="weekly" data-tab="weekly">📰 주보용 헌금내역</div>
+    <!-- 월간업무: 보고서 → 대조·확인 -->
+    <div class="nav-sub-lbl" data-grp="monthly">보고서</div>
+    <div class="nav-item grp-monthly" data-grp="monthly" data-tab="monthly">📊 월간보고</div>
+    <div class="nav-item grp-monthly" data-grp="monthly" data-tab="deptreport">🏢 부서보고서</div>
+    <div class="nav-sub-lbl" data-grp="monthly">대조 · 확인</div>
+    <div class="nav-item grp-monthly" data-grp="monthly" data-tab="bankbal">🏦 통장잔고</div>
+    <div class="nav-item grp-monthly" data-grp="monthly" data-tab="sponsor">🎁 찬조내역</div>
+    <!-- 조회·통계: 헌금 → 지출 → 성도·가족 -->
+    <div class="nav-sub-lbl" data-grp="lookup">헌금</div>
+    <div class="nav-item grp-lookup" data-grp="lookup" data-tab="query">📄 당일헌금내역</div>
+    <div class="nav-item grp-lookup" data-grp="lookup" data-tab="online-off">🌐 온라인 입금내역</div>
+    <div class="nav-item grp-lookup" data-grp="lookup" data-tab="offering">📊 누적헌금</div>
+    <div class="nav-sub-lbl" data-grp="lookup">지출</div>
+    <div class="nav-item grp-lookup" data-grp="lookup" data-tab="expense" data-focus="exp-search">💸 누적지출</div>
+    <div class="nav-sub-lbl" data-grp="lookup">성도 · 가족</div>
+    <div class="nav-item grp-lookup" data-grp="lookup" data-tab="member">👤 성도별 헌금</div>
+    <div class="nav-item grp-lookup" data-grp="lookup" data-tab="family">👨‍👩‍👧 가족별 누적</div>
+    <!-- 관리: 기준정보 → 예산·설정 -->
+    <div class="nav-sub-lbl" data-grp="manage">기준정보</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="offering-mgr">헌금종류</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="dept-mgr">부서</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="account-mgr">수취자 계좌</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="family-mgr">👨‍👩‍👧 가족 관리</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="sponsor-mgr">찬조유형</div>
+    <div class="nav-sub-lbl" data-grp="manage">예산 · 설정</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="budget-mgr">연간예산</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="carryover-mgr">이월금 설정</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="writer-mgr">작성자</div>
+    <div class="nav-item grp-manage" data-grp="manage" data-tab="manage" data-mgr="data-mgr">💾 데이터</div>
   </div>
 </nav>
 
@@ -1491,7 +1528,7 @@ table.fm-tbl td{height:44px}
     <div class="card-title" style="margin-bottom:10px">부서 선택</div>
     <div class="rpwrap" id="exp-deptRadio"></div>
   </div>
-  <div class="card">
+  <div class="card" id="exp-input-card">
     <div class="card-title" style="margin-bottom:12px">지출 내역 입력</div>
     <div class="g3">
       <div class="fg"><div class="flbl">날짜 (수정 가능)</div><input type="date" class="finp" id="exp-date"></div>
@@ -1517,7 +1554,7 @@ table.fm-tbl td{height:44px}
       <button class="btn btn-outline" onclick="clearExpForm()">초기화</button>
     </div>
   </div>
-  <div class="search-panel">
+  <div class="search-panel" id="exp-search">
     <div class="panel-title">검색 조건</div>
     <div class="g3 mb8">
       <div class="fg"><div class="flbl">년월</div>
@@ -2743,8 +2780,14 @@ window._fbLiveRefresh = function(key){
 // 탭 전환 시스템 — 즉시 실행 (DOM ready, 이벤트 즉시 바인딩)
 // ════════════════════════════════════════════════════════════
 
-// 탭 전환 핵심 함수
-function _doTabSwitch(tab){
+// 탭 전환 핵심 함수 (el: 클릭된 메뉴 요소 — 같은 화면이 두 그룹에 있을 때 어느 그룹에서 열었는지 구분)
+window._navLastInGrp=window._navLastInGrp||{};
+function _navPickItem(tab){
+  var cur=document.getElementById('mainNav')?.dataset.grp;
+  return document.querySelector('.nav-item[data-tab="'+tab+'"][data-grp="'+cur+'"]')
+      || document.querySelector('.nav-item[data-tab="'+tab+'"]');
+}
+function _doTabSwitch(tab,el){
   if(!tab) return;
   document.querySelectorAll('.tab-pane').forEach(function(p){
     p.style.display='none';
@@ -2752,15 +2795,22 @@ function _doTabSwitch(tab){
   var tp=document.getElementById('tab-'+tab);
   if(tp) tp.style.display='block';
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-  var ni=document.querySelector('.nav-item[data-tab="'+tab+'"]');
+  var ni=(el&&el.classList&&el.classList.contains('nav-item'))?el:_navPickItem(tab);
   if(ni) ni.classList.add('active');
-  try{ updateActiveGroup(tab); }catch(e){}
+  try{ updateActiveGroup(tab,ni); }catch(e){}
   try{ onTabActivate(tab); }catch(e){}
+  if(ni&&ni.dataset.mgr){ try{ switchMgr(ni.dataset.mgr,null); }catch(e){} }
+  if(ni&&ni.dataset.focus){
+    var fid=ni.dataset.focus;
+    setTimeout(function(){ var f=document.getElementById(fid); if(f) f.scrollIntoView({behavior:'smooth',block:'start'}); },60);
+  }else{
+    var mw=document.getElementById('mainWrap'); if(mw) mw.scrollTop=0;
+  }
 }
 
 // nav 클릭 이벤트 직접 바인딩 (즉시 실행)
 document.querySelectorAll('.nav-item[data-tab]').forEach(function(el){
-  el.addEventListener('click', function(){ _doTabSwitch(el.getAttribute('data-tab')); });
+  el.addEventListener('click', function(){ _doTabSwitch(el.getAttribute('data-tab'),el); });
 });
 
 // showTab (외부 호출용)
@@ -2785,7 +2835,8 @@ window.selectInputSheet=function(num){
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var ni=document.getElementById('nav-input-'+num);
   if(ni) ni.classList.add('active');
-  try{ updateActiveGroup('input'+num); }catch(e){}
+  try{ updateActiveGroup('input'+num,ni); }catch(e){}
+  var mw=document.getElementById('mainWrap'); if(mw) mw.scrollTop=0;
 };
 
 // ── 가장 가까운 이전 일요일 계산 ────────────────────────────
@@ -2797,21 +2848,28 @@ function getLastSunday(fromDate){
   return d.toISOString().slice(0,10);
 }
 
-// 그룹 pill active 갱신
-function updateActiveGroup(tab){
-  var weeklyTabs=['receipt','transfer','query','weekly','online-off','offering','expense','sponsor','input1','input2','input3'];
-  var monthlyTabs=['monthly','deptreport','bankbal','member','family'];
-  var grp='manage';
-  if(weeklyTabs.includes(tab)||tab.startsWith('input')) grp='weekly';
-  else if(monthlyTabs.includes(tab)) grp='monthly';
+// 그룹 pill active 갱신 — 2행에는 선택된 그룹의 메뉴만 표시
+function updateActiveGroup(tab,el){
+  var grp=(el&&el.dataset&&el.dataset.grp)||null;
+  if(!grp){
+    if(/^input\d$/.test(tab)) grp='weekly';
+    else{ var any=document.querySelector('.nav-item[data-tab="'+tab+'"]'); grp=(any&&any.dataset.grp)||'weekly'; }
+  }
+  var nav=document.getElementById('mainNav'); if(nav) nav.dataset.grp=grp;
+  window._navLastInGrp[grp]=el||tab;
   document.querySelectorAll('.nav-group-pill').forEach(function(p){ p.classList.remove('active-group'); });
   var gEl=document.getElementById('grp-'+grp);
   if(gEl) gEl.classList.add('active-group');
-  // nav-group-label active
-  document.querySelectorAll('.nav-group-label').forEach(function(l){ l.classList.remove('active'); });
-  var lEl=document.querySelector('.nav-group-label[data-group="'+(grp==='weekly'?'weekly':grp==='monthly'?'monthly':'manage')+'"]');
-  if(lEl) lEl.classList.add('active');
+  // 현재 메뉴가 보이도록 가로 스크롤
+  var act=document.querySelector('.nav-item.active');
+  if(act&&act.scrollIntoView) try{ act.scrollIntoView({block:'nearest',inline:'nearest'}); }catch(e){}
 }
+// 관리 소메뉴 선택 시 상단 메뉴 하이라이트 동기화
+window._navMarkMgr=function(id){
+  var cur=document.querySelector('.nav-item[data-mgr="'+id+'"]'); if(!cur) return;
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  cur.classList.add('active');
+};
 
 function onTabActivate(tab){
   if(window.fmPopClose) try{fmPopClose();}catch(e){}
@@ -4865,7 +4923,9 @@ window.switchMgr=function(id,btn){
   const target=document.getElementById(id);
   if(target){target.classList.remove('hidden');target.style.display='';}
   document.querySelectorAll('.sub-btn').forEach(function(b){b.classList.remove('on');});
+  if(!btn) btn=document.querySelector('.sub-btn[onclick*="\''+id+'\'"]');
   if(btn) btn.classList.add('on');
+  if(window._navMarkMgr) _navMarkMgr(id);
   if(id==='carryover-mgr') renderCarryoverForm();
   if(id==='writer-mgr') renderWriterMgr();
   if(id==='offering-mgr') renderOffTypeList();
@@ -5875,11 +5935,10 @@ function memberFamilyMap(){
   return m;
 }
 window.openFamilyMgr=function(){
+  const ni=document.querySelector('.nav-item[data-mgr="family-mgr"]');
+  if(ni){ ni.click(); return; }
   document.querySelector('[data-tab="manage"]')?.click();
-  setTimeout(function(){
-    const btn=Array.from(document.querySelectorAll('.sub-btn')).find(function(b){return b.textContent.includes('가족 관리');});
-    switchMgr('family-mgr',btn);
-  },50);
+  setTimeout(function(){ switchMgr('family-mgr',null); },50);
 };
 window.renderFamilyMgr=function(){
   const dl=document.getElementById('fam-member-list');
@@ -9017,12 +9076,15 @@ window.printSection=function(areaId){
   const LAST_KEY='skpc_lastTab';
   document.addEventListener('click',function(ev){
     const el=ev.target.closest&&ev.target.closest('.nav-item[data-tab]');
-    if(el) try{localStorage.setItem(LAST_KEY,el.dataset.tab);}catch(e){}
+    if(el) try{localStorage.setItem(LAST_KEY,el.dataset.tab+(el.dataset.mgr?'#'+el.dataset.mgr:'')+(el.dataset.grp?'@'+el.dataset.grp:''));}catch(e){}
   });
   window.restoreLastTab=function(){
     let last=null;try{last=localStorage.getItem(LAST_KEY);}catch(e){}
     if(!last||/^input\d$/.test(last)) return;
-    const el=document.querySelector('.nav-item[data-tab="'+last+'"]');
+    const m=last.match(/^([^#@]+)(?:#([^@]+))?(?:@(.+))?$/); if(!m) return;
+    const el=(m[2]&&document.querySelector('.nav-item[data-mgr="'+m[2]+'"]'))
+      ||(m[3]&&document.querySelector('.nav-item[data-tab="'+m[1]+'"][data-grp="'+m[3]+'"]'))
+      ||document.querySelector('.nav-item[data-tab="'+m[1]+'"]');
     if(el) el.click();
   };
 
@@ -9042,7 +9104,13 @@ window.printSection=function(areaId){
     {k:'bankbal',label:'통장잔액',          hint:'은행 잔액 대조'},
     {k:'member', label:'성도별 헌금',       hint:'가나다 목록에서 선택 · 헌금명별 묶음'},
     {k:'family', label:'가족별 누적',       hint:'가족 단위 누적 순위 · 미등록 일괄 배정 · 제외'},
-    {k:'manage', label:'관리',              hint:'헌금종류·부서·계좌·가족·예산·데이터'}
+    {k:'deposit',label:'입금확인',          hint:'ATM 명세표 사진 · 특이사항'},
+    {k:'manage', label:'관리 › 헌금종류',    hint:'헌금 항목 추가·삭제'},
+    {k:'mgr-account',label:'관리 › 수취자 계좌',hint:'송금 계좌 등록',go:function(){document.querySelector('.nav-item[data-mgr="account-mgr"]')?.click();}},
+    {k:'mgr-family',label:'관리 › 가족 관리',hint:'가족 등록·구성원 수정',go:function(){document.querySelector('.nav-item[data-mgr="family-mgr"]')?.click();}},
+    {k:'mgr-budget',label:'관리 › 연간예산', hint:'항목별 당년예산',go:function(){document.querySelector('.nav-item[data-mgr="budget-mgr"]')?.click();}},
+    {k:'mgr-carry',label:'관리 › 이월금 설정',hint:'연초 이월금·특별회계 이월',go:function(){document.querySelector('.nav-item[data-mgr="carryover-mgr"]')?.click();}},
+    {k:'mgr-data', label:'관리 › 데이터',    hint:'백업·복원·엑셀',go:function(){document.querySelector('.nav-item[data-mgr="data-mgr"]')?.click();}}
   ];
   function ensurePalette(){
     if(document.getElementById('skpc-palette')) return;
@@ -9569,11 +9637,11 @@ window.saveBankBalReal = function(acctId, ym){
 };
 
 window.scrollToGroup=function(grp){
-  if(grp==='weekly'){ selectInputSheet(1); }
-  else if(grp==='monthly'){ _doTabSwitch('monthly'); }
-  else if(grp==='manage'){ _doTabSwitch('manage'); }
-  var label=document.querySelector('.nav-group-label[data-group="'+grp+'"]');
-  if(label) label.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+  var last=(window._navLastInGrp||{})[grp];
+  if(last&&last.nodeType===1&&document.contains(last)){ last.click(); return; }
+  if(grp==='weekly'){ selectInputSheet(1); return; }
+  var first=document.querySelector('.nav-item[data-grp="'+grp+'"][data-tab]');
+  if(first) first.click();
 };
 
 function _runInit(){
