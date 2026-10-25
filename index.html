@@ -3511,7 +3511,8 @@ function updateMonthlySummaryCards(tot2CuExp, tot2MoExp){
   const prevBal=parseInt(w.getAttribute('data-prev-bal')||'0');
   const set=function(id,n){const el=document.getElementById(id);if(el) el.textContent=fmtN(n)+'원';};
   set('ms-cu-exp',tot2CuExp); set('ms-mo-exp',tot2MoExp);
-  set('ms-balance',prevBal+cuInc-tot2CuExp); set('ms-mo-result',moInc-tot2MoExp);
+  const yearBase=parseInt(w.getAttribute('data-year-base')||'0');
+  set('ms-balance',yearBase+cuInc-tot2CuExp); set('ms-mo-result',moInc-tot2MoExp);
 }
 // 일반회계 비고 저장 (월별, Firebase 동기화)
 window.saveGenMemo=function(ym,key,val){
@@ -4467,7 +4468,7 @@ function renderMonthlyGeneral(ym){
   <div class="rpt-section">
     <div class="rpt-section-title">① 총 계 <span class="badge">${yr}. ${String(mo).padStart(2,'0')}</span></div>
     <div id="monthly-summary-wrapper"
-      data-cu-inc="${tot2CuInc}" data-mo-inc="${tot2MoInc}" data-prev-bal="${prevBal}"
+      data-cu-inc="${tot2CuInc}" data-mo-inc="${tot2MoInc}" data-prev-bal="${prevBal}" data-year-base="${carryBase}"
       style="background:#fff;border:1px solid #d1d5db;border-radius:0 0 10px 10px;overflow:hidden">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:#f8f9fa;border-bottom:1px solid #e5e7eb">
         <span style="font-size:12px;font-weight:700;color:#6b7280">이 월 금 <span style="font-size:10px;color:#94a3b8;font-weight:500;margin-left:6px">전년도이월 + 전월까지 수입 − 지출</span></span>
@@ -4498,8 +4499,8 @@ function renderMonthlyGeneral(ym){
             <span id="ms-cu-exp" style="font-size:15px;font-weight:800;color:#dc2626;font-family:var(--fnum)">${fmtN(tot2CuExp)}원</span>
           </div>
           <div style="padding:11px 20px;display:flex;align-items:center;justify-content:space-between;background:#eff6ff">
-            <span style="font-size:12px;font-weight:700;color:#1e40af">잔 액 <span style="font-size:10px;color:#64748b;font-weight:500;margin-left:4px">이월금 + 수입누계 − 지출누계</span></span>
-            <span id="ms-balance" style="font-size:16px;font-weight:900;color:#1d4ed8;font-family:var(--fnum)">${fmtN(prevBal+tot2CuInc-tot2CuExp)}원</span>
+            <span style="font-size:12px;font-weight:700;color:#1e40af">잔 액 <span style="font-size:10px;color:#64748b;font-weight:500;margin-left:4px">${carryBase?'연초이월 + ':''}수입누계 − 지출누계</span></span>
+            <span id="ms-balance" style="font-size:16px;font-weight:900;color:#1d4ed8;font-family:var(--fnum)">${fmtN(carryBase+tot2CuInc-tot2CuExp)}원</span>
           </div>
         </div>
       </div>
