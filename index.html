@@ -1772,7 +1772,7 @@ table.fm-tbl td{height:44px}
 
 <div id="tab-weekly" class="tab-pane">
   <div class="pg-hd"><div class="pg-title">📰 주보작성용 헌금내역</div></div>
-  <div style="background:#fffde7;border:2px solid #f9ca24;border-radius:var(--rl);padding:8px 14px;font-weight:800;font-size:14px;color:#7c6a00;margin-bottom:14px">📰 주보작성용 — 금액 미표시</div>
+  <div id="wky-banner" style="background:#fffde7;border:2px solid #f9ca24;border-radius:var(--rl);padding:8px 14px;font-weight:800;font-size:14px;color:#7c6a00;margin-bottom:14px">📰 주보작성용 — 금액 미표시</div>
   <div class="search-panel">
     <div class="panel-title">검색 조건</div>
     <div class="g2 mb8">
@@ -1791,21 +1791,24 @@ table.fm-tbl td{height:44px}
         </select>
       </div>
     </div>
-    <div class="flex gap8">
+    <div class="flex gap8 items-c" style="flex-wrap:wrap">
       <button class="btn btn-navy" onclick="doWeeklySearch()">🔍 조회</button>
       <button class="btn btn-outline" onclick="resetWeeklySearch()">초기화</button>
+      <span style="flex:1"></span>
+      <label class="chk-pill" id="wky-amt-pill" title="켜면 성도명 옆에 헌금 금액과 합계가 표시됩니다 (인쇄에도 반영)"><input type="checkbox" id="wky-show-amt" onchange="setWeeklyAmt(this.checked)"> 💰 금액 표시</label>
     </div>
   </div>
   <div class="result-section" id="wky-result">
     <div class="card">
       <div class="card-hd">
-        <div class="card-title">헌금내역 (금액 미표시)</div>
+        <div class="card-title" id="wky-card-title">헌금내역 (금액 미표시)</div>
         <button class="btn btn-outline btn-sm no-print" onclick="printSection('wky-print-area')">🖨️ 인쇄</button>
       </div>
       <div id="wky-print-area">
         <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th style="width:40px">No</th><th>헌금구분</th><th>성도성명</th><th style="width:80px">입금방식</th><th>비고</th></tr></thead>
+          <thead id="wky-thead"><tr><th style="width:40px">No</th><th>헌금구분</th><th>성도성명</th><th style="width:80px">입금방식</th><th>비고</th></tr></thead>
           <tbody id="wky-tbody"></tbody>
+          <tfoot id="wky-tfoot"></tfoot>
         </table></div>
       </div>
     </div>
@@ -5326,6 +5329,7 @@ window.resetQuerySearch=function(){
 
 // ── 주보용 헌금내역 탭 ──────────────────────────────────────
 window.initWeeklyTab=function(){
+  try{ setWeeklyAmt(getWeeklyAmt()); }catch(e){}
   const typeSel=document.getElementById('wky-type');
   if(typeSel&&typeSel.options.length<=1){
     getOffTypes().forEach(function(t){
@@ -5336,51 +5340,75 @@ window.initWeeklyTab=function(){
   if(el) el.value=getLastSunday();
 };
 
+// 주보용 금액 표시 옵션 (기본: 미표시 · 선택은 이 기기에 기억)
+window.getWeeklyAmt=function(){ try{return localStorage.getItem('wkyShowAmt')==='1';}catch(e){return false;} };
+window.setWeeklyAmt=function(on){
+  try{localStorage.setItem('wkyShowAmt',on?'1':'0');}catch(e){}
+  const c=document.getElementById('wky-show-amt'); if(c) c.checked=!!on;
+  const pill=document.getElementById('wky-amt-pill'); if(pill) pill.classList.toggle('on',!!on);
+  const bn=document.getElementById('wky-banner');
+  if(bn){ bn.textContent=on?'📰 주보작성용 — 금액 표시 중 (주보에는 금액이 실리지 않도록 주의)':'📰 주보작성용 — 금액 미표시';
+    bn.style.background=on?'#fff4e6':'#fffde7'; bn.style.borderColor=on?'#e8a23a':'#f9ca24'; bn.style.color=on?'#8a4b00':'#7c6a00'; }
+  const ct=document.getElementById('wky-card-title'); if(ct) ct.textContent=on?'헌금내역 (금액 표시)':'헌금내역 (금액 미표시)';
+  const rs=document.getElementById('wky-result');
+  if(rs&&rs.classList.contains('show')) doWeeklySearch();
+};
 window.doWeeklySearch=function(){
   const dt=document.getElementById('wky-date')?.value||TODAY;
   const type=document.getElementById('wky-type')?.value||'';
   const name=(document.getElementById('wky-name')?.value||'').trim();
   const showOnline=document.getElementById('wky-online')?.value||'all';
+  const showAmt=getWeeklyAmt();
+  const COLS=showAmt?6:5;
+  const onlineBadge='<span style="background:#e3f2fd;color:#1565c0;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>';
+  const amtTd=function(e){return showAmt?'<td class="nc" style="font-weight:700;color:var(--navy);white-space:nowrap">'+fmtN(e.amount||0)+'</td>':'';};
+  const thead=document.getElementById('wky-thead');
+  if(thead) thead.innerHTML='<tr><th style="width:40px">No</th><th>헌금구분</th><th>성도성명</th>'+(showAmt?'<th class="nc" style="width:110px">금액(원)</th>':'')+'<th style="width:80px">입금방식</th><th>비고</th></tr>';
   // 주보용: 입력일 조회 시 차주(nextWeek) 내역 제외
-  let books=getOfferings().filter(function(e){return e.date===dt && !e.nextWeek;});
-  if(type) books=books.filter(function(e){return e.type===type;});
-  if(name) books=books.filter(function(e){return (e.name||'').includes(name);});
-  if(showOnline==='online') books=books.filter(isOnlinePayment);
-  else if(showOnline==='cash') books=books.filter(function(e){return !isOnlinePayment(e);});
-  books=books.sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||(a.name||'').localeCompare(b.name||'');});
-  const tbody=document.getElementById('wky-tbody');
-  // 주보작성용: 금액/주차 미표시, 헌금구분·성도명·입금방식·비고만
-  if(tbody) tbody.innerHTML=books.map(function(e,i){
+  const applyF=function(arr){
+    if(type) arr=arr.filter(function(e){return e.type===type;});
+    if(name) arr=arr.filter(function(e){return (e.name||'').includes(name);});
+    if(showOnline==='online') arr=arr.filter(isOnlinePayment);
+    else if(showOnline==='offline'||showOnline==='cash') arr=arr.filter(function(e){return !isOnlinePayment(e);});
+    return arr;
+  };
+  const books=applyF(getOfferings().filter(function(e){return e.date===dt && !e.nextWeek;}))
+    .sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||(a.name||'').localeCompare(b.name||'');});
+  const row=function(e,i,extra){
     const ci=getTypeColorIdx(e.type);
-    return '<tr class="off-color-'+ci+'">'
-      +'<td style="text-align:center;color:var(--g3);font-size:11px">'+(i+1)+'</td>'
+    return '<tr class="off-color-'+ci+'"'+(extra||'')+'>'
+      +'<td style="text-align:center;color:var(--g3);font-size:11px">'+i+'</td>'
       +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
       +'<td style="font-weight:700">'+(e.name||'')+'</td>'
-      +'<td style="text-align:center">'+(isOnlinePayment(e)
-        ?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>'
-        :'')
-      +'</td>'
+      +amtTd(e)
+      +'<td style="text-align:center">'+(isOnlinePayment(e)?onlineBadge:'')+'</td>'
       +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
       +'</tr>';
-  }).join('')||'<tr><td colspan="5" class="tbl-empty">해당 일자 데이터 없음</td></tr>';
+  };
+  let html=books.map(function(e,i){return row(e,i+1);}).join('')||'<tr><td colspan="'+COLS+'" class="tbl-empty">해당 일자 데이터 없음</td></tr>';
   // ── 조회일이 '차주 일요일'인 경우: 지난주 마감이후 입금내역 ──
-  let wNextBooks=getOfferings().filter(function(e){return e.nextWeek && e.displayWeek===dt;});
-  if(type) wNextBooks=wNextBooks.filter(function(e){return e.type===type;});
-  if(name) wNextBooks=wNextBooks.filter(function(e){return (e.name||'').includes(name);});
-  if(showOnline==='online') wNextBooks=wNextBooks.filter(isOnlinePayment);
-  else if(showOnline==='cash') wNextBooks=wNextBooks.filter(function(e){return !isOnlinePayment(e);});
-  if(wNextBooks.length && tbody){
-    tbody.innerHTML += '<tr><td colspan="5" style="background:#fff4e6;font-weight:800;color:#a05a00;text-align:center;padding:6px">📌 지난주 마감이후 헌금입금내역</td></tr>';
-    tbody.innerHTML += wNextBooks.sort(function(a,b){return (a.type||'').localeCompare(b.type||'');}).map(function(e,i){
-      const ci=getTypeColorIdx(e.type);
-      return '<tr class="off-color-'+ci+'" style="opacity:.85">'
-        +'<td style="text-align:center;color:var(--g3);font-size:11px">'+(books.length+i+1)+'</td>'
-        +'<td><span class="off-color-badge off-color-'+ci+'">'+e.type+'</span></td>'
-        +'<td style="font-weight:700">'+(e.name||'')+'</td>'
-        +'<td style="text-align:center">'+(isOnlinePayment(e)?'<span style="background:#e3f2fd;color:#1565c0;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid #90caf9">온라인</span>':'')+'</td>'
-        +'<td style="font-size:11px;color:var(--g2)">'+(e.memo||'')+'</td>'
-        +'</tr>';
-    }).join('');
+  const wNextBooks=applyF(getOfferings().filter(function(e){return e.nextWeek && e.displayWeek===dt;}))
+    .sort(function(a,b){return (a.type||'').localeCompare(b.type||'');});
+  if(wNextBooks.length){
+    html+='<tr><td colspan="'+COLS+'" style="background:#fff4e6;font-weight:800;color:#a05a00;text-align:center;padding:6px">📌 지난주 마감이후 헌금입금내역</td></tr>';
+    html+=wNextBooks.map(function(e,i){return row(e,books.length+i+1,' style="opacity:.85"');}).join('');
+  }
+  const tbody=document.getElementById('wky-tbody');
+  if(tbody) tbody.innerHTML=html;
+  // ── 합계 (금액 표시 시) ──
+  const tfoot=document.getElementById('wky-tfoot');
+  if(tfoot){
+    if(showAmt&&(books.length||wNextBooks.length)){
+      const sum=function(a){return a.reduce(function(s,e){return s+(Number(e.amount)||0);},0);};
+      const main=sum(books), nxt=sum(wNextBooks);
+      const byType={}; books.concat(wNextBooks).forEach(function(e){byType[e.type]=(byType[e.type]||0)+(Number(e.amount)||0);});
+      const sub=Object.keys(byType).sort().map(function(t){return t+' '+fmtN(byType[t]);}).join(' · ');
+      tfoot.innerHTML=(wNextBooks.length
+          ?'<tr style="background:#f6f8fb;font-weight:700"><td colspan="3" style="text-align:right">당일 합계 ('+books.length+'건)</td><td class="nc">'+fmtN(main)+'</td><td colspan="2"></td></tr>'
+           +'<tr style="background:#fff8ef;font-weight:700"><td colspan="3" style="text-align:right;color:#a05a00">지난주 마감이후 합계 ('+wNextBooks.length+'건)</td><td class="nc" style="color:#a05a00">'+fmtN(nxt)+'</td><td colspan="2"></td></tr>'
+          :'')
+        +'<tr style="background:#e3eaf3;font-weight:800"><td colspan="3" style="text-align:right">합계 ('+(books.length+wNextBooks.length)+'건)</td><td class="nc" style="font-size:13px;color:var(--navy)">'+fmtN(main+nxt)+'</td><td colspan="2" style="font-size:10px;color:var(--g2);font-weight:500">'+sub+'</td></tr>';
+    }else tfoot.innerHTML='';
   }
   const sw=document.getElementById('wky-stats-wrap');
   const total=books.length;
