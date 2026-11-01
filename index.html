@@ -1041,6 +1041,96 @@ table.fm-tbl td{height:44px}
   .dep-if-wide{grid-column:1/-1}
   .dep-issue{grid-template-columns:1fr;gap:4px}
 }
+/* ===== 모바일 홈 · 하단 바 ===== */
+.mbar{display:none}
+.mh-wrap{max-width:560px;margin:0 auto}
+.mh-date{font-size:13px;font-weight:800;color:var(--g2);margin:2px 0 12px}
+.mh-tile{width:100%;display:flex;align-items:center;gap:14px;padding:18px 16px;border:none;border-radius:16px;margin-bottom:12px;
+  text-align:left;font-family:var(--fn);cursor:pointer;box-shadow:0 4px 14px rgba(26,58,110,.16);color:#fff}
+.mh-tile:active{transform:scale(.985)}
+.mh-tile.gold{background:linear-gradient(135deg,#a9772a,#d4a456)}
+.mh-tile.navy{background:linear-gradient(135deg,var(--navy-d),var(--navy-m))}
+.mh-ico{font-size:28px;line-height:1;width:50px;height:50px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mh-txt{flex:1;min-width:0}
+.mh-txt b{display:block;font-size:17px;font-weight:900;letter-spacing:.2px}
+.mh-txt small{display:block;font-size:12px;opacity:.88;margin-top:4px;line-height:1.45;font-family:var(--fn)}
+.mh-txt small .n{font-family:var(--fnum);font-weight:800;opacity:1}
+.mh-arr{font-size:26px;opacity:.55;line-height:1}
+.mh-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mh-mini{height:66px;border:1px solid var(--g4);background:#fff;border-radius:12px;font-family:var(--fn);font-size:11px;font-weight:800;color:var(--navy);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:var(--sh);cursor:pointer;padding:0}
+.mh-mini-ico{font-size:21px;line-height:1}
+.mh-hint{font-size:11px;color:var(--g3);text-align:center;margin-top:14px}
+/* 송금내역: 모바일 상세조건 토글 / 내역 접기 */
+.tr-adv{display:contents}
+.tr-adv-btn{display:none}
+.tr-toggle{display:none;width:100%;border:none;border-top:1px solid var(--g5);background:var(--g6);color:var(--g2);font-size:11px;font-weight:700;padding:7px;font-family:var(--fn);cursor:pointer}
+.tr-date-lbl{display:none}
+/* 입금확인: 모바일 저장 바 */
+.dep-save-bar{display:none}
+
+@media (max-width:600px){
+  /* 하단 바 */
+  .mbar{display:flex;flex-shrink:0;background:var(--navy-d);border-top:1px solid rgba(255,255,255,.14);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));gap:6px;z-index:150}
+  .mbar-btn{flex:1;height:52px;border:none;border-radius:10px;background:transparent;color:rgba(255,255,255,.72);font-family:var(--fn);font-size:11px;font-weight:800;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;padding:0}
+  .mbar-ico{font-size:20px;line-height:1}
+  .mbar-btn.on{background:rgba(255,255,255,.13);color:#fff}
+  .mbar-btn.cam{background:rgba(200,150,62,.32);color:#fff}
+  .mbar-btn.cam.on{background:rgba(200,150,62,.55)}
+  .mbar-badge{position:absolute;top:3px;right:12px;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:900;font-style:normal;
+    display:none;align-items:center;justify-content:center;padding:0 5px;font-family:var(--fnum)}
+  .mbar-badge.show{display:inline-flex}
+  .main-wrap{padding:14px 12px 20px}
+  .pg-hd{margin-bottom:10px}
+  .pg-title{font-size:16px}
+
+  /* 입금확인 */
+  .dep-top{flex-direction:column;align-items:stretch;gap:8px;padding:12px}
+  .dep-up-btns{margin-left:0;width:100%;flex-direction:column;gap:8px}
+  .dep-up-btn{width:100%;text-align:center}
+  .dep-up-btn.btn-navy{height:58px;font-size:17px;font-weight:900;border-radius:14px;display:flex;align-items:center;justify-content:center}
+  .dep-up-btn.btn-outline{height:40px;font-size:13px}
+  .dep-stats{grid-template-columns:repeat(3,1fr)!important;gap:6px}
+  .dep-stats .stat{padding:8px 7px}
+  .dep-stats .stat-lbl{font-size:9px;margin-bottom:3px;letter-spacing:0}
+  .dep-stats .stat-val{font-size:13px}
+  .dep-stats .stat-sub{font-size:9px;margin-top:2px}
+  .dep-state{font-size:9.5px;padding:2px 6px;margin-top:3px}
+  .dep-save-bar{display:flex;position:sticky;bottom:-1px;gap:8px;align-items:center;padding:10px 0 4px;background:var(--blue-xp);box-shadow:0 -8px 10px -6px rgba(26,58,110,.18);margin-top:6px}
+  .dep-save-bar .btn{flex:1;height:48px;font-size:15px;font-weight:900;border-radius:12px}
+  .dep-pend .card-hd .btn{display:none}
+  .ocr-bar{font-size:11.5px}
+
+  /* 송금내역 */
+  #tab-transfer .pg-desc{display:none}
+  #tab-transfer .search-panel{padding:10px 12px}
+  #tab-transfer .panel-title{display:none}
+  .tr-adv{display:none}
+  .search-panel.adv-open .tr-adv{display:contents}
+  .tr-adv-btn{display:inline-flex}
+  .tr-date-lbl{display:block;width:100%;font-family:var(--fnum);font-size:12px;font-weight:700;color:var(--navy);margin-top:2px}
+  #tr-stats{grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+  #tr-stats .stat{padding:8px 10px}
+  #tr-stats .stat-lbl{font-size:9px;margin-bottom:3px;letter-spacing:0}
+  #tr-stats .stat-val{font-size:15px}
+  #tr-stats .stat-sub{font-size:9px;margin-top:2px}
+  .tr-group{margin-bottom:10px}
+  .tr-head{padding:10px 12px;gap:8px}
+  .tr-idx{width:24px;height:24px;font-size:11px}
+  .tr-who{min-width:0;flex:1 1 55%}
+  .tr-name{font-size:15px}
+  .tr-acct{font-size:15px;font-weight:800;letter-spacing:.3px}
+  .tr-amt-wrap{flex:0 0 auto;margin-left:auto}
+  .tr-amt{font-size:19px}
+  .tr-actions{width:100%;display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:6px;margin-top:2px}
+  .tr-copy,.tr-done-btn{height:42px;font-size:13px;padding:0;width:100%;border-radius:9px}
+  .tr-done-btn{background:var(--green)}
+  .tr-done-btn.undo{background:var(--g5);color:var(--g2)}
+  .tr-items{display:none;padding:4px 12px 10px}
+  .tr-group.open .tr-items{display:block}
+  .tr-toggle{display:block}
+}
 </style>
 
 <!-- Firebase SDK -->
@@ -1457,6 +1547,29 @@ table.fm-tbl td{height:44px}
 </nav>
 
 <main class="main-wrap" id="mainWrap">
+<!-- ===== 모바일 홈 (휴대폰 첫 화면: 명세표 사진 · 오늘 송금) ===== -->
+<div id="tab-mhome" class="tab-pane">
+  <div class="mh-wrap">
+    <div class="mh-date" id="mh-date"></div>
+    <button class="mh-tile gold" onclick="depQuickCapture()">
+      <div class="mh-ico">📷</div>
+      <div class="mh-txt"><b>입금 명세표 올리기</b><small id="mh-dep-sub">ATM 명세표를 찍으면 시간·금액을 자동 인식합니다</small></div>
+      <div class="mh-arr">›</div>
+    </button>
+    <button class="mh-tile navy" onclick="mhGo('transfer')">
+      <div class="mh-ico">💳</div>
+      <div class="mh-txt"><b>오늘 송금 목록</b><small id="mh-tr-sub">불러오는 중…</small></div>
+      <div class="mh-arr">›</div>
+    </button>
+    <div class="mh-grid">
+      <button class="mh-mini" onclick="mhGo('deposit')"><span class="mh-mini-ico">🏧</span>입금확인</button>
+      <button class="mh-mini" onclick="mhGo('receipt')"><span class="mh-mini-ico">🗒️</span>입금전표</button>
+      <button class="mh-mini" onclick="mhGo('query')"><span class="mh-mini-ico">📄</span>당일헌금</button>
+      <button class="mh-mini" onclick="selectInputSheet(1)"><span class="mh-mini-ico">📋</span>헌금입력</button>
+    </div>
+    <div class="mh-hint">다른 화면은 위쪽 메뉴에서 고를 수 있습니다.</div>
+  </div>
+</div>
 <div id="tab-input1" class="tab-pane active"></div>
 
 <div id="tab-input2" class="tab-pane"></div>
@@ -1935,6 +2048,8 @@ table.fm-tbl td{height:44px}
         <button class="qd-btn" onclick="setTransferDate('sun')">지난 주일</button>
         <button class="qd-btn" onclick="setTransferDate('week')">이번 주 전체</button>
       </div>
+      <button class="qd-btn tr-adv-btn" onclick="this.closest('.search-panel').classList.toggle('adv-open')">⚙ 상세</button>
+      <span class="tr-adv">
       <input type="date" class="finp" id="tr-date" style="max-width:160px" onchange="doTransferSearch()">
       <span style="color:var(--g3);font-size:12px">~</span>
       <input type="date" class="finp" id="tr-date-to" style="max-width:160px" onchange="doTransferSearch()">
@@ -1944,9 +2059,13 @@ table.fm-tbl td{height:44px}
         <option value="현금지급">현금지급</option>
         <option value="이자">이자</option>
       </select>
+      </span>
       <label class="chk-pill"><input type="checkbox" id="tr-hide-done" onchange="doTransferSearch()"> 송금완료 숨기기</label>
+      <span class="tr-adv">
       <button class="btn btn-navy" onclick="doTransferSearch()">🔍 조회</button>
       <button class="btn btn-outline btn-sm" onclick="printTransfer()">🖨️ 송금표 인쇄</button>
+      </span>
+      <div class="tr-date-lbl" id="tr-date-lbl"></div>
     </div>
   </div>
   <div class="result-section" id="tr-result">
@@ -2496,6 +2615,11 @@ table.fm-tbl td{height:44px}
   </div>
 </div>
 </main>
+<nav class="mbar no-print" id="mbar">
+  <button class="mbar-btn" data-mb="mhome" onclick="mhGo('mhome')"><span class="mbar-ico">🏠</span>홈</button>
+  <button class="mbar-btn cam" data-mb="deposit" onclick="depQuickCapture()"><span class="mbar-ico">📷</span>명세표 사진</button>
+  <button class="mbar-btn" data-mb="transfer" onclick="mhGo('transfer')"><span class="mbar-ico">💳</span>오늘 송금<i class="mbar-badge" id="mbar-tr-badge"></i></button>
+</nav>
 
 <!-- 중복 입력 확인 모달 -->
 <div id="dup-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
@@ -2762,9 +2886,9 @@ window._fbLiveRefresh = function(key){
   if(!activeTab) return;
   const refreshMap = {
     'accountBook':  ['offering','query','weekly','receipt','monthly','bankbal','finsearch','online-off','member','family'],
-    'expenseBook':  ['expense','monthly','deptreport','receipt','transfer','bankbal'],
+    'expenseBook':  ['expense','monthly','deptreport','receipt','transfer','bankbal','mhome'],
     'sponsorBook':  ['sponsor'],
-    'config':       ['manage','monthly','family','bankbal']
+    'config':       ['manage','monthly','family','bankbal','mhome']
   };
   const tabs = refreshMap[key] || [];
   if(tabs.includes(activeTab)){
@@ -2801,6 +2925,7 @@ function _doTabSwitch(tab,el){
   var ni=(el&&el.classList&&el.classList.contains('nav-item'))?el:_navPickItem(tab);
   if(ni) ni.classList.add('active');
   try{ updateActiveGroup(tab,ni); }catch(e){}
+  try{ _mbarMark(tab); }catch(e){}
   try{ onTabActivate(tab); }catch(e){}
   if(ni&&ni.dataset.mgr){ try{ switchMgr(ni.dataset.mgr,null); }catch(e){} }
   if(ni&&ni.dataset.focus){
@@ -2839,6 +2964,7 @@ window.selectInputSheet=function(num){
   var ni=document.getElementById('nav-input-'+num);
   if(ni) ni.classList.add('active');
   try{ updateActiveGroup('input'+num,ni); }catch(e){}
+  try{ _mbarMark('input'); }catch(e){}
   var mw=document.getElementById('mainWrap'); if(mw) mw.scrollTop=0;
 };
 
@@ -2859,7 +2985,7 @@ function updateActiveGroup(tab,el){
     else{ var any=document.querySelector('.nav-item[data-tab="'+tab+'"]'); grp=(any&&any.dataset.grp)||'weekly'; }
   }
   var nav=document.getElementById('mainNav'); if(nav) nav.dataset.grp=grp;
-  window._navLastInGrp[grp]=el||tab;
+  if(el) window._navLastInGrp[grp]=el;
   document.querySelectorAll('.nav-group-pill').forEach(function(p){ p.classList.remove('active-group'); });
   var gEl=document.getElementById('grp-'+grp);
   if(gEl) gEl.classList.add('active-group');
@@ -2905,6 +3031,7 @@ function onTabActivate(tab){
   if(tab==='online-off') initOnlineTab();
   if(tab==='transfer') initTransferTab();
   if(tab==='deposit') initDepositTab();
+  if(tab==='mhome') renderMobileHome();
   if(tab==='member') initMemberTab();
   if(tab==='family') initFamilyTab();
   if(tab==='finsearch'){const today=nowKST();const first=new Date(today.getUTCFullYear(),today.getUTCMonth(),1).toISOString().slice(0,10);const fd=document.getElementById('fin-from');const td=document.getElementById('fin-to');if(fd&&!fd.value) fd.value=first;if(td&&!td.value) td.value=TODAY;}
@@ -5620,6 +5747,19 @@ window.doTransferSearch=function(){
   const pay=document.getElementById('tr-paytype')?.value;
   const hideDone=document.getElementById('tr-hide-done')?.checked;
   const doneMap=getTransferDone();
+  // 빠른 날짜 칩 on 표시 · 날짜 라벨
+  try{
+    const ls=getLastSunday();
+    const ranges={0:[TODAY,TODAY],'-1':[addDays(TODAY,-1),addDays(TODAY,-1)],sun:[ls,ls],week:[ls,addDays(ls,6)]};
+    let marked=false;
+    document.querySelectorAll('#tab-transfer .quick-dates .qd-btn').forEach(function(b){
+      const m=(b.getAttribute('onclick')||'').match(/setTransferDate\((['"]?)([^'")]+)\1\)/); const r=m&&ranges[m[2]];
+      const on=!marked&&!!(r&&r[0]===from&&r[1]===to); if(on) marked=true;
+      b.classList.toggle('on',on);
+    });
+    const lbl=document.getElementById('tr-date-lbl');
+    if(lbl) lbl.textContent='📅 '+from+(to!==from?' ~ '+to:'')+(from===TODAY&&to===TODAY?' (오늘)':'')+(pay?' · '+pay:'');
+  }catch(e){}
 
   let exps=getExpenses().filter(function(e){return e.date>=from&&e.date<=to;});
   if(pay) exps=exps.filter(function(e){return (e.paytype||'송금지급')===pay;});
@@ -5685,6 +5825,7 @@ window.doTransferSearch=function(){
           +'<button class="tr-done-btn'+(g.done?' undo':'')+'" onclick="toggleTransferDone(\''+escH(dk).replace(/'/g,"\\'")+'\')">'+(g.done?'↩ 취소':'✓ 송금완료')+'</button>'
         +'</div>'
       +'</div>'
+      +'<button class="tr-toggle no-print" onclick="var g=this.closest(\'.tr-group\');g.classList.toggle(\'open\');this.textContent=g.classList.contains(\'open\')?\'내역 접기 ▴\':\'내역 '+g.items.length+'건 보기 ▾\'">내역 '+g.items.length+'건 보기 ▾</button>'
       +'<div class="tr-items">'
         +g.items.sort(function(a,b){return (a.date||'').localeCompare(b.date||'')||(a.dept||'').localeCompare(b.dept||'','ko');}).map(function(e){
           return '<div class="tr-item">'
@@ -7415,7 +7556,9 @@ window.depRenderPending=function(){
         +(p.ocr==='fail'?'<span style="color:var(--red)"> · 자동 인식 실패 — 직접 입력해 주세요</span>':'')+dWarn+'</div></div>'
         +'<div class="dep-acts"><button class="btn btn-navy btn-xs" onclick="depSavePending(\''+p.tmp+'\')"'+(busy?' disabled':'')+'>저장</button>'
         +'<button class="btn btn-outline btn-xs" onclick="depDropPending(\''+p.tmp+'\')">취소</button></div></div>';
-    }).join('')+'</div>';
+    }).join('')
+    +'<div class="dep-save-bar"><button class="btn btn-navy" onclick="depSaveAllPending()"'+(running?' disabled':'')+'>'+(running?'인식 중…':(P.length>1?'모두 저장 ('+P.length+'장)':'저장'))+'</button></div>'
+    +'</div>';
 };
 window.depDropPending=function(tmp){window._depPend=window._depPend.filter(function(p){return p.tmp!==tmp;});depRenderPending();};
 async function _depSaveOnePending(tmp,quiet){
@@ -7591,6 +7734,59 @@ window.depFillReceiptNote=async function(date){
   el.innerHTML='<div><b style="color:#8a5a00">ATM 입금 확인</b> '+fmtN(atm)+'원 ('+(slips||[]).length+'건'+((slips||[]).length?', '+slips.map(function(s){return s.time;}).sort()[0]+'~'+slips.map(function(s){return s.time;}).sort().slice(-1)[0]:'')+')'
     +' · 입금 대상액 대비 차액 <b>'+fmtN(diff)+'</b>원</div>'
     +issues.map(function(i){return '<div>• <b>['+_depEsc(i.status==='완료'?'처리완료':i.kind)+']</b> '+(i.amount?fmtN(i.amount)+'원 ':'')+_depEsc(i.reason)+(i.plan?' (처리 예정 '+_depMD(i.plan)+')':'')+'</div>';}).join('');
+};
+
+
+// ════════════════════════════════════════════════════════════
+// 📱 모바일 홈 · 하단 바 — 휴대폰에서 자주 쓰는 두 작업(명세표 사진, 오늘 송금) 중심
+// ════════════════════════════════════════════════════════════
+window.isMobileUI=function(){ try{return window.matchMedia('(max-width:600px)').matches;}catch(e){return false;} };
+window.mhGo=function(tab){
+  _doTabSwitch(tab);
+  if(tab==='transfer'){ try{ setTransferDate(0); }catch(e){} }
+};
+// 명세표 사진: 입금확인 화면으로 가면서 바로 카메라 열기
+window.depQuickCapture=function(){
+  const pane=document.getElementById('tab-deposit');
+  if(!pane||pane.style.display!=='block') _doTabSwitch('deposit');
+  const inp=document.querySelector('#tab-deposit input[type=file][capture]');
+  if(inp){ try{ inp.click(); }catch(e){} }
+};
+window._mbarMark=function(tab){
+  document.querySelectorAll('.mbar-btn').forEach(function(b){ b.classList.toggle('on',b.dataset.mb===tab); });
+};
+window.renderMobileHome=function(){
+  const dEl=document.getElementById('mh-date');
+  if(dEl){ const d=new Date(TODAY+'T00:00:00Z'); dEl.textContent=d.getUTCFullYear()+'년 '+(d.getUTCMonth()+1)+'월 '+d.getUTCDate()+'일 ('+'일월화수목금토'[d.getUTCDay()]+')'; }
+  // 오늘 송금 (하단 바 배지와 공유)
+  let n=0,doneCnt=0,tot=0;
+  try{
+    const exps=getExpenses().filter(function(e){return e.date===TODAY&&(e.paytype||'송금지급')==='송금지급';});
+    const groups={};exps.forEach(function(e){groups[(e.recipient||'')+'|'+String(e.account||e.acc||'').replace(/\s+/g,'')]=1;});
+    const done=getTransferDone();const dk=TODAY+'~'+TODAY+'|';
+    n=Object.keys(groups).length; doneCnt=Object.keys(groups).filter(function(k){return done[dk+k];}).length;
+    tot=exps.reduce(function(s,e){return s+Number(e.amount||0);},0);
+  }catch(e){}
+  const tEl=document.getElementById('mh-tr-sub');
+  if(tEl){
+    if(!n) tEl.innerHTML='오늘 송금할 내역이 없습니다';
+    else if(n-doneCnt===0) tEl.innerHTML='✓ <span class="n">'+n+'</span>건 모두 송금 완료 · <span class="n">'+fmtN(tot)+'</span>원';
+    else tEl.innerHTML='<span class="n">'+(n-doneCnt)+'</span>건 남음 (전체 '+n+'건) · <span class="n">'+fmtN(tot)+'</span>원';
+  }
+  const bd=document.getElementById('mbar-tr-badge');
+  if(bd){ bd.textContent=n-doneCnt; bd.classList.toggle('show',n-doneCnt>0); }
+  // 오늘 입금 명세표 현황 (서버 조회 후 갱신)
+  const sEl=document.getElementById('mh-dep-sub');
+  if(sEl&&window.DEP&&window.depTarget){
+    try{
+      const t=depTarget(TODAY);
+      DEP.slips(TODAY).then(function(slips){
+        const atm=(slips||[]).reduce(function(s,e){return s+(+e.amount||0);},0);
+        if(!(slips||[]).length) sEl.innerHTML='오늘 올린 명세표 없음 · 입금 대상액 <span class="n">'+fmtN(t.target)+'</span>원';
+        else sEl.innerHTML='오늘 명세표 <span class="n">'+slips.length+'</span>장 · ATM <span class="n">'+fmtN(atm)+'</span>원'+(t.target-atm===0?' · ✓ 대상액 일치':' · 차액 <span class="n">'+fmtN(t.target-atm)+'</span>원');
+      }).catch(function(){});
+    }catch(e){}
+  }
 };
 
 // ── 데이터 관리 탭 전환 ──────────────────────────────────────
@@ -9201,6 +9397,7 @@ window.printSection=function(areaId){
       if(!n){host.innerHTML='💳 오늘 송금 없음';host.classList.remove('hot');}
       else{host.innerHTML='💳 오늘 송금 <b>'+(n-doneCnt)+'</b>/'+n+'건 · '+fmtN(tot)+'원';host.classList.toggle('hot',n-doneCnt>0);}
     }catch(e){}
+    try{ if(window.renderMobileHome) renderMobileHome(); }catch(e){}
   };
 })();
 
@@ -9680,6 +9877,7 @@ function _runInit(){
   selectInputSheet(1);
   try{ updateTodayBadge(); }catch(e){}
   try{ restoreLastTab(); }catch(e){}
+  try{ if(isMobileUI()) _doTabSwitch('mhome'); }catch(e){}
 }
 
 // Firebase 완료 시 호출
