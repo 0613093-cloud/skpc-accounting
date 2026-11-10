@@ -1150,6 +1150,63 @@ button:disabled,[aria-disabled="true"]{cursor:not-allowed}
 button[aria-busy="true"]{cursor:progress}
 button{-webkit-tap-highlight-color:transparent}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ── UX 기준 v1.4 (2026-11-11) — UI별 애니메이션 ──
+   들어올 때 Ease out · 나갈 때 Ease in · 0.2~0.4초. 스낵바=아래에서 Slide · 토스트=제자리 Fade · 팝업=배경 Fade + 90%→100%
+   바텀시트=아래에서 Slide · 좋아요=Spring · 체크박스=선 그리기 · 로딩=Linear 회전 · 타이틀=한 줄씩 */
+:root { --ux-out: cubic-bezier(0.22, 0.61, 0.36, 1); --ux-in: cubic-bezier(0.4, 0, 1, 1); --ux-inout: cubic-bezier(0.65, 0, 0.35, 1); --ux-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes ux-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ux-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes ux-rise     { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes ux-pop-in   { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes ux-snack-in { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: none; } }
+@keyframes ux-snack-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(100%); } }
+@keyframes ux-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes ux-like-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 70% { transform: scale(0.95); } 100% { transform: scale(1); } }
+@keyframes ux-spin     { to { transform: rotate(360deg); } }
+.ux-fade-in  { animation: ux-fade-in 200ms var(--ux-out) both; }
+.ux-fade-out { animation: ux-fade-out 200ms var(--ux-in) both; }
+.ux-pop-in   { animation: ux-pop-in 300ms var(--ux-out) both; }
+.ux-scrim    { animation: ux-fade-in 300ms var(--ux-out) both; }
+.ux-snack-in { animation: ux-snack-in 300ms var(--ux-out) both; }
+.ux-snack-out { animation: ux-snack-out 200ms var(--ux-in) both; }
+.ux-sheet-up { animation: ux-sheet-up 300ms var(--ux-out) both; }
+.ux-like-pop { animation: ux-like-pop 400ms var(--ux-spring) both; }
+.ux-spin     { animation: ux-spin 0.8s linear infinite; }
+/* 타이틀 · 서브타이틀 한 줄씩 (60ms 간격) — 부모에 ux-stagger, 또는 줄마다 ux-title + ux-title-2/3 */
+.ux-stagger > *, .ux-title { animation: ux-rise 300ms var(--ux-out) both; }
+.ux-stagger > :nth-child(2), .ux-title-2 { animation-delay: 60ms; }
+.ux-stagger > :nth-child(3), .ux-title-3 { animation-delay: 120ms; }
+.ux-stagger > :nth-child(4) { animation-delay: 180ms; }
+
+/* 체크박스 : 체크 선이 왼쪽부터 그려집니다 (250ms Ease in out) */
+@keyframes ux-check-draw { from { background-size: 100% 100%, 70% 70%; } to { background-size: 0% 100%, 70% 70%; } }
+input[type="checkbox"] { -webkit-appearance: none; appearance: none; flex: none; margin: 0 4px 0 0; vertical-align: -3px;
+  width: 16px; height: 16px; border: 1.5px solid #9aa7b8; border-radius: 3px; background-color: #fff;
+  cursor: pointer; transition: border-color 200ms var(--ux-out); }
+input[type="checkbox"]:hover:not(:disabled) { border-color: var(--navy); }
+input[type="checkbox"]:checked { border-color: var(--navy);
+  background: linear-gradient(var(--navy), var(--navy)) right center / 0% 100% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 70% 70% no-repeat, var(--navy);
+  animation: ux-check-draw 250ms var(--ux-inout) both; }
+input[type="checkbox"]:disabled { opacity: .45; cursor: not-allowed; }
+
+/* 팝업 : 중복 확인 창 · 입금 사진 보기 · 빠른 이동 — 배경 Fade + 창 90% → 100% */
+@keyframes ux-pal-pop { from { opacity: 0; transform: translateX(-50%) scale(0.9); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+#dup-modal, .dep-viewer:not(.hidden), #skpc-palette.open .pal-bg { animation: ux-fade-in 300ms var(--ux-out) both; }
+#dup-modal > :first-child, .dep-viewer:not(.hidden) .dep-viewer-box { animation: ux-pop-in 300ms var(--ux-out) both; }
+#skpc-palette .pal-box { animation: ux-pal-pop 300ms var(--ux-out) both; }
+/* 숫자 위에 뜨는 작은 창(가족 목록) = 드롭다운 → 제자리 Fade (예전 palIn 은 가운데 정렬용 이동이 섞여 잠깐 왼쪽으로 튀었음) */
+.fm-pop.show { animation: ux-fade-in 200ms var(--ux-out) both; }
+/* 토스트(복사 · 저장 알림) : 아래에서 올라오던 것 → 제자리 Fade in(Ease out) · Fade out(Ease in) */
+.toast { transform: translateX(-50%); transition: opacity 200ms var(--ux-in); }
+.toast.show { transform: translateX(-50%); transition-timing-function: var(--ux-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ux-fade-in, .ux-fade-out, .ux-pop-in, .ux-scrim, .ux-snack-in, .ux-snack-out, .ux-sheet-up, .ux-like-pop,
+  .ux-stagger > *, .ux-title, input[type="checkbox"]:checked, #dup-modal, #dup-modal > :first-child, .dep-viewer, .dep-viewer-box, #skpc-palette .pal-bg, #skpc-palette .pal-box, .fm-pop.show { animation: none !important; }
+  .ux-spin { animation-duration: 2s; }
+}
 </style>
 
 <!-- Firebase SDK -->
@@ -1502,7 +1559,7 @@ button{-webkit-tap-highlight-color:transparent}
 <header class="hdr">
   <div class="hdr-brand">
     <div class="hdr-logo"></div>
-    <div class="hdr-title">
+    <div class="hdr-title ux-stagger">
       <h1>서부광성교회 회계 시스템</h1>
       <p>Seobukwangseong Presbyterian Church — Financial Management</p>
     </div>
@@ -7739,7 +7796,8 @@ window.depRenderOpen=async function(){
 function _depToast(msg){
   const t=document.createElement('div'); t.textContent='✓ '+msg;
   t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.25)';
-  document.body.appendChild(t); setTimeout(function(){t.remove();},2200);
+  t.className='ux-fade-in'; document.body.appendChild(t);
+  setTimeout(function(){ t.className='ux-fade-out'; setTimeout(function(){t.remove();},200); },2200);   // UX v1.4 토스트 : Fade in → Fade out
 }
 
 // 입금전표 하단: ATM 입금 확인 · 특이사항 요약
