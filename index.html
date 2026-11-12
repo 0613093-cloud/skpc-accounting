@@ -1207,6 +1207,9 @@ input[type="checkbox"]:disabled { opacity: .45; cursor: not-allowed; }
   .ux-stagger > *, .ux-title, input[type="checkbox"]:checked, #dup-modal, #dup-modal > :first-child, .dep-viewer, .dep-viewer-box, #skpc-palette .pal-bg, #skpc-palette .pal-box, .fm-pop.show { animation: none !important; }
   .ux-spin { animation-duration: 2s; }
 }
+
+/* UX 기준 v1.5 (2026-11-13) — 휴대폰 입력칸 글자 16px 이상 (아이폰이 입력할 때 화면을 확대하지 않게) */
+@media (max-width: 640px) { input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: max(16px, 1em) !important; } }
 </style>
 
 <!-- Firebase SDK -->
